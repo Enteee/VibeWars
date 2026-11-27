@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Relay bağlantısını kendi sekmesinde aç. Hiçbir şey kaydedilmedi.",
   "app.inviteInLobby": "Menüye dön, sonra davet bağlantısını yeniden aç.",
   "app.lostMatch": "Maçla bağlantı koptu.",
+  "app.rejoinFailed": "Maça geri dönülemedi: yerin tutulmadı.",
   "app.malformedRelayLink": "Bu relay bağlantısı geçersiz. Hiçbir şey kaydedilmedi.",
   "app.ownLobby": "Bu senin lobin",
 
@@ -451,7 +452,7 @@ export default {
   "effects.categoryShout": "Haykırış",
   "effects.categoryStance": "Duruş",
   "effects.categoryWeaponSpell": "Silah Büyüsü",
-  "effects.endHint": "bitirmek için çift tıkla",
+  "effects.endHint": "bitirmek için çift tıkla, Enter ya da Delete",
   "effects.from": "kaynak: {caster}",
   "effects.inRange": "menzilindeyken",
   "effects.maintained": "sürdürülüyor",
@@ -1109,6 +1110,7 @@ export default {
   "recharge.spent": "{skill}, Moral Artışına kadar harcandı",
 
   "reconnect.detail": "Kurucunun bağlantısı koptu. Yerin korunuyor.",
+  "reconnect.rejoinDetail": "Seni maçına geri götürüyoruz. Yerin tutuluyor.",
   "reconnect.seconds": "{seconds} sn",
   "reconnect.title": "Yeniden bağlanıyor…",
 

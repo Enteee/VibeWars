@@ -23,7 +23,8 @@ const ROOT = path.join(import.meta.dirname, "..", "..");
 const CAPTURE = path.join(ROOT, "out", "promo", "capture");
 const OUT = path.join(ROOT, "out", "promo");
 const FPS = 30;
-const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
+/** The action shots in cut order (#3982). */
+const ACTIONS = ["cast", "gate", "heal", "ramp"];
 /** @type {unknown} */
 const raw = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "captions.json"), "utf8"));
 const {
@@ -267,14 +268,14 @@ function timeline() {
   const before = plan.cuts.slice(0, plan.hit).reduce((sum, cut) => sum + cutSeconds(cut), 0);
   const hitAt = lead + before + 0.8;
 
-  for (const id of MAPS) {
-    const map = scene(`map-${id}`);
-    const from = (map.marks.pan ?? 4) - 0.5;
+  for (const id of ACTIONS) {
+    const shot = scene(`act-${id}`);
+    const from = Math.max(0, (shot.marks.action ?? 0) - 0.3);
     pieces.push({
       scene: "maps",
-      src: path.join(CAPTURE, `map-${id}.webm`),
+      src: path.join(CAPTURE, `act-${id}.webm`),
       from,
-      to: from + 2.7,
+      to: from + 2,
       speed: 1,
     });
   }

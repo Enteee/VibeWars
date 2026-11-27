@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "リレーリンクは別のタブで開いてください。何も保存されていません。",
   "app.inviteInLobby": "メニューに戻ってから、招待リンクをもう一度開いてください。",
   "app.lostMatch": "マッチとの接続が切れました。",
+  "app.rejoinFailed": "マッチに戻れませんでした: 席は確保されていませんでした。",
   "app.malformedRelayLink": "このリレーリンクは無効です。何も保存されていません。",
   "app.ownLobby": "自分のロビーです",
 
@@ -423,7 +424,7 @@ export default {
   "effects.categoryShout": "シャウト",
   "effects.categoryStance": "スタンス",
   "effects.categoryWeaponSpell": "武器スペル",
-  "effects.endHint": "ダブルクリックで終了",
+  "effects.endHint": "ダブルクリック、Enter または Delete で終了",
   "effects.from": "{caster}より",
   "effects.inRange": "範囲内にいる間",
   "effects.maintained": "維持中",
@@ -1059,6 +1060,7 @@ export default {
   "recharge.spent": "{skill}、モラルブーストまで使用不可",
 
   "reconnect.detail": "ホストの接続が切れました。席は確保されています。",
+  "reconnect.rejoinDetail": "試合に戻しています。席は確保されています。",
   "reconnect.seconds": "{seconds}秒",
   "reconnect.title": "再接続中…",
 

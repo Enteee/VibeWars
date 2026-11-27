@@ -31,7 +31,10 @@ export interface ReconnectOverlay {
  * seconds are `aria-hidden`: the live region speaks once, when it shows,
  * not every tick.
  */
-export function mountReconnectOverlay(parent: HTMLElement): ReconnectOverlay {
+export function mountReconnectOverlay(
+  parent: HTMLElement,
+  detailText: string = t("reconnect.detail"),
+): ReconnectOverlay {
   const scrim = document.createElement("div");
   scrim.className = "reconnect-overlay";
   scrim.hidden = true;
@@ -47,7 +50,7 @@ export function mountReconnectOverlay(parent: HTMLElement): ReconnectOverlay {
   title.append(" ", seconds);
   const detail = document.createElement("div");
   detail.className = "reconnect-overlay-detail";
-  detail.textContent = t("reconnect.detail");
+  detail.textContent = detailText;
   box.append(title, detail);
   scrim.append(box);
   parent.append(scrim);

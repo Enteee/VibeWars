@@ -49,7 +49,7 @@ Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dov
 
 Přisluhovači (kromě Masového golema), přízraky a duchové nekrvácejí, neotráví se ani neonemocní a duchové nedostanou žádné prokletí ani stav kromě **Hoření**.
 
-![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
+![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu, nebo na ni přesuň fokus a stiskni Enter či Delete.
 
 Několik dovedností přestane fungovat, když jsi pod očarováním, a začne znovu, jakmile nejsi. Dovednost trvající na "dalších N útoků" počítá každý útok, takže minutí nebo blok spotřebuje jeden útok stejně jako zásah.
 

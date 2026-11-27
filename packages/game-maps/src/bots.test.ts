@@ -344,11 +344,11 @@ describe("King of the Hill bots (#2582)", () => {
   it("a 4v4 caster mirror is won by either team, as the seed falls, not always by team 0 (#2624)", () => {
     // Before #2624 a bot's reaction times and dodges were a hash of its id
     // alone, so team 0's ids had the same luck in every match: 6 of 6.
-    // The seeds are ordered only for speed: "a" and "c" have different winners,
+    // The seeds are ordered only for speed: "a" and "g" have different winners,
     // so a passing run plays two matches. If a bot change shifts the outcomes
     // the test gets slower, not wrong; reorder them then.
     const winners = new Set<number | undefined>();
-    for (const seed of ["a", "c", "b", "d", "e", "f"]) {
+    for (const seed of ["a", "g", "b", "h", "c", "i"]) {
       winners.add(winner(seed));
       if (winners.has(0) && winners.has(1)) break;
     }

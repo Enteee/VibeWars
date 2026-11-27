@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "เปิดลิงก์รีเลย์ในแท็บของมันเอง ไม่มีการบันทึกใดๆ",
   "app.inviteInLobby": "กลับไปที่เมนู แล้วเปิดลิงก์เชิญอีกครั้ง",
   "app.lostMatch": "ขาดการเชื่อมต่อกับแมตช์",
+  "app.rejoinFailed": "กลับเข้าแมตช์ไม่ได้: ที่นั่งของคุณไม่ได้ถูกเก็บไว้",
   "app.malformedRelayLink": "ลิงก์รีเลย์นี้ไม่ถูกต้อง ไม่มีการบันทึกใดๆ",
   "app.ownLobby": "นี่คือล็อบบี้ของคุณเอง",
 
@@ -417,7 +418,7 @@ export default {
   "effects.categoryShout": "ตะโกน",
   "effects.categoryStance": "ท่าต่อสู้",
   "effects.categoryWeaponSpell": "เวทอาวุธ",
-  "effects.endHint": "ดับเบิลคลิกเพื่อยุติ",
+  "effects.endHint": "ดับเบิลคลิก, Enter หรือ Delete เพื่อยุติ",
   "effects.from": "จาก {caster}",
   "effects.inRange": "ขณะอยู่ในระยะ",
   "effects.maintained": "คงไว้",
@@ -1049,6 +1050,7 @@ export default {
   "recharge.spent": "{skill}, ใช้ไปแล้วจนกว่าจะได้บูสต์ขวัญกำลังใจ",
 
   "reconnect.detail": "การเชื่อมต่อของโฮสต์หลุด ที่นั่งของคุณยังอยู่",
+  "reconnect.rejoinDetail": "กำลังพาคุณกลับเข้าแมตช์ ที่นั่งของคุณยังถูกเก็บไว้",
   "reconnect.seconds": "{seconds} วิ",
   "reconnect.title": "กำลังเชื่อมต่อใหม่…",
 

@@ -87,7 +87,8 @@ Köleler (Et Golemi hariç), hayaletler ve ruhlar kanamaz, zehirlenmez ve hastal
 kendin ya da müttefiklerin tarafından. Her biri kendi türünden bir
 beceriyle kaldırılır. Bazı tılsımlar **sürdürülür**: sen bitirene kadar
 sürerler ve sürdükleri boyunca bir Enerji pip'ine mal olurlar. Birini
-bitirmek için simgesine çift tıkla.
+bitirmek için simgesine çift tıkla ya da simgeye odaklanıp Enter veya
+Delete tuşuna bas.
 
 Birkaç beceri, üzerinde tılsım varken çalışmayı bırakır ve tılsımın
 kalmayınca yeniden çalışır. "Sonraki N saldırın" boyunca süren bir

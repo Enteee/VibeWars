@@ -2183,6 +2183,31 @@ describe("a click on the target frame calls its target (#2737)", () => {
     expect(onCall).toHaveBeenCalledOnce();
   });
 
+  it("calls on Enter with the panel focused, not from a control inside it (#4090)", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const onCall = vi.fn();
+    const hud = createHud(
+      new FakeNode() as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+      onCall,
+    );
+    const panel = hud.targetPanel as unknown as FakeNode;
+    const key = (k: string, target: unknown): void => {
+      panel.listeners.get("keydown")?.({
+        key: k,
+        target,
+        preventDefault: () => undefined,
+        stopPropagation: () => undefined,
+      });
+    };
+    key("Enter", new FakeClicked(true));
+    key("a", panel);
+    expect(onCall).not.toHaveBeenCalled();
+    key("Enter", panel);
+    expect(onCall).toHaveBeenCalledOnce();
+  });
+
   it("ignores any button but the primary one, and a click on an effect's icon or a button", () => {
     const click = (button: number, inOwnControl: boolean): MouseEvent =>
       ({ button, target: new FakeClicked(inOwnControl) }) as unknown as MouseEvent;

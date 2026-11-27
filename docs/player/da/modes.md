@@ -166,7 +166,7 @@ ved alteret. En bot, der bærer din relikvie, går direkte til alteret med
 den; de andre forlader kun relikvien for at kæmpe mod en fjende, der
 kommer inden for besværgelsesrækkevidde.
 
-Broken Tower spiller den (4v4 og 8v8, 5400x2800): et væltet tårn på en bakke i højlandet. Gå op ad murbrokkernes terrasser ad deres trapper til alteret på stubben, eller tag kælderen under bakken, når et håndtag på terrassen åbner dens døre; murbrokvægge kan slås i stykker.
+Broken Tower spiller den (4v4 og 8v8, 5400x2800): et væltet tårn på en bakke i højlandet. Gå op ad murbrokkernes terrasser ad deres trapper til alteret på stubben, eller tag kælderen under bakken, når et håndtag på terrassen åbner dens døre; murbrokvægge kan slås i stykker. Ved siden af hver murbrokvæg åbner et faldgitter sig, mens nogen står på dets trykplade.
 
 ### Cinder Sanctum
 
@@ -252,7 +252,7 @@ alteret, dræber hver bot først det andet holds Spøgelseshelt, så snart
 den står på alteret inden for deres rækkevidde: den er den ene fjende,
 der forhindrer dit spøgelse i at gøre krav på det.
 
-Threefold Keep (4v4 og 8v8, 5000x4400) spiller den: en borg på en bakke i højlandet, for tre hold. Gå op på murgangen ad trappen ved din port og kryds en dæmning til bakken, og klatr så op til alteret på tårnet. Et håndtag i hver gård åbner alle fire porte: din portgang under muren, og krypten, den lange vej under bakken.
+Threefold Keep (4v4 og 8v8, 5000x4400) spiller den: en borg på en bakke i højlandet, for tre hold. Gå op på murgangen ad trappen ved din port og kryds en dæmning til bakken, og klatr så op til alteret på tårnet. Et håndtag i hver gård åbner alle tre porte, portgangene under muren.
 
 ## Erobring
 

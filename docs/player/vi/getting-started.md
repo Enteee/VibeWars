@@ -120,7 +120,8 @@ những ai đang ở trong; huy hiệu số của nó đếm số người.
   tất. Khi đã vào, cửa sổ Sảnh ghi **Sảnh**, và nút **Rời** của nó đưa bạn
   về một sảnh mới của riêng bạn, với link mời mới. Link được mở trên màn hình
   của một sảnh hoặc trong trận sẽ yêu cầu bạn về menu trước. Nếu mất kết nối,
-  chỗ của bạn được giữ trong 30 giây.
+  hoặc bạn tải lại hay mở lại trang, chỗ của bạn được giữ trong 30 giây và
+  bạn được đưa trở lại chỗ đó.
 - **Mời ai đó ra:** là chủ phòng, nhấn **×** cạnh tên một người chơi trong
   cửa sổ Sảnh, khi không trong trận. Họ được báo rằng chủ phòng đã mời họ ra,
   nhận một sảnh mới của riêng họ, và không thể vào lại sảnh của bạn chừng nào

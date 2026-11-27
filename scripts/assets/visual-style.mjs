@@ -56,16 +56,24 @@ files["lava.svg"] = svg(
 ${body(310, 178)}`,
 );
 
-// ---- water, deep and shallow side by side: dark and still against clear and rippled ----
+// ---- water (#4058): deep is dark and sunk, with rings, a stone lip and a cell network; shallow lets the floor through ----
+const cells = (/** @type {number} */ x0, /** @type {number} */ y0) =>
+  `<path d="M${String(x0)},${String(y0 + 40)} q20,-14 38,0 t40,6 M${String(x0 + 10)},${String(y0 + 80)} q24,10 44,-4 t46,8 M${String(x0 + 38)},${String(y0 + 40)} q4,22 -6,40 M${String(x0 + 78)},${String(y0 + 46)} q10,18 2,36 M${String(x0 + 20)},${String(y0 + 118)} q26,-12 50,2 t44,-6"/>`;
 files["water.svg"] = svg(
-  `<linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1320"/><stop offset="1" stop-color="#16263a"/></linearGradient>`,
+  "",
   `${floor()}
-<path d="M20,40 H165 V190 H20Z" fill="url(#d)" stroke="#c4dcee" stroke-width="4" stroke-linejoin="round"/>
-<g stroke="#4e6c8a" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round"><path d="M40,80h32M100,110h32M50,140h32M110,165h32"/></g>
-<path d="M195,40 H340 V190 H195Z" fill="#8fb8d6" fill-opacity="0.3" stroke="#8fb8d6" stroke-width="2" stroke-linejoin="round"/>
-<g stroke="#bfe2f5" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"><path d="M215,70h32M290,95h32M225,125h32M285,160h32"/></g>
+<path d="M20,40 H165 V190 H20Z" fill="#0b0e12"/>
+<path d="M20,48 H165 V190 H20Z" fill="#0e2228"/>
+<g fill="#040c10" fill-opacity="0.3"><rect x="34" y="60" width="117" height="116" rx="8"/><rect x="48" y="74" width="89" height="88" rx="8"/><rect x="62" y="88" width="61" height="60" rx="8"/><rect x="76" y="102" width="33" height="32" rx="8"/></g>
+<g fill="none" stroke="#3c6a78" stroke-opacity="0.6" stroke-width="2">${cells(28, 40)}</g>
+<g fill="none" stroke="#b4d2dc" stroke-opacity="0.35" stroke-width="1.5"><ellipse cx="60" cy="90" rx="12" ry="5"/><ellipse cx="128" cy="150" rx="12" ry="5"/></g>
+<path d="M20,40 H165 V190 H20Z" fill="none" stroke="#4b5a70" stroke-width="6" stroke-linejoin="round"/>
+<path d="M17,37 H168 V193 H17Z" fill="none" stroke="#11151c" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M195,40 H340 V190 H195Z" fill="#5ea8b8" fill-opacity="0.5" stroke="#a8d8e0" stroke-width="1.5" stroke-linejoin="round"/>
+<g fill="none" stroke="#8cc0cc" stroke-opacity="0.4" stroke-width="2">${cells(205, 40)}</g>
+<g fill="none" stroke="#d2ecf2" stroke-opacity="0.4" stroke-width="1.5"><ellipse cx="230" cy="70" rx="12" ry="5"/><ellipse cx="310" cy="170" rx="12" ry="5"/></g>
 ${body(268, 118)}
-<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="30" y="30">deep: dark, hard shore</text><text x="200" y="30">shallow: clear, floor shows</text></g>`,
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="30" y="30">deep: dark, sunk, stone lip</text><text x="200" y="30">shallow: floor shows, thin shore</text></g>`,
 );
 
 // ---- toxic fog: soft overlapping puffs, never a hard fill, but a hard edge ring ----

@@ -166,7 +166,7 @@ reliquia enemiga caída la manda a casa, y los demás esperan junto al altar. Un
 bot que lleva tu reliquia va directo al altar; los demás solo la dejan para
 luchar contra un enemigo que entre en alcance de hechizo.
 
-Se juega en Broken Tower (4v4 y 8v8, 5400x2800): una torre caída sobre una colina en las tierras altas. Sube por las escaleras de las terrazas de escombros hasta el altar en el muñón de la torre, o ve por la bodega bajo la colina cuando una palanca de la terraza abra sus puertas; los muros de escombros se pueden romper.
+Se juega en Broken Tower (4v4 y 8v8, 5400x2800): una torre caída sobre una colina en las tierras altas. Sube por las escaleras de las terrazas de escombros hasta el altar en el muñón de la torre, o ve por la bodega bajo la colina cuando una palanca de la terraza abra sus puertas; los muros de escombros se pueden romper. Junto a cada muro de escombros, un rastrillo se abre mientras alguien está sobre su placa de presión.
 
 ### Cinder Sanctum
 
@@ -238,7 +238,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las tres puertas, los pasos bajo la muralla.
 
 ## Puntos de captura
 

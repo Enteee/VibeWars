@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Nyisd meg a relay linket külön lapon. Semmi sem lett mentve.",
   "app.inviteInLobby": "Menj vissza a menübe, majd nyisd meg újra a meghívó linket.",
   "app.lostMatch": "Megszakadt a kapcsolat a meccsel.",
+  "app.rejoinFailed": "Nem sikerült visszatérni a meccsbe: a helyedet nem tartották meg.",
   "app.malformedRelayLink": "Ez a relay link érvénytelen. Semmi sem lett mentve.",
   "app.ownLobby": "Ez a saját lobbid",
 
@@ -454,7 +455,7 @@ export default {
   "effects.categoryShout": "Kiáltás",
   "effects.categoryStance": "Állás",
   "effects.categoryWeaponSpell": "Fegyvervarázslat",
-  "effects.endHint": "dupla kattintás a befejezéshez",
+  "effects.endHint": "dupla kattintás, Enter vagy Delete a befejezéshez",
   "effects.from": "forrás: {caster}",
   "effects.inRange": "amíg a hatósugarában vagy",
   "effects.maintained": "fenntartott",
@@ -1114,6 +1115,7 @@ export default {
   "recharge.spent": "{skill}, a következő morálnövelésig elhasználva",
 
   "reconnect.detail": "A házigazda kapcsolata megszakadt. A helyed fenntartva.",
+  "reconnect.rejoinDetail": "Visszaviszünk a meccsedbe. A helyed fenntartva.",
   "reconnect.seconds": "{seconds} mp",
   "reconnect.title": "Újracsatlakozás…",
 

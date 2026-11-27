@@ -49,7 +49,7 @@ Le **condizioni** ti danneggiano finché non svaniscono o non vengono rimosse:
 
 I servitori (tranne il Golem di carne), i fantasmi e gli spiriti non sanguinano, non vengono avvelenati né si ammalano, e gli spiriti non subiscono alcun maleficio né alcuna condizione tranne **Bruciatura**.
 
-I ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **malefici** sono lanciati su di te dai nemici; gli ![Incantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **incantamenti** da te o dai tuoi alleati. Ognuno viene rimosso da un suo tipo di abilità. Alcuni incantamenti sono **mantenuti**: durano finché non li termini, e consumano un pip di Energia finché sono attivi. Fai doppio clic sull'icona per terminarne uno.
+I ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **malefici** sono lanciati su di te dai nemici; gli ![Incantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **incantamenti** da te o dai tuoi alleati. Ognuno viene rimosso da un suo tipo di abilità. Alcuni incantamenti sono **mantenuti**: durano finché non li termini, e consumano un pip di Energia finché sono attivi. Fai doppio clic sull'icona, oppure portaci sopra il focus e premi Invio o Canc, per terminarne uno.
 
 Alcune abilità smettono di funzionare mentre sei incantato, e riprendono quando non lo sei più. Un'abilità che dura per i tuoi "prossimi N attacchi" conta ogni attacco: un colpo mancato o parato ne consuma uno come un colpo a segno.
 

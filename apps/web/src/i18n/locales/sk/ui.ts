@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otvor odkaz na relé vo vlastnej karte. Nič sa neuložilo.",
   "app.inviteInLobby": "Vráť sa do menu a znova otvor pozývací odkaz.",
   "app.lostMatch": "Spojenie so zápasom sa stratilo.",
+  "app.rejoinFailed": "Do zápasu sa nepodarilo vrátiť: tvoje miesto nebolo podržané.",
   "app.malformedRelayLink": "Tento odkaz na relé je neplatný. Nič sa neuložilo.",
   "app.ownLobby": "To je tvoje vlastné lobby",
 
@@ -489,7 +490,7 @@ export default {
   "effects.categoryShout": "Pokrik",
   "effects.categoryStance": "Postoj",
   "effects.categoryWeaponSpell": "Zbraňové kúzlo",
-  "effects.endHint": "dvojklikom ukončíš",
+  "effects.endHint": "dvojklikom, Enterom alebo Delete ukončíš",
   "effects.from": "od: {caster}",
   "effects.inRange": "kým si v jeho dosahu",
   "effects.maintained": "udržiavané",
@@ -1209,6 +1210,7 @@ export default {
   "recharge.spent": "{skill}, vyčerpané do posily morálky",
 
   "reconnect.detail": "Spojenie s hostiteľom sa prerušilo. Tvoje miesto zostáva rezervované.",
+  "reconnect.rejoinDetail": "Vraciame ťa do tvojho zápasu. Tvoje miesto je držané.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Znovu sa pripája…",
 

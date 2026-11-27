@@ -1373,7 +1373,56 @@
     }
   ],
   "objectives": [],
-  "decor": [],
+  "decor": [
+    {
+      "id": "snowdrift-1",
+      "kind": "snowdrift",
+      "at": {
+        "x": 1280,
+        "y": 1610
+      },
+      "layer": 0,
+      "rotation": 192,
+      "scale": 1.09,
+      "variant": 2
+    },
+    {
+      "id": "snowdrift-2",
+      "kind": "snowdrift",
+      "at": {
+        "x": 1123,
+        "y": 1604
+      },
+      "layer": 0,
+      "rotation": 62,
+      "scale": 1.1,
+      "variant": 2
+    },
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": {
+        "x": 1174,
+        "y": 1753
+      },
+      "layer": 0,
+      "rotation": 204,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "bones-1",
+      "kind": "bones",
+      "at": {
+        "x": 1322,
+        "y": 1466
+      },
+      "layer": 0,
+      "rotation": 158,
+      "scale": 1.25,
+      "variant": 0
+    }
+  ],
   "gates": [],
   "switches": [
     {

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Hãy mở link relay trong tab riêng. Chưa có gì được lưu.",
   "app.inviteInLobby": "Hãy về menu rồi mở lại link mời.",
   "app.lostMatch": "Mất kết nối với trận đấu.",
+  "app.rejoinFailed": "Không thể vào lại trận: chỗ của bạn đã không được giữ.",
   "app.malformedRelayLink": "Link relay này không hợp lệ. Chưa có gì được lưu.",
   "app.ownLobby": "Đây là sảnh của bạn",
 
@@ -416,7 +417,7 @@ export default {
   "effects.categoryShout": "Hiệu lệnh",
   "effects.categoryStance": "Thế",
   "effects.categoryWeaponSpell": "Phép vũ khí",
-  "effects.endHint": "nhấn đúp để kết thúc",
+  "effects.endHint": "nhấn đúp, Enter hoặc Delete để kết thúc",
   "effects.from": "từ {caster}",
   "effects.inRange": "khi ở trong tầm",
   "effects.maintained": "duy trì",
@@ -1051,6 +1052,7 @@ export default {
   "recharge.spent": "{skill}, đã dùng, chờ tăng sĩ khí",
 
   "reconnect.detail": "Chủ phòng mất kết nối. Chỗ của bạn vẫn được giữ.",
+  "reconnect.rejoinDetail": "Đang đưa bạn trở lại trận đấu. Chỗ của bạn vẫn được giữ.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Đang kết nối lại…",
 

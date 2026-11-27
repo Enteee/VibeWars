@@ -12,6 +12,7 @@ export default {
     "Άνοιξε τον σύνδεσμο αναμεταδότη σε δική του καρτέλα. Δεν αποθηκεύτηκε τίποτα.",
   "app.inviteInLobby": "Γύρνα στο μενού και άνοιξε ξανά τον σύνδεσμο πρόσκλησης.",
   "app.lostMatch": "Η σύνδεση με τον αγώνα χάθηκε.",
+  "app.rejoinFailed": "Δεν ήταν δυνατή η επιστροφή στον αγώνα: η θέση σου δεν κρατήθηκε.",
   "app.malformedRelayLink": "Ο σύνδεσμος αναμεταδότη δεν είναι έγκυρος. Δεν αποθηκεύτηκε τίποτα.",
   "app.ownLobby": "Αυτό είναι το δικό σου λόμπι",
 
@@ -457,7 +458,7 @@ export default {
   "effects.categoryShout": "Κραυγή",
   "effects.categoryStance": "Στάση",
   "effects.categoryWeaponSpell": "Ξόρκι όπλου",
-  "effects.endHint": "διπλό κλικ για τερματισμό",
+  "effects.endHint": "διπλό κλικ, Enter ή Delete για τερματισμό",
   "effects.from": "από {caster}",
   "effects.inRange": "όσο είσαι εντός εμβέλειας",
   "effects.maintained": "συντηρείται",
@@ -1121,6 +1122,7 @@ export default {
   "recharge.spent": "{skill}, αναλώθηκε μέχρι την ενίσχυση ηθικού",
 
   "reconnect.detail": "Η σύνδεση του οικοδεσπότη έπεσε. Η θέση σου διατηρείται.",
+  "reconnect.rejoinDetail": "Σε επιστρέφουμε στον αγώνα σου. Η θέση σου κρατιέται.",
   "reconnect.seconds": "{seconds} δ",
   "reconnect.title": "Επανασύνδεση…",
 

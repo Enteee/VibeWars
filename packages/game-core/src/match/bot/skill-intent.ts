@@ -269,6 +269,7 @@ function actsOnAttacks(status: StatusDefinition): boolean {
     statAtTwelve(status.criticalChanceBonus) > 0 ||
     status.doubleStrikeChanceBonus > 0 ||
     status.attackArmorPenetration > 0 ||
+    status.attackBonusArmorPenetration > 0 ||
     status.nextAttackSkill !== undefined ||
     status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")
   );

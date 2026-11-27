@@ -20,6 +20,7 @@ import {
 
 import type {
   CombatMessage,
+  ConnectionState,
   ObservedSnapshot,
   PlayerSnapshot,
   SeatWorn,
@@ -31,6 +32,7 @@ import {
   MatchTimeoutError,
   onFromHost,
 } from "./match-client.js";
+import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, observedSnapshot, playerSnapshots, wear } from "./wire.js";
@@ -40,8 +42,11 @@ import { combatMessage, observedSnapshot, playerSnapshots, wear } from "./wire.j
  * combat and end a player is sent, `delaySeconds` late. It has no seat, so
  * nothing to send but its goodbye, and none of a seat's own channels.
  *
- * The host's peer going is the end of it: a viewer holds no seat to come
- * back to, and watches again by observing again.
+ * The host's peer going is waited out as a player's seat waits it out
+ * (#4105): `RECONNECT_WINDOW_SECONDS` for it to be heard again, and then
+ * the same observe said again. Past the window, it is the end of it.
+ * Before `observing` it fails nothing (#4115): the observe goes on being
+ * said, at once when the host is heard again, until `timeoutMs`.
  */
 export interface ObserverConnection {
   readonly map: MapDescriptor;
@@ -51,8 +56,11 @@ export interface ObserverConnection {
   /** The match as it stood `delaySeconds` ago; `undefined` until its first snapshot comes. */
   getSnapshot(): ObservedSnapshot | undefined;
   onCombat(handler: (message: CombatMessage) => void): void;
-  /** The host is gone, or said it left: there is nothing more to watch. */
-  onLost(handler: (state: "lost" | "host-left") => void): void;
+  /**
+   * The host's peer went (`reconnecting`) and came back (`online`), or is
+   * gone, or said it left: there is nothing more to watch.
+   */
+  onConnectionChange(handler: (state: ConnectionState) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -84,9 +92,18 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let teamCount: WireTeamCount = 3;
   /** Says the observe again until the host answers it (#1805). */
   let observeTimer: unknown;
+  /** When the host's peer went (#4105), on the clock; `undefined` while it is here. */
+  let droppedAt: number | undefined;
+  let reconnectTimer: unknown;
   let onLostWhileJoining: () => void = () => undefined;
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
-  const lostHandlers: ((state: "lost" | "host-left") => void)[] = [];
+  const stateHandlers: ((state: ConnectionState) => void)[] = [];
+
+  const tell = (state: ConnectionState): void => {
+    for (const handler of [...stateHandlers]) {
+      handler(state);
+    }
+  };
 
   const fromHost = <T>(
     channel: Channel,
@@ -101,13 +118,32 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       return;
     }
     lost = true;
+    clearTimeout(reconnectTimer);
+    droppedAt = undefined;
     if (!settled) {
       onLostWhileJoining();
       return;
     }
-    for (const handler of [...lostHandlers]) {
-      handler(state);
+    clearInterval(observeTimer);
+    tell(state);
+  };
+
+  /**
+   * The host's peer went. Before `observing`, only noted, so its return
+   * says the observe at once: the join's own timeout is its window (#4115).
+   * Watching, wait the window out. It is measured on the clock, so a
+   * hidden tab's late timer does not stretch it.
+   */
+  const dropHost = (): void => {
+    if (lost || droppedAt !== undefined) {
+      return;
     }
+    droppedAt = Date.now();
+    if (!settled) {
+      return;
+    }
+    reconnectTimer = setTimeout(loseHost, RECONNECT_WINDOW_SECONDS * 1000);
+    tell("reconnecting");
   };
 
   // A tick's snapshot comes in parts (#662); what follows sees it whole.
@@ -166,21 +202,42 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
     },
   );
+  const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId };
+  /** Says the observe, and again until the host answers it (#1805). */
+  const sayObserve = (): void => {
+    transport.send("observe", observe, hostId);
+    observeTimer = setInterval(() => {
+      transport.send("observe", observe, hostId);
+    }, HELLO_RESEND_MS);
+  };
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
-        loseHost();
+        dropHost();
       }
+    }),
+    transport.onPeerJoin((peerId) => {
+      if (peerId !== hostId || droppedAt === undefined) {
+        return;
+      }
+      if (settled && Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000) {
+        loseHost();
+        return;
+      }
+      // One observe said at a time, however often the host flaps.
+      clearInterval(observeTimer);
+      sayObserve();
     }),
   );
 
   const stop = (): void => {
     clearInterval(observeTimer);
+    clearTimeout(reconnectTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
     }
     combatHandlers.length = 0;
-    lostHandlers.length = 0;
+    stateHandlers.length = 0;
   };
 
   return new Promise((resolve, reject) => {
@@ -227,8 +284,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       onCombat(handler) {
         combatHandlers.push(handler);
       },
-      onLost(handler) {
-        lostHandlers.push(handler);
+      onConnectionChange(handler) {
+        stateHandlers.push(handler);
       },
       async disconnect() {
         stop();
@@ -242,6 +299,13 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
 
     fromHost("observing", parsePeerObserving, (message) => {
       if (settled) {
+        // The answer to the observe said again after a drop (#4105).
+        if (droppedAt !== undefined && !lost) {
+          clearTimeout(reconnectTimer);
+          clearInterval(observeTimer);
+          droppedAt = undefined;
+          tell("online");
+        }
         return;
       }
       if (message.protocolVersion !== PROTOCOL_VERSION) {
@@ -250,18 +314,20 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
       teamCount = message.map.teamCount;
       settled = true;
+      droppedAt = undefined;
       clearTimeout(timer);
       clearInterval(observeTimer);
       resolve(connection(message));
     });
     fromHost("refuse", parsePeerRefuse, (refusal) => {
+      // Back after a drop to a match that is over (#4105): nothing to watch.
+      if (settled && droppedAt !== undefined) {
+        loseHost();
+        return;
+      }
       fail(new MatchRefusedError(refusal));
     });
 
-    const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId };
-    transport.send("observe", observe, hostId);
-    observeTimer = setInterval(() => {
-      transport.send("observe", observe, hostId);
-    }, HELLO_RESEND_MS);
+    sayObserve();
   });
 }

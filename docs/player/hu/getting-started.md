@@ -134,8 +134,9 @@ ki van benne; a jelvénye megszámolja őket.
   feliratot mutatja, és a **Kilép** gombja visszavisz egy friss saját
   lobbiba, új meghívó linkkel. Az a link, amelyet egy lobbi képernyőjén
   vagy meccs közben nyitsz meg, arra kér, hogy előbb menj vissza a
-  menübe. Ha megszakad a kapcsolatod, a helyedet 30 másodpercig
-  megtartják.
+  menübe. Ha megszakad a kapcsolatod, vagy újratöltöd vagy újra
+  megnyitod az oldalt, a helyedet 30 másodpercig megtartják, és
+  visszakerülsz rá.
 - **Valaki eltávolítása:** házigazdaként nyomd meg a Lobbi ablakban egy
   játékos neve melletti **×** gombot, meccsen kívül. Közlik vele, hogy a
   házigazda eltávolította, kap egy friss saját lobbit, és amíg a tiéd

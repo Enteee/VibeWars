@@ -265,7 +265,7 @@ describe("the outside's place in the order (#3066)", () => {
 });
 
 describe("water's place in the order (#2984)", () => {
-  const water = (layer: number, part: "surface" | "ripples"): RenderItem => ({
+  const water = (layer: number, part: "surface" | "cells" | "ripples"): RenderItem => ({
     kind: "water",
     layer,
     part,
@@ -275,6 +275,7 @@ describe("water's place in the order (#2984)", () => {
     const items: readonly RenderItem[] = [
       { kind: "floor" },
       water(0, "surface"),
+      water(0, "cells"),
       water(0, "ripples"),
       { kind: "ground-effect", layer: 0 },
       { kind: "terrain" },
@@ -291,6 +292,7 @@ describe("water's place in the order (#2984)", () => {
       { kind: "deck", deckLayer: 1 },
       { kind: "ramp", upperLayer: 1 },
       water(1, "surface"),
+      water(1, "cells"),
       water(1, "ripples"),
       { kind: "lighting", layer: 1 },
       character(1),
@@ -438,6 +440,31 @@ describe("atmosphere's place in the order (#3032)", () => {
     expect(renderOrder({ kind: "weather" })).toBeGreaterThan(top);
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "hidden-outline" }));
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "ui" }));
+  });
+
+  it("draws the vignette over the ground and under every gameplay layer (#4057)", () => {
+    const vignette = renderOrder({ kind: "vignette" });
+    expect(vignette).toBeGreaterThan(renderOrder({ kind: "cosmetic-ground", layer: 0 }));
+    expect(vignette).toBeGreaterThan(renderOrder({ kind: "paving", layer: 0 }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "ground-effect", layer: 0 }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "zone", layer: 0, part: "ground" }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "character", band: 0, part: "body" }));
+  });
+
+  it("draws a deck layer's vignette over its deck and under every gameplay layer on it (#4070)", () => {
+    for (const layer of [1, 2, 3]) {
+      const vignette = renderOrder({ kind: "deck-vignette", deckLayer: layer });
+      expect(vignette).toBeGreaterThan(renderOrder({ kind: "deck", deckLayer: layer }));
+      expect(vignette).toBeGreaterThan(renderOrder({ kind: "ramp", upperLayer: layer }));
+      expect(vignette).toBeGreaterThan(renderOrder({ kind: "paving", layer }));
+      expect(vignette).toBeGreaterThan(renderOrder({ kind: "water", layer, part: "ripples" }));
+      expect(vignette).toBeGreaterThan(renderOrder({ kind: "cosmetic-ground", layer }));
+      expect(vignette).toBeLessThan(renderOrder({ kind: "lighting", layer }));
+      expect(vignette).toBeLessThan(renderOrder({ kind: "zone", layer, part: "ground" }));
+      expect(vignette).toBeLessThan(renderOrder({ kind: "ground-effect", layer }));
+      expect(vignette).toBeLessThan(renderOrder({ kind: "character", band: layer, part: "body" }));
+      expect(vignette).toBeLessThan(renderOrder({ kind: "deck", deckLayer: layer + 1 }));
+    }
   });
 });
 

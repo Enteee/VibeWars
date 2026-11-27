@@ -14,7 +14,12 @@ import { isAttacking, skillsOnBar } from "./attacking.js";
 import { getSkill } from "./catalog.js";
 import { modWhileHolds } from "./mod-conditions.js";
 import { statAt, statAtTwelve } from "./scaling.js";
-import { aggregateModifiers, getStatusDefinition } from "./status.js";
+import {
+  aggregateModifiers,
+  getStatusDefinition,
+  isSuppressed,
+  statusArmorModifier,
+} from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel, Surroundings } from "./types.js";
 
@@ -60,8 +65,8 @@ export interface DamagePacket {
    */
   readonly spell?: true;
   /**
-   * On the target's armor against this packet alone (#2502), with the
-   * status modifiers: Shadowy Burden's −28 against its source's blows.
+   * Special armor against this packet alone (#2502, #4085), after armor
+   * penetration: Shadowy Burden's −28 against its source's blows.
    * Absent: none.
    */
   readonly armorModifier?: number;
@@ -73,9 +78,10 @@ function ignoresArmor(type: DamageType): boolean {
 }
 
 /**
- * A skill's own armor penetration, and what `caster`'s statuses add to
- * one of `profession` (#1464, Cruel Was Daoshen): at most 1 in all.
- * `undefined` is no skill's, and takes nothing.
+ * A skill's own armor penetration, or what `caster`'s statuses give one of
+ * `profession` (#1464, Cruel Was Daoshen), whichever is highest: all are
+ * GW1's base penetration, and base never adds (#4085). `undefined` is no
+ * skill's, and takes nothing.
  */
 export function withSkillArmorPenetration(
   own: number,
@@ -85,10 +91,9 @@ export function withSkillArmorPenetration(
   if (profession === undefined) {
     return own;
   }
-  const added = aggregateModifiers(caster.statuses.active)
+  return aggregateModifiers(caster.statuses.active)
     .skillArmorPenetration.filter((rule) => rule.profession === profession)
-    .reduce((sum, rule) => sum + rule.share, 0);
-  return Math.min(1, own + added);
+    .reduce((highest, rule) => Math.max(highest, rule.share), own);
 }
 
 /** A skill's damage packet, of the effect's type and armor penetration. */
@@ -130,58 +135,92 @@ export function hitLocationOf(packet: DamagePacket, rng: SimulationRng): HitLoca
   return packet.armored > 0 ? rollHitLocation(rng) : null;
 }
 
+/** GW1's cap on a net armor bonus (#4085), unless one bonus alone is higher. */
+export const ARMOR_BONUS_CAP = 25;
+
 /**
- * The defender's armor against this packet, struck at `location`. Every
- * conditional bonus is answerable from the packet and the defender alone;
- * an insignia's only on a hit to its own piece (#1135). A status's (#1437)
- * counts as the profession's does, wherever the hit lands.
+ * The least a net armor penalty leaves (#763, #4085), unless core armor
+ * is already under it: Cracked Armor's "not below 60".
+ */
+export const ARMOR_PENALTY_FLOOR = 60;
+
+/**
+ * `core` with the bonus pool's `bonuses` and penalties (GW1's step 2,
+ * #4085): a net above the cap adds the cap or the largest single bonus;
+ * a net loss never takes armor below the floor, nor below core under it.
+ */
+export function pooledArmor(core: number, pool: readonly number[]): number {
+  const net = pool.reduce((sum, amount) => sum + amount, 0);
+  if (net > ARMOR_BONUS_CAP) {
+    return core + Math.max(ARMOR_BONUS_CAP, ...pool);
+  }
+  if (net >= 0) {
+    return core + net;
+  }
+  return Math.max(core + net, Math.min(core, ARMOR_PENALTY_FLOOR));
+}
+
+/**
+ * The defender's armor against this packet, struck at `location`, in
+ * GW1's four steps (#4085): core armor; the bonus pool, capped; armor
+ * penetration; special armor. Every conditional bonus is answerable from
+ * the packet and the defender alone; an insignia's only on a hit to its
+ * own piece (#1135). A status's (#1437) counts wherever the hit lands.
  */
 export function effectiveArmor(
   target: Combatant,
   packet: DamagePacket,
   location: HitLocation,
 ): number {
-  let armor = target.equipment.baseArmor;
+  const holds = (conditions: readonly ArmorCondition[]): boolean =>
+    conditions.every((condition) => conditionHolds(condition, target, packet));
 
+  // Core: base and shield, inscriptions, insignias, the profession's own.
   const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
-  const statusArmor = target.statuses.active.flatMap(({ id, ranks }) =>
-    getStatusDefinition(id).conditionalArmor.map(({ amount, conditions }) => ({
-      amount: Math.round(statAt(amount, ranks)),
-      conditions,
-    })),
-  );
-  for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor, ...statusArmor]) {
-    if (bonus.conditions.every((condition) => conditionHolds(condition, target, packet))) {
-      armor += bonus.amount;
+  const core = [...target.equipment.conditionalArmor, ...pieceArmor]
+    .filter((bonus) => holds(bonus.conditions))
+    .reduce((sum, bonus) => sum + bonus.amount, target.equipment.baseArmor);
+
+  // The pool: weapon mods, statuses, Cracked Armor's −20 (#763). Each
+  // status is one bonus, Armor of Earth's +24, "Stand Your Ground!"'s +24
+  // only while standing (#921). One held for a weapon only while the
+  // target wields it (#2335), as Dwarven Battle Stance's off a hammer.
+  // Special armor waits until after penetration: Healing Signet's −40,
+  // and the packet's own, Shadowy Burden's against its caster (#2502).
+  const pool = target.equipment.bonusArmor
+    .filter((bonus) => holds(bonus.conditions))
+    .map((bonus) => bonus.amount);
+  let special = packet.armorModifier ?? 0;
+  const wielded = target.equipment.mainHand.weapon.id;
+  const counted = target.statuses.active.filter(({ id }) => {
+    const weapon = getStatusDefinition(id).armorModifierWeapon;
+    return weapon === undefined || wieldsFor(wielded, weapon);
+  });
+  for (const status of counted) {
+    if (isSuppressed(counted, status)) {
+      continue;
+    }
+    const definition = getStatusDefinition(status.id);
+    const amount =
+      statusArmorModifier(counted, status) +
+      (target.moving ? 0 : definition.armorWhileStill) +
+      definition.conditionalArmor
+        .filter((bonus) => holds(bonus.conditions))
+        .reduce((sum, bonus) => sum + Math.round(statAt(bonus.amount, status.ranks)), 0);
+    if (definition.specialArmor) {
+      special += amount;
+    } else if (amount !== 0) {
+      pool.push(amount);
     }
   }
-  // Cracked Armor (#763) before status modifiers: −20, never below 60,
-  // and never a raise for armor already under it. Armor of Earth then
-  // adds its full +24 even to a cracked caster.
   const reduction = armorReductionOf(target);
-  if (reduction !== undefined) {
-    armor -= Math.min(reduction.amount, Math.max(0, armor - reduction.floor));
+  if (reduction !== 0) {
+    pool.push(-reduction);
   }
 
-  // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
-  // the first time; "Stand Your Ground!"'s +24 only while standing (#921).
-  // One held for a weapon only while the target wields it (#2335), as
-  // Dwarven Battle Stance's off a hammer.
-  const wielded = target.equipment.mainHand.weapon.id;
-  const modifiers = aggregateModifiers(
-    target.statuses.active.filter(({ id }) => {
-      const weapon = getStatusDefinition(id).armorModifierWeapon;
-      return weapon === undefined || wieldsFor(wielded, weapon);
-    }),
-  );
-  armor += modifiers.armorModifier + (packet.armorModifier ?? 0);
-  if (!target.moving) {
-    armor += modifiers.armorWhileStill;
-  }
-
-  // Penetration is a fraction of what is left, applied last, so a shield
-  // and an enchantment both dilute it rather than being bypassed flat.
-  armor *= 1 - packet.armorPenetration;
+  // Penetration is a fraction of core and pool, so a shield and an
+  // enchantment both dilute it rather than being bypassed flat.
+  const armor = pooledArmor(core, pool) * (1 - packet.armorPenetration) + special;
 
   // Armor may be driven negative by stacked debuffs; the curve handles
   // that fine (it simply amplifies damage), but a floor keeps the

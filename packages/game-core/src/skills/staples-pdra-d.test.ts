@@ -20,6 +20,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SurroundingBody, Surroundings } from "./types.js";
 import { resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Paragon, Dervish, Assassin and Ritualist staples (#2413): Inspirational
@@ -697,7 +698,7 @@ describe("Binding Chains (#2413)", () => {
 
   it("moves 90% slower", () => {
     expect(
-      aggregateModifiers([{ id: "binding-chains", ranks: NO_RANKS }]).moveSpeedMultiplier,
+      statusMoveSpeed(aggregateModifiers([{ id: "binding-chains", ranks: NO_RANKS }])),
     ).toBeCloseTo(0.1);
   });
 });

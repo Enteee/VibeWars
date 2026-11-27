@@ -157,7 +157,7 @@ tranh. Bot gần thánh tích địch bị rơi nhất sẽ đưa nó về nhà,
 tế đàn. Bot mang thánh tích của bạn đi thẳng tới tế đàn; các bot khác chỉ rời
 thánh tích để đánh địch tiến vào tầm Phép.
 
-Broken Tower chơi chế độ này (4v4 và 8v8, 5400x2800): một tòa tháp đổ trên ngọn đồi ở vùng cao. Leo cầu thang của các bậc thềm đổ nát lên tế đàn trên gốc tháp, hoặc đi qua hầm dưới đồi khi một cần gạt trên bậc thềm mở cửa hầm; tường đổ nát có thể bị phá vỡ.
+Broken Tower chơi chế độ này (4v4 và 8v8, 5400x2800): một tòa tháp đổ trên ngọn đồi ở vùng cao. Leo cầu thang của các bậc thềm đổ nát lên tế đàn trên gốc tháp, hoặc đi qua hầm dưới đồi khi một cần gạt trên bậc thềm mở cửa hầm; tường đổ nát có thể bị phá vỡ. Bên cạnh mỗi bức tường đổ nát có một cửa song sắt mở ra khi có người đứng trên tấm áp lực của nó.
 
 ### Cinder Sanctum
 
@@ -233,7 +233,7 @@ Phép. Khi đội bạn không giữ tế đàn, mọi bot hạ Anh hùng Ma c�
 tiên một khi nó đứng trên tế đàn trong tầm của chúng: đó là kẻ địch duy nhất
 ngăn con ma của bạn chiếm tế đàn.
 
-Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả bốn cổng: lối qua cổng của bạn dưới tường thành, và hầm mộ, đường vòng dài dưới ngọn đồi.
+Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả ba cổng, những lối qua dưới tường thành.
 
 ## Chiếm điểm
 

@@ -25,7 +25,7 @@ export const COMMON_STATUSES: Readonly<Record<CommonStatusId, StatusDefinition>>
     attributeDeltas: [{ scope: "all", amount: -1 }],
   }),
   "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
-    armorReduction: { amount: 20, floor: 60 },
+    armorReduction: 20,
   }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", {
     maxHealthLoss: { fraction: 0.2, cap: 100 },

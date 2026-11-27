@@ -321,7 +321,7 @@ async function heightsShot(page, dir) {
   }
   await sleep(600);
   step = "heights shot";
-  const shot = await page.screenshot();
+  const shot = await page.screenshot({ timeout: 60_000 });
   assertNotVoid(shot);
   fs.writeFileSync(path.join(dir, "readme-heights.png"), shot);
 }
@@ -429,6 +429,8 @@ try {
   await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
   await matchShots(page, dir);
+  // Client 2 renders alone: two WebGL matches in one software Chromium starve its screenshot.
+  await context.close();
   const second = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,

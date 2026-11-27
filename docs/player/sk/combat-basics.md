@@ -81,7 +81,8 @@ Prisluhovači (okrem Mäsového golema), prízraky a duchovia nekrvácajú, neot
 ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **Kliatby** na teba zosielajú nepriatelia; ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovania** ty sám alebo tvoji
 spojenci. Každé z nich odstraňuje vlastný druh schopnosti. Niektoré očarovania
 sú **udržiavané**: trvajú, kým ich neukončíš, a kým bežia, stoja jeden pip
-energie. Ukončíš ich dvojitým kliknutím na ich ikonu.
+energie. Ukončíš ich dvojitým kliknutím na ich ikonu alebo tak, že na ňu
+presunieš fokus a stlačíš Enter alebo Delete.
 
 Niekoľko schopností prestane fungovať, kým si očarovaný, a znova začne, keď
 už nie si. Schopnosť, ktorá trvá na tvojich „ďalších N útokov“, počíta každý

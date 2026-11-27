@@ -15,6 +15,7 @@ export const en = {
   "app.framedRelayLink": "Open the relay link in its own tab. Nothing was saved.",
   "app.inviteInLobby": "Go back to the menu, then open the invite link again.",
   "app.lostMatch": "Lost the connection to the match.",
+  "app.rejoinFailed": "Could not rejoin the match: your seat was not held.",
   "app.malformedRelayLink": "That relay link is not valid. Nothing was saved.",
   "app.ownLobby": "That is your own lobby",
 
@@ -451,7 +452,7 @@ export const en = {
   "effects.categoryShout": "Shout",
   "effects.categoryStance": "Stance",
   "effects.categoryWeaponSpell": "Weapon Spell",
-  "effects.endHint": "double-click to end",
+  "effects.endHint": "double-click, Enter or Delete to end",
   "effects.from": "from {caster}",
   "effects.inRange": "while in its range",
   "effects.maintained": "maintained",
@@ -1108,6 +1109,7 @@ export const en = {
   "recharge.spent": "{skill}, spent until a morale boost",
 
   "reconnect.detail": "The host's connection dropped. Your seat is held.",
+  "reconnect.rejoinDetail": "Putting you back in your match. Your seat is held.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnecting…",
 

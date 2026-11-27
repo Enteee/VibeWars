@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otvori poveznicu releja u zasebnoj kartici. Ništa nije spremljeno.",
   "app.inviteInLobby": "Vrati se u izbornik pa ponovno otvori pozivnicu.",
   "app.lostMatch": "Veza s mečem je izgubljena.",
+  "app.rejoinFailed": "Povratak u meč nije uspio: tvoje mjesto nije zadržano.",
   "app.malformedRelayLink": "Ta poveznica releja nije valjana. Ništa nije spremljeno.",
   "app.ownLobby": "To je tvoja soba",
 
@@ -475,7 +476,7 @@ export default {
   "effects.categoryShout": "Povik",
   "effects.categoryStance": "Stav",
   "effects.categoryWeaponSpell": "Čarolija oružja",
-  "effects.endHint": "dvostruki klik za kraj",
+  "effects.endHint": "dvostruki klik, Enter ili Delete za kraj",
   "effects.from": "izvor: {caster}",
   "effects.inRange": "dok si u dometu",
   "effects.maintained": "održavano",
@@ -1169,6 +1170,7 @@ export default {
   "recharge.spent": "{skill}, potrošeno do podizanja morala",
 
   "reconnect.detail": "Veza domaćina je prekinuta. Tvoje mjesto je sačuvano.",
+  "reconnect.rejoinDetail": "Vraćamo te u tvoj meč. Tvoje mjesto je sačuvano.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Ponovno povezivanje…",
 

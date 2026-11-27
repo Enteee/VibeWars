@@ -11,7 +11,7 @@ import { getSkill } from "./catalog.js";
 import { resolveSkillEffects, type CombatEvent } from "./effects.js";
 import { aggregateModifiers, getStatusDefinition, NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
-import { attackDamageDeltaOf } from "./tick.js";
+import { attackDamageDeltaOf, statusMoveSpeed } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
@@ -234,9 +234,9 @@ describe("Shared Burden (#2367)", () => {
     const target = foe("f");
     use(BURDEN, caster(R12), target);
     const mods = aggregateModifiers(target.statuses.active);
-    expect(mods.moveSpeedMultiplier).toBe(0.67);
+    expect(statusMoveSpeed(mods)).toBe(0.67);
     expect(mods.attackDurationMultiplier).toBe(1.33);
-    expect(mods.castTimeMultiplier).toBe(1.33);
+    expect(mods.castTimeMultiplier).toEqual([1.33]);
   });
 });
 
@@ -337,7 +337,7 @@ describe("Earthen Shackles (#2367)", () => {
       for (const id of ["foe", "near"]) {
         const hit = get(match, id);
         expect(hit.statuses.has("earthen-shackles"), id).toBe(true);
-        expect(aggregateModifiers(hit.statuses.active).moveSpeedMultiplier).toBe(0.1);
+        expect(statusMoveSpeed(aggregateModifiers(hit.statuses.active))).toBe(0.1);
         expect(hit.statuses.has("weakness")).toBe(false);
       }
       expect(get(match, "far").statuses.has("earthen-shackles")).toBe(false);

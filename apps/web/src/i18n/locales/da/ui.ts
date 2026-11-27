@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Åbn relay-linket i sin egen fane. Intet blev gemt.",
   "app.inviteInLobby": "Gå tilbage til menuen, og åbn invitationslinket igen.",
   "app.lostMatch": "Forbindelsen til kampen blev afbrudt.",
+  "app.rejoinFailed": "Kunne ikke vende tilbage til kampen: din plads blev ikke holdt.",
   "app.malformedRelayLink": "Det relay-link er ikke gyldigt. Intet blev gemt.",
   "app.ownLobby": "Det er din egen lobby",
 
@@ -449,7 +450,7 @@ export default {
   "effects.categoryShout": "Råb",
   "effects.categoryStance": "Kampstilling",
   "effects.categoryWeaponSpell": "Våbenbesværgelse",
-  "effects.endHint": "dobbeltklik for at afslutte",
+  "effects.endHint": "dobbeltklik, Enter eller Delete for at afslutte",
   "effects.from": "fra {caster}",
   "effects.inRange": "mens du er inden for rækkevidde",
   "effects.maintained": "vedligeholdt",
@@ -1107,6 +1108,7 @@ export default {
   "recharge.spent": "{skill}, brugt indtil et moralløft",
 
   "reconnect.detail": "Værtens forbindelse røg. Din plads holdes.",
+  "reconnect.rejoinDetail": "Vi sætter dig tilbage i din kamp. Din plads holdes.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Genopretter forbindelse…",
 

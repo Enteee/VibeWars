@@ -37,6 +37,11 @@ natomiast ciebie: frontowcy krok przed tobą, boty dystansowe obok ciebie,
 uzdrowiciele z tyłu, i idą tam, dokąd ty idziesz. Gdy od jakiegoś czasu stoisz
 bezczynnie, grają dalej tak, jak grałaby drużyna złożona z botów.
 Dopóki jesteś aktywny, bot, którego walka odciągnęła daleko od ciebie, wraca do ciebie, chyba że jest ciężko ranny albo tuż przy nim stoi wróg.
+Bot z pierwszej linii odwraca się przeciw wrogowi, który atakuje uzdrowiciela lub czarodziejów jego drużyny, chyba że właśnie dobija własny cel.
+
+Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
+
+Bot dystansowy lub uzdrowiciel, do którego wróg podejdzie za blisko, najpierw wycofuje się do najbliższego sojusznika z pierwszej linii, jeśli ten jest dość blisko, i tam walczy.
 
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.

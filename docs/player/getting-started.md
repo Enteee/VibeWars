@@ -122,8 +122,8 @@ Leave, and a list of who is in it; its badge counts them.
   until the join is in. Once in, the Lobby window says **Lobby**, and
   its **Leave** takes you back to a fresh lobby of your own, with a new
   invite link. A link opened on a lobby's screen or in a match asks you
-  to go back to the menu first. If your connection drops, your seat is held
-  for 30 seconds.
+  to go back to the menu first. If your connection drops, or you reload or
+  reopen the page, your seat is held for 30 seconds and you are put back in.
 - **Remove someone:** as the host, press the **×** next to a player's
   name in the Lobby window, outside a match. They are told the host removed
   them, get a fresh lobby of their own, and cannot rejoin yours while it lasts.

@@ -1170,7 +1170,32 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": {
+        "x": 1862,
+        "y": 996
+      },
+      "layer": 1,
+      "rotation": 254,
+      "scale": 0.82,
+      "variant": 2
+    },
+    {
+      "id": "bones-1",
+      "kind": "bones",
+      "at": {
+        "x": 1801,
+        "y": 750
+      },
+      "layer": 1,
+      "rotation": 272,
+      "scale": 0.94,
+      "variant": 1
+    }
+  ],
   "gates": [],
   "switches": [
     {

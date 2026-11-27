@@ -1150,7 +1150,632 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "fern-1",
+      "kind": "fern",
+      "at": {
+        "x": 2164,
+        "y": 2743
+      },
+      "layer": 1,
+      "rotation": 159,
+      "scale": 0.78,
+      "variant": 2
+    },
+    {
+      "id": "fern-2",
+      "kind": "fern",
+      "at": {
+        "x": 2645,
+        "y": 1345
+      },
+      "layer": 1,
+      "rotation": 306,
+      "scale": 1.08,
+      "variant": 0
+    },
+    {
+      "id": "fern-3",
+      "kind": "fern",
+      "at": {
+        "x": 3275,
+        "y": 131
+      },
+      "layer": 1,
+      "rotation": 22,
+      "scale": 1.19,
+      "variant": 0
+    },
+    {
+      "id": "fern-4",
+      "kind": "fern",
+      "at": {
+        "x": 3679,
+        "y": 479
+      },
+      "layer": 1,
+      "rotation": 29,
+      "scale": 1.15,
+      "variant": 2
+    },
+    {
+      "id": "fern-5",
+      "kind": "fern",
+      "at": {
+        "x": 164,
+        "y": 2741
+      },
+      "layer": 1,
+      "rotation": 283,
+      "scale": 0.94,
+      "variant": 1
+    },
+    {
+      "id": "fern-6",
+      "kind": "fern",
+      "at": {
+        "x": 264,
+        "y": 2746
+      },
+      "layer": 1,
+      "rotation": 159,
+      "scale": 1.15,
+      "variant": 0
+    },
+    {
+      "id": "fern-7",
+      "kind": "fern",
+      "at": {
+        "x": 2770,
+        "y": 289
+      },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 1.02,
+      "variant": 2
+    },
+    {
+      "id": "fern-8",
+      "kind": "fern",
+      "at": {
+        "x": 3539,
+        "y": 424
+      },
+      "layer": 1,
+      "rotation": 156,
+      "scale": 1.14,
+      "variant": 3
+    },
+    {
+      "id": "fern-9",
+      "kind": "fern",
+      "at": {
+        "x": 1645,
+        "y": 1816
+      },
+      "layer": 1,
+      "rotation": 279,
+      "scale": 0.81,
+      "variant": 2
+    },
+    {
+      "id": "fern-10",
+      "kind": "fern",
+      "at": {
+        "x": 2387,
+        "y": 329
+      },
+      "layer": 1,
+      "rotation": 121,
+      "scale": 0.79,
+      "variant": 0
+    },
+    {
+      "id": "fern-11",
+      "kind": "fern",
+      "at": {
+        "x": 647,
+        "y": 218
+      },
+      "layer": 1,
+      "rotation": 148,
+      "scale": 0.79,
+      "variant": 1
+    },
+    {
+      "id": "fern-12",
+      "kind": "fern",
+      "at": {
+        "x": 2267,
+        "y": 235
+      },
+      "layer": 1,
+      "rotation": 108,
+      "scale": 1.15,
+      "variant": 2
+    },
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": {
+        "x": 283,
+        "y": 2463
+      },
+      "layer": 1,
+      "rotation": 22,
+      "scale": 1.23,
+      "variant": 0
+    },
+    {
+      "id": "rock-2",
+      "kind": "rock",
+      "at": {
+        "x": 973,
+        "y": 1510
+      },
+      "layer": 1,
+      "rotation": 119,
+      "scale": 1,
+      "variant": 0
+    },
+    {
+      "id": "rock-3",
+      "kind": "rock",
+      "at": {
+        "x": 2602,
+        "y": 2699
+      },
+      "layer": 1,
+      "rotation": 156,
+      "scale": 1.15,
+      "variant": 1
+    },
+    {
+      "id": "rock-4",
+      "kind": "rock",
+      "at": {
+        "x": 3362,
+        "y": 2563
+      },
+      "layer": 1,
+      "rotation": 326,
+      "scale": 1.17,
+      "variant": 3
+    },
+    {
+      "id": "rock-5",
+      "kind": "rock",
+      "at": {
+        "x": 2412,
+        "y": 2125
+      },
+      "layer": 1,
+      "rotation": 317,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "rock-6",
+      "kind": "rock",
+      "at": {
+        "x": 1224,
+        "y": 2437
+      },
+      "layer": 1,
+      "rotation": 355,
+      "scale": 1.16,
+      "variant": 1
+    },
+    {
+      "id": "rock-7",
+      "kind": "rock",
+      "at": {
+        "x": 1056,
+        "y": 244
+      },
+      "layer": 1,
+      "rotation": 101,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "rock-8",
+      "kind": "rock",
+      "at": {
+        "x": 3722,
+        "y": 1278
+      },
+      "layer": 1,
+      "rotation": 238,
+      "scale": 0.9,
+      "variant": 3
+    },
+    {
+      "id": "rock-9",
+      "kind": "rock",
+      "at": {
+        "x": 878,
+        "y": 2781
+      },
+      "layer": 1,
+      "rotation": 312,
+      "scale": 0.94,
+      "variant": 3
+    },
+    {
+      "id": "rock-10",
+      "kind": "rock",
+      "at": {
+        "x": 749,
+        "y": 465
+      },
+      "layer": 1,
+      "rotation": 258,
+      "scale": 1.14,
+      "variant": 0
+    },
+    {
+      "id": "rock-11",
+      "kind": "rock",
+      "at": {
+        "x": 3342,
+        "y": 1548
+      },
+      "layer": 1,
+      "rotation": 141,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "rock-12",
+      "kind": "rock",
+      "at": {
+        "x": 3504,
+        "y": 933
+      },
+      "layer": 1,
+      "rotation": 283,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "rock-13",
+      "kind": "rock",
+      "at": {
+        "x": 3405,
+        "y": 827
+      },
+      "layer": 1,
+      "rotation": 114,
+      "scale": 0.99,
+      "variant": 3
+    },
+    {
+      "id": "rock-14",
+      "kind": "rock",
+      "at": {
+        "x": 3356,
+        "y": 479
+      },
+      "layer": 1,
+      "rotation": 217,
+      "scale": 1.09,
+      "variant": 1
+    },
+    {
+      "id": "rock-15",
+      "kind": "rock",
+      "at": {
+        "x": 918,
+        "y": 462
+      },
+      "layer": 1,
+      "rotation": 97,
+      "scale": 0.81,
+      "variant": 0
+    },
+    {
+      "id": "rock-16",
+      "kind": "rock",
+      "at": {
+        "x": 3289,
+        "y": 2663
+      },
+      "layer": 1,
+      "rotation": 356,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "rock-17",
+      "kind": "rock",
+      "at": {
+        "x": 646,
+        "y": 2166
+      },
+      "layer": 1,
+      "rotation": 358,
+      "scale": 1,
+      "variant": 2
+    },
+    {
+      "id": "rock-18",
+      "kind": "rock",
+      "at": {
+        "x": 1067,
+        "y": 134
+      },
+      "layer": 1,
+      "rotation": 312,
+      "scale": 0.75,
+      "variant": 1
+    },
+    {
+      "id": "bones-1",
+      "kind": "bones",
+      "at": {
+        "x": 1974,
+        "y": 2150
+      },
+      "layer": 1,
+      "rotation": 291,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "bones-2",
+      "kind": "bones",
+      "at": {
+        "x": 2359,
+        "y": 904
+      },
+      "layer": 1,
+      "rotation": 141,
+      "scale": 1.06,
+      "variant": 3
+    },
+    {
+      "id": "bones-3",
+      "kind": "bones",
+      "at": {
+        "x": 1057,
+        "y": 693
+      },
+      "layer": 1,
+      "rotation": 176,
+      "scale": 0.87,
+      "variant": 3
+    },
+    {
+      "id": "bones-4",
+      "kind": "bones",
+      "at": {
+        "x": 3453,
+        "y": 2134
+      },
+      "layer": 1,
+      "rotation": 266,
+      "scale": 0.8,
+      "variant": 3
+    },
+    {
+      "id": "bones-5",
+      "kind": "bones",
+      "at": {
+        "x": 3686,
+        "y": 938
+      },
+      "layer": 1,
+      "rotation": 133,
+      "scale": 1.03,
+      "variant": 0
+    },
+    {
+      "id": "bones-6",
+      "kind": "bones",
+      "at": {
+        "x": 3333,
+        "y": 2503
+      },
+      "layer": 1,
+      "rotation": 188,
+      "scale": 1.07,
+      "variant": 2
+    },
+    {
+      "id": "bones-7",
+      "kind": "bones",
+      "at": {
+        "x": 3687,
+        "y": 2058
+      },
+      "layer": 1,
+      "rotation": 143,
+      "scale": 0.94,
+      "variant": 1
+    },
+    {
+      "id": "bones-8",
+      "kind": "bones",
+      "at": {
+        "x": 4069,
+        "y": 558
+      },
+      "layer": 1,
+      "rotation": 312,
+      "scale": 1.13,
+      "variant": 0
+    },
+    {
+      "id": "bones-9",
+      "kind": "bones",
+      "at": {
+        "x": 182,
+        "y": 638
+      },
+      "layer": 1,
+      "rotation": 100,
+      "scale": 0.93,
+      "variant": 3
+    },
+    {
+      "id": "bones-10",
+      "kind": "bones",
+      "at": {
+        "x": 969,
+        "y": 329
+      },
+      "layer": 1,
+      "rotation": 312,
+      "scale": 1.06,
+      "variant": 3
+    },
+    {
+      "id": "bones-11",
+      "kind": "bones",
+      "at": {
+        "x": 2657,
+        "y": 2091
+      },
+      "layer": 1,
+      "rotation": 105,
+      "scale": 1.23,
+      "variant": 1
+    },
+    {
+      "id": "cairn-1",
+      "kind": "cairn",
+      "at": {
+        "x": 273,
+        "y": 287
+      },
+      "layer": 1,
+      "rotation": 100,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "cairn-2",
+      "kind": "cairn",
+      "at": {
+        "x": 2489,
+        "y": 659
+      },
+      "layer": 1,
+      "rotation": 300,
+      "scale": 1.02,
+      "variant": 1
+    },
+    {
+      "id": "cairn-3",
+      "kind": "cairn",
+      "at": {
+        "x": 1146,
+        "y": 2414
+      },
+      "layer": 1,
+      "rotation": 194,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "cairn-4",
+      "kind": "cairn",
+      "at": {
+        "x": 899,
+        "y": 944
+      },
+      "layer": 1,
+      "rotation": 191,
+      "scale": 1.19,
+      "variant": 2
+    },
+    {
+      "id": "cairn-5",
+      "kind": "cairn",
+      "at": {
+        "x": 597,
+        "y": 2294
+      },
+      "layer": 1,
+      "rotation": 194,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "cairn-6",
+      "kind": "cairn",
+      "at": {
+        "x": 1260,
+        "y": 2840
+      },
+      "layer": 1,
+      "rotation": 48,
+      "scale": 1.19,
+      "variant": 1
+    },
+    {
+      "id": "cairn-7",
+      "kind": "cairn",
+      "at": {
+        "x": 179,
+        "y": 2578
+      },
+      "layer": 1,
+      "rotation": 183,
+      "scale": 0.85,
+      "variant": 0
+    },
+    {
+      "id": "cairn-8",
+      "kind": "cairn",
+      "at": {
+        "x": 4183,
+        "y": 1073
+      },
+      "layer": 1,
+      "rotation": 250,
+      "scale": 1,
+      "variant": 3
+    },
+    {
+      "id": "cairn-9",
+      "kind": "cairn",
+      "at": {
+        "x": 4094,
+        "y": 2448
+      },
+      "layer": 1,
+      "rotation": 217,
+      "scale": 0.83,
+      "variant": 1
+    },
+    {
+      "id": "cairn-10",
+      "kind": "cairn",
+      "at": {
+        "x": 1669,
+        "y": 2195
+      },
+      "layer": 1,
+      "rotation": 21,
+      "scale": 1.15,
+      "variant": 2
+    },
+    {
+      "id": "cairn-11",
+      "kind": "cairn",
+      "at": {
+        "x": 3140,
+        "y": 816
+      },
+      "layer": 1,
+      "rotation": 183,
+      "scale": 1.15,
+      "variant": 0
+    }
+  ],
   "gates": [
     {
       "id": "portcullis",

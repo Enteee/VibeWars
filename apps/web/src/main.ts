@@ -25,6 +25,7 @@ import {
   modeMapIds,
 } from "./net/maps.js";
 import { RANKED_STARTER_ID } from "./net/transport/ranked-receipts.js";
+import { type RejoinRecord, takeRejoinRecord } from "./net/rejoin-record.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -120,6 +121,7 @@ import {
 } from "./storage/starter-team.js";
 import { importedTeamSummary } from "./storage/team-transfer.js";
 import { buildReplacedNotice } from "./ui/build-replaced.js";
+import { mountReconnectOverlay, type ReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-ribbon.js";
 import {
@@ -447,6 +449,9 @@ async function main(): Promise<void> {
   const relayLink = takeRelayLink();
   const guildLink = takeGuildLink();
   const lobbyLink = takeLobbyLink();
+  // A page back from a reload mid-match (#4110): taken, so only this one tries.
+  const rejoinTaken = takeRejoinRecord(Date.now());
+  const rejoinRecord = rejoinTaken === "expired" ? undefined : rejoinTaken;
   // Every screen reads its text in the player's language (#2648).
   await loadLocale();
   const screenRoot = requireElement("#screens");
@@ -666,6 +671,18 @@ async function main(): Promise<void> {
    * `match === undefined` and pull the player back to the lobby screen.
    */
   let enteringMatch = false;
+  /**
+   * A page back from a reload taking its seat back (#4110), from startup
+   * until its match is entered or it gives up; no own lobby meanwhile.
+   */
+  let rejoining:
+    | {
+        readonly record: RejoinRecord;
+        readonly overlay: ReconnectOverlay;
+        readonly tick: number;
+        readonly deadline: number;
+      }
+    | undefined;
   /** The match in view has its result: nothing said over it. */
   let matchFinished = false;
   let lobbyNotice: string | undefined;
@@ -1350,7 +1367,13 @@ async function main(): Promise<void> {
   const openOwnLobby = (): void => {
     /** In a lobby, or on the way to a queue: no own one now. */
     const elsewhere = (): boolean => lobby !== undefined || queue !== undefined || joiningQueue;
-    if (elsewhere() || opening || stay !== undefined || following !== undefined) {
+    if (
+      elsewhere() ||
+      opening ||
+      stay !== undefined ||
+      following !== undefined ||
+      rejoining !== undefined
+    ) {
       return;
     }
     opening = true;
@@ -1583,6 +1606,77 @@ async function main(): Promise<void> {
     }
     setStatus("", "online");
     seatLobby(name, joined, entrant, false);
+  };
+
+  /**
+   * The seat a page back from a reload held, taken back (#4110): the
+   * reconnect countdown over the page, the lobby joined with its token,
+   * and the match it plays entered as its start arrives. Not back in by
+   * the end of the host's hold, it lands on the menu, told once.
+   */
+  const rejoinMatch = async (record: RejoinRecord): Promise<void> => {
+    // The host is fine: it is this page that went (#4110).
+    const overlay = mountReconnectOverlay(document.body, t("reconnect.rejoinDetail"));
+    const count = (): void => {
+      overlay.show(Math.max(0, Math.ceil((record.expiresAt - Date.now()) / 1000)));
+    };
+    count();
+    /** Whether this rejoin is still under way: it gave up or got in otherwise. */
+    const underWay = (): boolean => rejoining?.record === record;
+    const giveUp = (): void => {
+      if (underWay()) {
+        void failRejoin();
+      }
+    };
+    rejoining = {
+      record,
+      overlay,
+      tick: window.setInterval(count, 250),
+      deadline: window.setTimeout(giveUp, Math.max(0, record.expiresAt - Date.now())),
+    };
+    const name = loadPlayerName();
+    const entrant = await readEntrant();
+    let joined: LobbyConnection;
+    try {
+      joined = await joinLobbyByCode(
+        record.code,
+        name,
+        entrant.guild,
+        playerKey,
+        undefined,
+        undefined,
+        record,
+      );
+    } catch (error) {
+      console.warn("[web] could not rejoin the lobby", error);
+      giveUp();
+      return;
+    }
+    if (!underWay()) {
+      await joined.disconnect();
+      return;
+    }
+    setStatus("", "online");
+    // Its match's start comes straight after, and enters the match.
+    seatLobby(name, joined, entrant, false);
+  };
+
+  /** The rejoin over (#4110), in or not: its countdown and timers go. */
+  const endRejoin = (): void => {
+    if (rejoining !== undefined) {
+      window.clearInterval(rejoining.tick);
+      window.clearTimeout(rejoining.deadline);
+      rejoining.overlay.destroy();
+    }
+    rejoining = undefined;
+  };
+
+  /** The seat was not held (#4110): out of its lobby, and to the menu, told once. */
+  const failRejoin = async (): Promise<void> => {
+    endRejoin();
+    await closeLobby();
+    menuNotice = t("app.rejoinFailed");
+    enterMenu();
   };
 
   /**
@@ -3410,6 +3504,12 @@ async function main(): Promise<void> {
     }
     const found = warmupFoundIn === from;
     warmupFoundIn = undefined;
+    // A page back from a reload (#4110): this start is its match's, and the
+    // host decides now whether the seat is still held.
+    const rejoin = rejoining?.record.matchId === start.matchId ? rejoining.record : undefined;
+    if (rejoining !== undefined) {
+      window.clearTimeout(rejoining.deadline);
+    }
     // The menu quest's closing line goes as its match is found (#3544).
     menuQuest?.stop();
     menuQuest = undefined;
@@ -3523,12 +3623,13 @@ async function main(): Promise<void> {
         {
           kind: "play",
           connect: () =>
-            connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
+            connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay, rejoin),
           ranked: rankedSigned,
         },
         ownOptions,
       );
       hallWatch.pause();
+      endRejoin();
       // Said by the match about to begin, never by the next one.
       rankedSigned = false;
       // In the match, the status has nothing to say until it is lost.
@@ -3557,6 +3658,10 @@ async function main(): Promise<void> {
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;
+      if (rejoining !== undefined) {
+        await failRejoin();
+        return;
+      }
       if (isStaleChunkError(error)) {
         void buildWatch?.chunkFailed();
       }
@@ -3684,7 +3789,10 @@ async function main(): Promise<void> {
   let tutorial: TutorialSession | undefined;
   /** A lobby, relay or guild link came with this tab or in it: it is what the player is here for. */
   let linked =
-    lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild";
+    rejoinTaken !== undefined ||
+    lobbyLink.kind === "invite" ||
+    relayLink.kind === "config" ||
+    guildLink.kind === "guild";
   /** The menu quest from the start of `from` (#3540), on the menu shown. */
   const startMenuQuestAt = (from: MenuQuestStepId): void => {
     menuQuest?.stop();
@@ -3797,6 +3905,10 @@ async function main(): Promise<void> {
         saveTutorialRecord("skipped");
         enterMenu();
       },
+      onNotNow: () => {
+        closeOffer = undefined;
+        enterMenu();
+      },
     });
   };
   let splash: Splash | undefined;
@@ -3825,6 +3937,13 @@ async function main(): Promise<void> {
     // An e2e build's seeded menu quest (#3540): the menu, no splash, no offer.
     enterMenu();
     startMenuQuestAt(seededMenuStep);
+  } else if (rejoinRecord !== undefined) {
+    // Back into the match this tab played before its reload (#4110).
+    void rejoinMatch(rejoinRecord);
+  } else if (rejoinTaken === "expired") {
+    // Back after the host's hold ended (#4110): the menu, told once.
+    menuNotice = t("app.rejoinFailed");
+    enterMenu();
   } else if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),

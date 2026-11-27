@@ -1,14 +1,18 @@
-import { pointInPolygon } from "@vibewars/game-core";
+import { pointInPolygon, ZONE_KINDS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import type { MapZone } from "./arena-snapshot.js";
 import { shoreDistance } from "./water-shape.js";
 import { ZONE_LOOK } from "./zone-look.js";
 import {
+  CAUSTICS_FRAGMENT,
   drawnOutline,
+  liquidOf,
+  LIQUID_ZONES,
   paintZoneMotion,
   paintZoneShadow,
   reliefEdges,
+  ZONE_CAUSTICS,
   ZONE_DRIFT,
   zoneArtOf,
   zoneGroundAlpha,
@@ -72,6 +76,12 @@ describe("a zone's painted ground (#3052)", () => {
     expect(zoneArtOf(square("scorched"), 0)?.specks.length).toBeGreaterThan(0);
     expect(zoneArtOf(square("toxic-fog"), 0)?.puffs.length).toBeGreaterThan(0);
     expect(zoneArtOf(square("foul-water"), 0)?.ripples.length).toBeGreaterThan(0);
+  });
+
+  it("keeps a spring clear: no ripple lines and no sparkles, only its cells (#4062)", () => {
+    const art = zoneArtOf(square("spring"), 0);
+    expect(art?.ripples).toEqual([]);
+    expect(art?.specks).toEqual([]);
   });
 
   it("holds every mark still under reduced motion", () => {
@@ -229,5 +239,40 @@ describe("a zone's drawn outline and relief (#4037)", () => {
       expect(Math.min(y1, y2)).toBeGreaterThan(100);
       expect(pointInPolygon({ x: (x1 + x2) / 2, y: (y1 + y2) / 2 }, art.outline)).toBe(false);
     }
+  });
+});
+
+describe("a liquid zone's cells (#4062)", () => {
+  it("lays cells on every water zone, and on no lava, mud or other ground", () => {
+    const liquids = new Set<string>();
+    for (const kind of ZONE_KINDS) {
+      const art = zoneArtOf(square(kind), 0);
+      const liquid = art === undefined ? undefined : liquidOf(art.painter);
+      if (liquid !== undefined) {
+        liquids.add(liquid);
+      }
+    }
+    expect([...liquids].sort()).toEqual([...LIQUID_ZONES].sort());
+    expect(liquidOf("lava")).toBeUndefined();
+    expect(liquidOf("mud")).toBeUndefined();
+  });
+
+  it("orders the cells' sizes: foul water's the largest, a spring's the smallest", () => {
+    const cells = LIQUID_ZONES.map((id) => ZONE_CAUSTICS[id].cell);
+    expect(cells).toEqual([...cells].sort((a, b) => b - a));
+    expect(new Set(cells).size).toBe(cells.length);
+    expect(LIQUID_ZONES[0]).toBe("foul-water");
+    expect(LIQUID_ZONES.at(-1)).toBe("spring");
+  });
+
+  it("declares exactly the uniforms the scene sets, so none is silently zero", () => {
+    const declared = [...CAUSTICS_FRAGMENT.matchAll(/^uniform \w+ (\w+);$/gm)].map((m) => m[1]);
+    expect(declared.sort()).toEqual(["uAlpha", "uBounds", "uCell", "uColour", "uGround", "uTime"]);
+  });
+
+  it("layers two Voronoi patterns at different scales and speeds", () => {
+    const layers = [...CAUSTICS_FRAGMENT.matchAll(/voronoi\(uv[^;]*;/g)].map((m) => m[0]);
+    expect(layers).toHaveLength(2);
+    expect(layers[0]).not.toBe(layers[1]);
   });
 });

@@ -20,9 +20,21 @@ export function hudCorner(page: Page): Locator {
 export async function hudMenuRow(page: Page, row: HudRow): Promise<Locator> {
   const toggle = hudCorner(page);
   await expect(toggle).toBeVisible();
-  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
-    await toggle.click();
+  // A click can be lost on a page just brought to front (#4136), and on a
+  // starved page each step takes seconds (#4146): so one click, then the
+  // whole wait for the list, and a second click only on a ☰ still shut,
+  // so it never closes an open one.
+  const clickShut = async (): Promise<void> => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+      await toggle.click();
+    }
+  };
+  await clickShut();
+  try {
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  } catch {
+    await clickShut();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
   }
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
   return page.locator(`.hud-menu .hud-${row}`);
 }

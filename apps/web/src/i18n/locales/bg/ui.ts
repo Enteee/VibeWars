@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Отвори линка за релето в отделен раздел. Нищо не е запазено.",
   "app.inviteInLobby": "Върни се в менюто и отвори линка за покана отново.",
   "app.lostMatch": "Връзката с мача е изгубена.",
+  "app.rejoinFailed": "Не успя да се върнеш в мача: мястото ти не беше запазено.",
   "app.malformedRelayLink": "Този линк за реле не е валиден. Нищо не е запазено.",
   "app.ownLobby": "Това е твоето лоби",
 
@@ -454,7 +455,7 @@ export default {
   "effects.categoryShout": "Вик",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание в оръжие",
-  "effects.endHint": "двоен клик за край",
+  "effects.endHint": "двоен клик, Enter или Delete за край",
   "effects.from": "от {caster}",
   "effects.inRange": "докато си в обхвата му",
   "effects.maintained": "поддържано",
@@ -1111,6 +1112,7 @@ export default {
   "recharge.spent": "{skill}, изразходвано до прилив на морал",
 
   "reconnect.detail": "Връзката на домакина прекъсна. Мястото ти се пази.",
+  "reconnect.rejoinDetail": "Връщаме те в мача ти. Мястото ти е запазено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Свързване отново…",
 

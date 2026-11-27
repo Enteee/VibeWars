@@ -39,6 +39,11 @@ stattdessen bei dir: Frontkämpfer einen Schritt voraus, Fernkämpfer neben dir,
 Heiler dahinter, und sie folgen dir, wohin du gehst. Sobald du eine Weile untätig
 herumgestanden hast, spielen sie weiter wie ein Team aus Bots.
 Solange du aktiv bist, kehrt ein Bot, den ein Kampf weit von dir weggezogen hat, zu dir zurück, außer er ist schwer verwundet oder ein Gegner steht direkt bei ihm.
+Ein Frontkämpfer wendet sich gegen einen Gegner, der den Heiler oder die Zauberwirker seines Teams angreift, außer er ist kurz davor, sein eigenes Ziel zu erledigen.
+
+Gegen ein Team mit Flächen-Skills halten Fernkämpfer und Heiler Abstand voneinander, damit eine Explosion nicht zwei von ihnen trifft. Deckung geben sie dafür nie auf.
+
+Ein Fernkämpfer oder Heiler, dem ein Gegner zu nah kommt, weicht zuerst zu seinem nächsten Frontkämpfer zurück, wenn einer nah genug ist, und kämpft dort.
 
 Bogenschützen und Speerwerfer besetzen die Anhöhe, wenn es sicher ist.
 Ein Bot, auf den sich zwei Gegner stürzen oder der unter halber Gesundheit schnell weiter verliert, duckt sich bis zu drei Sekunden aus ihrer Sicht: hinter eine Mauer, unter eine Plattform oder auf eine Anhöhe.

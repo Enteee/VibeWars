@@ -491,8 +491,10 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   ).not.toHaveCount(0);
   await page.keyboard.press(key("skill-5"));
 
-  await expect(message).toHaveText("That skill is recharging.");
-  await expect(message).toHaveClass(/is-visible/);
+  // Text and visibility in one assertion: the message keeps its text after
+  // it fades, so two checks can see the text and miss the 2 s it shows on
+  // a slow runner (#4124).
+  await expect(page.locator(".hud-message.is-visible")).toHaveText("That skill is recharging.");
   // Gone again on its own, so it never becomes clutter.
   await expect(message).not.toHaveClass(/is-visible/, { timeout: 4000 });
 });
@@ -643,6 +645,10 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
 test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
   page,
 }) => {
+  // A match started on two pages, then a dozen HUD clicks, seconds each on
+  // a software renderer and far more on a loaded one, outrun the default
+  // 60 s (#4140).
+  test.slow();
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const attacking = page.locator(".hud-attacking");

@@ -8,7 +8,7 @@ import {
 import type { ProfessionId } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
-import { creatureDamageMultiplier } from "./damage.js";
+import { ARMOR_PENALTY_FLOOR, creatureDamageMultiplier } from "./damage.js";
 import { resolveMagnitudeAtRanks, statAt, statAtTwelve } from "./scaling.js";
 import { isSelfOnlyStatus } from "./self-only.js";
 import {
@@ -580,9 +580,13 @@ function statusText(
     const weapon = definition.doubleStrikeChanceBonusWeapon;
     parts.push(say.words.chanceToDoubleStrikeWhileWielding({ chance, weapon }));
   }
-  if (definition.armorReduction !== undefined) {
-    const { amount, floor } = definition.armorReduction;
-    parts.push(say.words.armorNotBelow({ amount: String(amount), floor: String(floor) }));
+  if (definition.armorReduction !== 0) {
+    parts.push(
+      say.words.armorNotBelow({
+        amount: String(definition.armorReduction),
+        floor: String(ARMOR_PENALTY_FLOOR),
+      }),
+    );
   }
   if (definition.moveSpeedMultiplier !== 1) {
     const speed = statText(definition.moveSpeedMultiplier, ranks, (multiplier) =>
@@ -753,6 +757,14 @@ function statusText(
     parts.push(
       say.words.attacksHaveArmorPenetration({
         attackArmorPenetration: String(Math.round(definition.attackArmorPenetration * 100)),
+      }),
+    );
+  }
+  // GW1's own wording for a bonus (#4085): "armor penetration +20%".
+  if (definition.attackBonusArmorPenetration !== 0) {
+    parts.push(
+      say.words.attacksHaveArmorPenetration({
+        attackArmorPenetration: `+${String(Math.round(definition.attackBonusArmorPenetration * 100))}`,
       }),
     );
   }

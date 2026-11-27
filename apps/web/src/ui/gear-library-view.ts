@@ -62,7 +62,16 @@ export function mountGearLibrary(
     });
     // Click-to-equip alongside dragging, as the skill library's Equip:
     // dragging is the nicer gesture and a poor only option on a trackpad.
+    // Enter or Space equips from the keyboard (#4090).
+    node.setAttribute("role", "button");
+    node.tabIndex = 0;
     node.addEventListener("click", options.onClick);
+    node.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.target === node && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        options.onClick();
+      }
+    });
     return node;
   }
 

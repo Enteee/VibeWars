@@ -159,7 +159,7 @@ ispuštenoj neprijateljskoj relikviji šalje je kući, a ostali čekaju kod olta
 koji nosi tvoju relikviju nosi je ravno na oltar; ostali napuštaju
 relikviju samo da se bore s neprijateljem koji dođe u domet čarolije.
 
-Broken Tower ga igra (4v4 i 8v8, 5400x2800): srušena kula na brdu u visoravni. Popni se stubama terasa od ruševina do oltara na batrljku kule ili idi podrumom ispod brda kad poluga na terasi otvori njegova vrata; zidovi od ruševina mogu se razbiti.
+Broken Tower ga igra (4v4 i 8v8, 5400x2800): srušena kula na brdu u visoravni. Popni se stubama terasa od ruševina do oltara na batrljku kule ili idi podrumom ispod brda kad poluga na terasi otvori njegova vrata; zidovi od ruševina mogu se razbiti. Uz svaki zid od ruševina stoje rešetkasta vrata koja su otvorena dok netko stoji na njihovoj ploči na pritisak.
 
 ### Cinder Sanctum
 
@@ -238,7 +238,7 @@ domet čarolije. Dok tvoj tim ne drži oltar, svaki bot prvo ubija Sablasnog her
 drugog tima kad stoji na oltaru u njihovu dometu:
 on je jedini neprijatelj koji sprečava tvoju sablast da ga zauzme.
 
-Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva četiri vrata: prolaz tvojih vrata ispod zida, i podrum, dugi put ispod brda.
+Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva troja vrata, prolaze ispod zida.
 
 ## Zauzimanje točaka
 

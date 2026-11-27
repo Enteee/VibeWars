@@ -123,8 +123,8 @@ spočíta.
   kým sa pripojenie nedokončí. Keď si dnu, okno Lobby ukazuje **Lobby**
   a jeho **Odísť** ťa vráti do nového vlastného lobby s novým pozývacím
   odkazom. Odkaz otvorený na obrazovke lobby alebo v zápase ťa požiada, aby si
-  sa najprv vrátil do menu. Ak ti vypadne spojenie, tvoje miesto sa drží
-  30 sekúnd.
+  sa najprv vrátil do menu. Ak ti vypadne spojenie alebo stránku znova načítaš
+  či otvoríš, tvoje miesto sa drží 30 sekúnd a vrátiš sa späť naň.
 - **Odstránenie hráča:** ako hostiteľ stlač **×** vedľa mena hráča v okne
   Lobby, mimo zápasu. Hráč sa dozvie, že ho hostiteľ odstránil, dostane nové
   vlastné lobby a do tvojho sa už nemôže vrátiť, kým trvá.

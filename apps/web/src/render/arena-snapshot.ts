@@ -271,6 +271,8 @@ export interface MapStructure {
   readonly atmosphere?: MapAtmosphere;
   /** Its roads, squares and tracks (#3210), drawn on their layer's floor; a map without it has none. */
   readonly paving?: readonly MapPaving[];
+  /** The render bench's reference map in its build (#4129): drawn with no whole-screen pass. */
+  readonly bare?: true;
   /** Each deck there is now, drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
@@ -1020,7 +1022,7 @@ export function overheadRise(actor: RenderableActor): number {
 const SHIELD_FROM = (45 * Math.PI) / 180;
 const SHIELD_TO = (105 * Math.PI) / 180;
 /** The focus: a ring of radius 1.75 centred 75° left of the facing, at r + 3.5 (#275). */
-const FOCUS_ANGLE = (75 * Math.PI) / 180;
+export const FOCUS_ANGLE = (75 * Math.PI) / 180;
 const FOCUS_RADIUS = 1.75;
 /** Both off-hand marks' centrelines sit this far past the body's edge. */
 const OFFHAND_REACH = 3.5;

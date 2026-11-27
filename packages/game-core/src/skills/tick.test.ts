@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { FLAG_CARRIER_SPEED_MULTIPLIER } from "../match/flags.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 
 import { getSkill } from "./catalog.js";
 import {
   NO_RANKS,
+  aggregateModifiers,
   combinedHealingMultiplier,
   HEALING_MULTIPLIER_FLOOR,
   HEALTH_PER_PIP,
+  type StatusId,
 } from "./status.js";
 import {
   advanceStatuses,
@@ -20,6 +23,7 @@ import {
   moveSpeedMultiplier,
   raisedMaxHealth,
   rankOf,
+  statusMoveSpeed,
 } from "./tick.js";
 import { effectiveMaxEnergy, raisedMaxEnergy } from "./overcast.js";
 import { makeCombatant } from "./testing.js";
@@ -199,18 +203,54 @@ describe("moveSpeedMultiplier", () => {
     expect(moveSpeedMultiplier(c)).toBe(0.5);
   });
 
-  it("multiplies crippled with Armor of Earth's slow, at its Earth Magic", () => {
+  it("stops crippled and Armor of Earth's slow at the snare floor (#4095)", () => {
     const c = makeCombatant({ id: "c" });
     c.statuses.apply("crippled", 10, "a", NO_RANKS);
     c.statuses.apply("armor-boost", 10, "c", new Map([["elementalist.earth-magic", 12]]));
-    expect(moveSpeedMultiplier(c)).toBeCloseTo(0.5 * 0.788);
+    expect(moveSpeedMultiplier(c)).toBe(0.5);
   });
 
-  it("clamps to [0.25, 1.33]", () => {
-    expect(clampMoveSpeed(0.1)).toBe(0.25);
-    expect(clampMoveSpeed(0.25)).toBe(0.25);
-    expect(clampMoveSpeed(0.8)).toBe(0.8);
-    expect(clampMoveSpeed(2)).toBe(1.33);
+  it("clamps to [0.25, 1.33], or up to an active cap-breaker's boost", () => {
+    expect(clampMoveSpeed(0.1, 1)).toBe(0.25);
+    expect(clampMoveSpeed(0.25, 1)).toBe(0.25);
+    expect(clampMoveSpeed(0.8, 1)).toBe(0.8);
+    expect(clampMoveSpeed(2, 1)).toBe(1.33);
+    expect(clampMoveSpeed(2, 1.5)).toBe(1.5);
+  });
+});
+
+describe("statusMoveSpeed (#4095)", () => {
+  /** The status part of the speed of a bearer of `ids`. */
+  const speedOf = (...ids: StatusId[]): number =>
+    statusMoveSpeed(aggregateModifiers(ids.map((id) => ({ id, ranks: NO_RANKS }))));
+
+  it("lets Dash break the +33% cap, alone or beside a 33% boost", () => {
+    expect(speedOf("dash")).toBe(1.5);
+    expect(speedOf("dash", "incoming")).toBe(1.5);
+    expect(speedOf("pious-haste-run", "dash")).toBe(1.5);
+  });
+
+  it("caps two 33% boosts at 1.33", () => {
+    expect(speedOf("incoming", "fall-back")).toBe(1.33);
+  });
+
+  it("floors stacked snares at 0.5, unless one alone is slower", () => {
+    expect(speedOf("crippled", "sum-of-all-fears")).toBe(0.5);
+    expect(speedOf("deep-freeze")).toBeCloseTo(0.34, 10);
+  });
+
+  it("multiplies a cap-breaker by the snares: Dash and Crippled give 0.75", () => {
+    expect(speedOf("dash", "crippled")).toBe(0.75);
+  });
+
+  it("lets a flag carrier with Dash run at 1.5 / 1.2", () => {
+    const modifiers = aggregateModifiers([{ id: "dash", ranks: NO_RANKS }]);
+    expect(
+      clampMoveSpeed(
+        statusMoveSpeed(modifiers) / FLAG_CARRIER_SPEED_MULTIPLIER,
+        modifiers.speedCapBreaker,
+      ),
+    ).toBeCloseTo(1.5 / 1.2, 10);
   });
 });
 
@@ -236,6 +276,15 @@ describe("effectiveActivationSeconds", () => {
     c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(swiftChop?.activationSeconds).toBe(0);
     expect(swiftChop && effectiveActivationSeconds(swiftChop, c)).toBe(0);
+  });
+
+  it("stops Dazed and a ×2 hex at ×2.5, GW1's cap (#4089)", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
+    c.statuses.apply("arcane-conundrum", 10, "a", NO_RANKS);
+    expect(fireball && effectiveActivationSeconds(fireball, c)).toBe(
+      (fireball?.activationSeconds ?? 0) * 2.5,
+    );
   });
 });
 
@@ -300,6 +349,16 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
     const c = mesmer();
     c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(1.149, 3);
+  });
+
+  it("multiplies outside the cap (#4089): dazed and a ×2 hex, ×2.5 of its fast cast", () => {
+    const c = mesmer();
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
+    c.statuses.apply("arcane-conundrum", 10, "a", NO_RANKS);
+    expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(
+      2.5 * effectiveActivationSeconds(mesmerHex, mesmer()),
+      9,
+    );
   });
 
   it("casts a 3 s Resurrection Signet in 1.72 s at rank 12, dazed or not (#1100, #3880)", () => {

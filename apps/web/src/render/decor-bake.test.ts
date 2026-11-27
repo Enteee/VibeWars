@@ -19,6 +19,7 @@ const crates: MapDecor = {
   rotation: 30,
   scale: 1.5,
   variant: 2,
+  wading: false,
 };
 
 /** Whether two slots on one sheet share a pixel. */

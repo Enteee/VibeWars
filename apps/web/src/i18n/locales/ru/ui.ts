@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Открой ссылку на релей в отдельной вкладке. Ничего не сохранено.",
   "app.inviteInLobby": "Вернись в меню и снова открой ссылку-приглашение.",
   "app.lostMatch": "Соединение с матчем потеряно.",
+  "app.rejoinFailed": "Не удалось вернуться в матч: твоё место не сохранили.",
   "app.malformedRelayLink": "Эта ссылка на релей недействительна. Ничего не сохранено.",
   "app.ownLobby": "Это твоё лобби",
 
@@ -488,7 +489,7 @@ export default {
   "effects.categoryShout": "Клич",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание оружия",
-  "effects.endHint": "двойной щелчок — завершить",
+  "effects.endHint": "двойной щелчок, Enter или Delete — завершить",
   "effects.from": "от {caster}",
   "effects.inRange": "пока в зоне действия",
   "effects.maintained": "поддерживается",
@@ -1208,6 +1209,7 @@ export default {
   "recharge.spent": "{skill}, израсходован до прилива морали",
 
   "reconnect.detail": "Связь с хостом прервалась. Твоё место сохранено.",
+  "reconnect.rejoinDetail": "Возвращаем тебя в твой матч. Твоё место сохранено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Переподключение…",
 

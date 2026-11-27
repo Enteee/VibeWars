@@ -19,6 +19,9 @@ import {
   ownSkillBoost,
   recastReplaces,
   scaledStatAttributes,
+  stackedActivationMultiplier,
+  stackedAdrenalineGainFaster,
+  stackedRechargeFaster,
   type BodyTrait,
   type StatusId,
   type StatusStat,
@@ -27,7 +30,7 @@ import { statAtTwelve } from "./scaling.js";
 
 const BLOOD = "necromancer.blood-magic";
 import { makeCombatant, withAttackDuration } from "./testing.js";
-import { attackDamageDeltaOf } from "./tick.js";
+import { attackDamageDeltaOf, statusMoveSpeed } from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
 import type { Skill } from "./types.js";
 import { attackBlockedRiders } from "./weapon-attack.js";
@@ -91,7 +94,7 @@ describe("status definitions", () => {
         def.healthPerSecondWhileMoving !== 0 ||
         def.healthPerSecond !== 0 ||
         def.healthPerSecondNearSpirit !== 0 ||
-        def.armorReduction !== undefined ||
+        def.armorReduction !== 0 ||
         statAtTwelve(def.moveSpeedMultiplier) !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
@@ -1485,7 +1488,7 @@ describe("aggregateModifiers, health per enchantment (#845)", () => {
 describe("aggregateModifiers, while under another status (#1485)", () => {
   it("adds Soldier's Fury's speed and adrenaline only while a chant or a shout is up", () => {
     const alone = aggregateModifiers([{ id: "soldiers-fury", ranks: NO_RANKS }]);
-    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, 0]);
+    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, []]);
     expect(alone.armorModifier).toBe(-20);
     for (const under of ["defensive-anthem", "fall-back"] as const) {
       const both = aggregateModifiers([
@@ -1493,7 +1496,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
         { id: under, ranks: NO_RANKS },
       ]);
       expect(both.attackDurationMultiplier, under).toBe(0.67);
-      expect(both.adrenalineGainFaster, under).toBeCloseTo(0.33);
+      expect(both.adrenalineGainFaster, under).toEqual([0.33]);
       expect(both.armorModifier, under).toBe(-20);
     }
   });
@@ -1503,7 +1506,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
       { id: "soldiers-fury", ranks: NO_RANKS },
       { id: "mending-refrain", ranks: NO_RANKS },
     ]);
-    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, 0]);
+    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, []]);
   });
 });
 
@@ -1529,11 +1532,11 @@ describe("aggregateModifiers", () => {
     expect(mods.healthPips).toBe(0);
     expect(mods.energyPips).toBe(0);
     expect(mods.armorModifier).toBe(0);
-    expect(mods.moveSpeedMultiplier).toBe(1);
+    expect(statusMoveSpeed(mods)).toBe(1);
     expect(mods.attackMissChance).toBe(0);
     expect(mods.maxHealthLoss).toBeUndefined();
     expect(mods.healingMultiplier).toBe(1);
-    expect(mods.castTimeMultiplier).toBe(1);
+    expect(mods.castTimeMultiplier).toEqual([]);
   });
 
   it("sums additive health degeneration from stacked conditions", () => {
@@ -1567,7 +1570,7 @@ describe("aggregateModifiers", () => {
     const set = new StatusSet("fleshy");
     set.apply("crippled", 10, "a", NO_RANKS);
     const mods = aggregateModifiers(set.active);
-    expect(mods.moveSpeedMultiplier).toBe(0.5);
+    expect(statusMoveSpeed(mods)).toBe(0.5);
   });
 
   it("takes the worst miss chance rather than compounding it", () => {
@@ -1641,14 +1644,23 @@ describe("attack duration (ADR-0029)", () => {
     ).toBeCloseTo(0.75 * 1.5);
   });
 
-  it("takes only the strongest speed-up", () => {
+  it("multiplies speed-ups, capped at 0.67 (#4095)", () => {
     expect(multiplierWith({ bleeding: 0.67 })).toBe(0.67);
-    expect(multiplierWith({ bleeding: 0.67, poison: 0.75 })).toBe(0.67);
+    expect(multiplierWith({ bleeding: 0.75, poison: 0.85 })).toBe(0.67);
+    expect(multiplierWith({ bleeding: 0.85, poison: 0.85 })).toBeCloseTo(0.7225, 9);
   });
 
-  it("multiplies the strongest speed-up by the strongest slow-down", () => {
+  it("multiplies slow-downs, capped at 1.5 (#4095)", () => {
+    expect(multiplierWith({ bleeding: 1.33, poison: 1.5 })).toBe(1.5);
+    expect(multiplierWith({ bleeding: 1.1, poison: 1.2 })).toBeCloseTo(1.32, 9);
+  });
+
+  it("multiplies the capped speed-ups by the capped slow-downs (#4095)", () => {
     expect(multiplierWith({ bleeding: 0.67, poison: 1.2 })).toBeCloseTo(0.804, 9);
-    expect(multiplierWith({ bleeding: 0.67, poison: 1.2, burning: 1.1 })).toBeCloseTo(0.804, 9);
+    expect(multiplierWith({ bleeding: 0.75, poison: 0.85, burning: 1.2 })).toBeCloseTo(
+      0.67 * 1.2,
+      9,
+    );
   });
 
   it("leaves the table as it was", () => {
@@ -1803,7 +1815,7 @@ describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
 
 describe("rank-scaled speed and reversal (#2428)", () => {
   const FIRE = "elementalist.fire-magic";
-  const speed = (set: StatusSet): number => aggregateModifiers(set.active).moveSpeedMultiplier;
+  const speed = (set: StatusSet): number => statusMoveSpeed(aggregateModifiers(set.active));
 
   it.each([
     [0, 1.3],
@@ -1859,23 +1871,23 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
     expect(modifiers(set).damageReduction).toBe(17);
   });
 
-  it("slows Icy Shackles' bearer 66%, 90% while enchanted, a speed-boost bar or not", () => {
+  it("slows Icy Shackles' bearer 66%, 90% while enchanted, past the snare floor (#4095)", () => {
     const set = new StatusSet("fleshy");
     set.apply("icy-shackles", 8, "e", NO_RANKS);
-    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.34);
+    expect(statusMoveSpeed(modifiers(set))).toBeCloseTo(0.34);
     set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
-    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.1, 2);
+    expect(statusMoveSpeed(modifiers(set))).toBeCloseTo(0.1, 2);
     set.apply("muddy-terrain", 10, "r", NO_RANKS);
-    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.34 * 0.294 * 0.9);
+    expect(statusMoveSpeed(modifiers(set))).toBeCloseTo(0.34 * 0.294, 9);
   });
 
   it("still bars Godspeed's boost under a speed-boost bar", () => {
     const set = new StatusSet("fleshy");
     set.apply("godspeed", 10, "p", NO_RANKS);
     set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
-    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(1.25);
+    expect(statusMoveSpeed(modifiers(set))).toBeCloseTo(1.25);
     set.apply("muddy-terrain", 10, "r", NO_RANKS);
-    expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.9);
+    expect(statusMoveSpeed(modifiers(set))).toBeCloseTo(0.9);
   });
 
   it("answers elemental damage with Ward of Weakness, physical with Mark of Pain", () => {
@@ -1924,5 +1936,32 @@ describe("StatusSet body traits (#3881)", () => {
     const set = new StatusSet("non-fleshy");
     set.apply("bleeding", 10, "foe", NO_RANKS);
     expect(set.has("bleeding")).toBe(false);
+  });
+});
+
+describe("GW1's effect caps (#4089)", () => {
+  it("multiplies recharge shares, two or more at most halving it", () => {
+    expect(stackedRechargeFaster([0.33])).toBeCloseTo(0.33, 9);
+    expect(stackedRechargeFaster([0.33, 0.33])).toBe(0.5);
+    expect(stackedRechargeFaster([0.75])).toBe(0.75);
+    expect(stackedRechargeFaster([0.2, 0.2, 0.2])).toBeCloseTo(0.488, 9);
+    expect(stackedRechargeFaster([0.33, 0, 0])).toBeCloseTo(0.33, 9);
+    expect(stackedRechargeFaster([])).toBe(0);
+  });
+
+  it("keeps two or more activation factors within ×0.75 and ×2.5", () => {
+    expect(stackedActivationMultiplier([2, 2])).toBe(2.5);
+    expect(stackedActivationMultiplier([2])).toBe(2);
+    expect(stackedActivationMultiplier([0.5, 0.5])).toBe(0.75);
+    expect(stackedActivationMultiplier([0.5, 1, 1])).toBe(0.5);
+    expect(stackedActivationMultiplier([2, 0.5])).toBe(1);
+  });
+
+  it("multiplies adrenaline boosts, two or more within −50% and +100%", () => {
+    expect(stackedAdrenalineGainFaster([0.5, 0.5])).toBe(1);
+    expect(stackedAdrenalineGainFaster([1.5])).toBe(1.5);
+    expect(stackedAdrenalineGainFaster([0.25, 0.25])).toBeCloseTo(0.5625, 9);
+    expect(stackedAdrenalineGainFaster([-0.5, -0.5])).toBe(-0.5);
+    expect(stackedAdrenalineGainFaster([-0.5, 1])).toBe(0);
   });
 });

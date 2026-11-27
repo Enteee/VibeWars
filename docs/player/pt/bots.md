@@ -41,6 +41,11 @@ curandeiros atrás, e eles seguem você aonde você for. Depois que você
 fica parado por algum tempo, eles continuam jogando como uma equipe só de
 bots jogaria.
 Enquanto você estiver ativo, um bot que uma luta afastou de você volta para perto de você, a menos que esteja muito ferido ou tenha um inimigo colado nele.
+Um bot da linha de frente se volta contra um inimigo que ataca o curandeiro ou os conjuradores do seu time, a menos que esteja prestes a acabar com o próprio alvo.
+
+Contra uma equipe com habilidades de área, os bots à distância e os curandeiros ficam afastados, para que uma explosão não atinja dois deles. Nunca abrem mão de cobertura para isso.
+
+Um bot à distância ou curandeiro de quem um inimigo chega perto demais recua primeiro até o seu bot da linha de frente mais próximo, se houver um perto o bastante, e luta ali.
 
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.

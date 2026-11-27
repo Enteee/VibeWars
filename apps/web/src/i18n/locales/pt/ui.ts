@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Abra o link do relay em uma aba própria. Nada foi salvo.",
   "app.inviteInLobby": "Volte ao menu e abra o link de convite de novo.",
   "app.lostMatch": "A conexão com a partida caiu.",
+  "app.rejoinFailed": "Não foi possível voltar à partida: sua vaga não foi mantida.",
   "app.malformedRelayLink": "Esse link de relay não é válido. Nada foi salvo.",
   "app.ownLobby": "Essa sala é sua",
 
@@ -477,7 +478,7 @@ export default {
   "effects.categoryShout": "Grito",
   "effects.categoryStance": "Postura",
   "effects.categoryWeaponSpell": "Feitiço de Arma",
-  "effects.endHint": "clique duplo para encerrar",
+  "effects.endHint": "clique duplo, Enter ou Delete para encerrar",
   "effects.from": "de {caster}",
   "effects.inRange": "enquanto no alcance",
   "effects.maintained": "mantido",
@@ -1166,6 +1167,7 @@ export default {
   "recharge.spent": "{skill}, gasta até um bônus de moral",
 
   "reconnect.detail": "A conexão do host caiu. Sua vaga está garantida.",
+  "reconnect.rejoinDetail": "A colocar-te de volta na tua partida. O teu lugar está reservado.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectando…",
 

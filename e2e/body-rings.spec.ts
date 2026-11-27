@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
 import { joinFriend } from "./helpers/menu.js";
@@ -94,10 +94,57 @@ async function aroundYou(
   });
 }
 
+/** Waits until `name`'s button on `page`'s skill bar is off its 5 or 12 s recharge. */
+async function ready(page: Page, name: RegExp): Promise<void> {
+  const button = page.locator(".hud-skills").getByRole("button", { name });
+  await expect(button.locator(".recharge-overlay")).toHaveCount(0);
+}
+
+/**
+ * Puts Life Siphon, Pious Haste and Mystic Regeneration on you together,
+ * and returns the shot of your body taken straight after the one read of
+ * your effects that saw all three. Pious Haste takes a Dervish enchantment
+ * off you, so it goes on just before Mystic Regeneration, both off
+ * recharge, and the hex is refreshed first when it has run out.
+ */
+async function allThree(
+  page: Page,
+  foe: Page,
+  wearing: (name: RegExp) => Locator,
+): Promise<Buffer> {
+  const effects = page.getByRole("list", { name: "your effects" });
+  const names = ["Life Siphon", "Pious Haste", "Mystic Regeneration"];
+  let seen: string[] = [];
+  for (let pass = 0; pass < 3; pass += 1) {
+    await ready(page, /^Pious Haste/);
+    await ready(page, /^Mystic Regeneration/);
+    if ((await wearing(/^Life Siphon$/).count()) === 0) {
+      await foe.keyboard.press(key("target-next"));
+      await expect(foe.locator(".hud-target-text")).not.toHaveText("no target");
+      await ready(foe, /^Life Siphon/);
+      await foe.keyboard.press(LIFE_SIPHON);
+      await expect(wearing(/^Life Siphon$/)).toBeVisible({ timeout: 30_000 });
+    }
+    await page.keyboard.press(PIOUS_HASTE);
+    await expect(wearing(/^Pious Haste/)).not.toHaveCount(0);
+    await page.keyboard.press(MYSTIC_REGENERATION);
+    await expect(wearing(/^Mystic Regeneration$/)).toBeVisible();
+    seen = await effects
+      .getByRole("img")
+      .evaluateAll((icons) => icons.map((icon) => icon.getAttribute("alt") ?? ""));
+    if (names.every((name) => seen.some((alt) => alt.startsWith(name)))) {
+      return aroundYou(page, -40, -45, 40, 30);
+    }
+  }
+  throw new Error(`never wore ${names.join(", ")} at once; last saw ${seen.join(", ")}`);
+}
+
 test("a hexed body wears the violet halo over its bar, with its stance band and enchantment ring at its feet (#3226)", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(90_000);
+  // Up to three passes of allThree, each waiting out a 12 s recharge and
+  // up to 30 s for a fresh hex, on top of what the match took before.
+  test.setTimeout(150_000);
   // One context, so the two pages find each other (helpers/peers.ts), and
   // one storage, so the foe plays this starter too.
   const foe = await page.context().newPage();
@@ -126,15 +173,11 @@ test("a hexed body wears the violet halo over its bar, with its stance band and 
   await expect(wearing(/^Life Siphon$/)).toBeVisible({ timeout: 30_000 });
   await expect.poll(async () => (await halo()).equals(before)).toBe(false);
 
-  // The stance first: a Pious skill takes an enchantment off you.
-  await page.keyboard.press(PIOUS_HASTE);
-  await expect(wearing(/^Pious Haste/)).not.toHaveCount(0);
-  await page.keyboard.press(MYSTIC_REGENERATION);
-  await expect(wearing(/^Mystic Regeneration$/)).toBeVisible();
-  await expect(wearing(/^Life Siphon$/)).toBeVisible();
-
+  // All three at once, in one read: on a slow runner a fixed sequence
+  // lets the hex or the 1-5.8 s stance run out first (#4108).
+  const shot = await allThree(page, foe, wearing);
   await testInfo.attach("enchanted, in a stance and hexed", {
-    body: await aroundYou(page, -40, -45, 40, 30),
+    body: shot,
     contentType: "image/png",
   });
   await foe.close();

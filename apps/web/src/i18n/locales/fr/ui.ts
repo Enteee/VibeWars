@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Ouvre le lien du relais dans son propre onglet. Rien n'a été enregistré.",
   "app.inviteInLobby": "Reviens au menu, puis rouvre le lien d'invitation.",
   "app.lostMatch": "Connexion au match perdue.",
+  "app.rejoinFailed": "Impossible de rejoindre le match : ta place n'a pas été gardée.",
   "app.malformedRelayLink": "Ce lien de relais n'est pas valide. Rien n'a été enregistré.",
   "app.ownLobby": "C'est ton propre salon",
 
@@ -478,7 +479,7 @@ export default {
   "effects.categoryShout": "Cri",
   "effects.categoryStance": "Posture",
   "effects.categoryWeaponSpell": "Sort d'arme",
-  "effects.endHint": "double-clic pour terminer",
+  "effects.endHint": "double-clic, Entrée ou Suppr pour terminer",
   "effects.from": "de {caster}",
   "effects.inRange": "tant qu'à portée",
   "effects.maintained": "maintenu",
@@ -1180,6 +1181,7 @@ export default {
   "recharge.spent": "{skill}, épuisée jusqu'à un bonus de moral",
 
   "reconnect.detail": "La connexion de l'hôte a sauté. Ta place est gardée.",
+  "reconnect.rejoinDetail": "Retour dans ton match. Ta place est gardée.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnexion…",
 

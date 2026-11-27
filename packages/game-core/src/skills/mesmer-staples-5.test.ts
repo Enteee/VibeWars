@@ -157,7 +157,7 @@ describe("Confusing Images (#2231)", () => {
     const target = foe("f");
     use(mesmer(), "mesmer.confusing-images", target);
     expect(target.statuses.get("confusing-images")?.remainingSeconds).toBe(8);
-    expect(aggregateModifiers(target.statuses.active).skillActivationMultiplier).toBe(2);
+    expect(aggregateModifiers(target.statuses.active).skillActivationMultiplier).toEqual([2]);
   });
 });
 

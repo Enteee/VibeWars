@@ -82,7 +82,8 @@ Diener (außer dem Fleischgolem), Gespenster und Geister bluten nicht, werden ni
 ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** wirken Gegner auf dich, ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberungen** du selbst oder deine
 Verbündeten. Jede wird durch ihre eigene Art von Skill entfernt. Manche
 Verzauberungen werden **aufrechterhalten**: Sie halten, bis du sie beendest, und
-kosten solange einen Energie-Pip. Doppelklicke auf ihr Symbol, um eine zu beenden.
+kosten solange einen Energie-Pip. Doppelklicke auf ihr Symbol oder fokussiere
+es und drücke Enter oder Entf, um eine zu beenden.
 
 Ein paar Skills funktionieren nicht, solange du verzaubert bist, und wieder, wenn
 du es nicht mehr bist. Ein Skill, der für deine „nächsten N Angriffe“ gilt, zählt

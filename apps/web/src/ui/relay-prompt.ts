@@ -6,6 +6,7 @@ import {
   type Relay,
 } from "../net/transport/turn-config.js";
 import { button, h, toast } from "./kit.js";
+import { holdFocus } from "./modal-focus.js";
 
 /** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
 const ARM_USE_MS = 500;
@@ -47,17 +48,12 @@ export function openRelayPrompt(
     h("p", "screen-subtitle relay-prompt-share", t("relayPrompt.sharing")),
   );
 
+  let release = (): void => undefined;
   const close = (): void => {
-    document.removeEventListener("keydown", onKey, true);
     backdrop.remove();
+    release();
     if (closeOpen === close) {
       closeOpen = undefined;
-    }
-  };
-  const onKey = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-      event.stopPropagation();
-      close();
     }
   };
   const use = button(t("relayPrompt.use"), "primary relay-prompt-use", () => {
@@ -79,7 +75,7 @@ export function openRelayPrompt(
   backdrop.appendChild(panel);
   parent.appendChild(backdrop);
   closeOpen = close;
-  document.addEventListener("keydown", onKey, true);
+  release = holdFocus(panel, close);
   // Enter on a link nobody read should not route traffic: focus starts on Ignore.
   ignore.focus();
 }

@@ -152,7 +152,7 @@ z walki. Najbliższy upuszczonej relikwii wroga odsyła ją do domu, a reszta cz
 ołtarzu. Bot niosący twoją relikwię idzie prosto na ołtarz; pozostałe opuszczają
 relikwię tylko po to, by walczyć z wrogiem w zasięgu czaru.
 
-Gra w niego Broken Tower (4v4 i 8v8, 5400x2800): przewrócona wieża na wzgórzu w wyżynach. Wejdź schodami tarasów z gruzu do ołtarza na kikucie wieży albo przejdź piwnicą pod wzgórzem, gdy dźwignia na tarasie otworzy jej drzwi; ściany z gruzu można rozbić.
+Gra w niego Broken Tower (4v4 i 8v8, 5400x2800): przewrócona wieża na wzgórzu w wyżynach. Wejdź schodami tarasów z gruzu do ołtarza na kikucie wieży albo przejdź piwnicą pod wzgórzem, gdy dźwignia na tarasie otworzy jej drzwi; ściany z gruzu można rozbić. Obok każdej ściany z gruzu jest brona, otwarta, dopóki ktoś stoi na jej płycie naciskowej.
 
 ### Cinder Sanctum
 
@@ -224,7 +224,7 @@ ołtarza, każdy bot najpierw zabija Upiornego Bohatera drugiej drużyny, gdy ty
 stanie on na ołtarzu w ich zasięgu: to jedyny wróg, który nie pozwala twojemu duchowi go
 przejąć.
 
-Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie cztery bramy: przejście twojej bramy pod murem oraz podziemia, długą drogę pod wzgórzem.
+Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie trzy bramy, przejścia pod murem.
 
 ## Punkty kontrolne
 

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Buka link relay di tab tersendiri. Belum ada yang disimpan.",
   "app.inviteInLobby": "Kembali ke menu, lalu buka lagi link undangannya.",
   "app.lostMatch": "Koneksi ke pertandingan terputus.",
+  "app.rejoinFailed": "Tidak bisa kembali ke pertandingan: kursimu tidak ditahan.",
   "app.malformedRelayLink": "Link relay itu tidak valid. Belum ada yang disimpan.",
   "app.ownLobby": "Itu lobi kamu sendiri",
 
@@ -421,7 +422,7 @@ export default {
   "effects.categoryShout": "Teriakan",
   "effects.categoryStance": "Kuda-kuda",
   "effects.categoryWeaponSpell": "Mantra Senjata",
-  "effects.endHint": "klik dua kali untuk mengakhiri",
+  "effects.endHint": "klik dua kali, Enter, atau Delete untuk mengakhiri",
   "effects.from": "dari {caster}",
   "effects.inRange": "selama dalam jangkauannya",
   "effects.maintained": "dipertahankan",
@@ -1059,6 +1060,7 @@ export default {
   "recharge.spent": "{skill}, habis sampai Dorongan Moral",
 
   "reconnect.detail": "Koneksi host terputus. Tempatmu tetap dijaga.",
+  "reconnect.rejoinDetail": "Mengembalikanmu ke pertandinganmu. Kursimu ditahan.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Menyambung ulang…",
 
