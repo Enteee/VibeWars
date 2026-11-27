@@ -4425,7 +4425,8 @@ body:has(> .splash) #menu-background::after {
   display: none;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 2.6rem 0.7rem 0;
+  margin-block-end: 0.7rem;
+  margin-inline-end: 2.6rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--line);
 }
@@ -4463,6 +4464,11 @@ body:has(> .splash) #menu-background::after {
 
   .screen button.flyout-rail-entry {
     min-height: 44px;
+  }
+
+  /* Clear of the window's close button, as the back bar is. */
+  .screen button.flyout-rail-entry:first-child {
+    margin-inline-end: 2.6rem;
   }
 }
 
