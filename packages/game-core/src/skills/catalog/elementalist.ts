@@ -21,7 +21,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     attributeId: "elementalist.fire-magic",
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
-    activationSeconds: 1,
+    activationSeconds: 1.5,
     rechargeSeconds: 7,
     range: RANGE_SPELL,
     target: "single-enemy",
@@ -323,7 +323,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "elementalist",
     attributeId: "elementalist.air-magic",
-    cost: { kind: "energy", amount: 15 },
+    cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 2,
     rechargeSeconds: 5,
@@ -381,13 +381,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Strike target foe for 5...33...40 lightning damage. This spell has
+    // "Strike target foe for 10...50...60 lightning damage. This spell has
     // 25% armor penetration."
     effects: [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 33 },
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 50 },
         },
         type: "lightning",
         armorPenetration: 0.25,
@@ -500,7 +500,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     attributeId: "elementalist.water-magic",
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
-    activationSeconds: 1,
+    activationSeconds: 1.5,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "single-enemy",
@@ -693,21 +693,21 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "...are struck for 26...85...100 earth damage. Knocked down foes are
-    // struck for 10...56...68 additional earth damage." One strike: down is
+    // "...are struck for 15...71...85 earth damage. Knocked down foes are
+    // struck for 15...71...85 additional earth damage." One strike: down is
     // read as it lands.
     effects: [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 71 },
         },
         type: "earth",
         armorPenetration: 0,
         conditionalBonus: {
           condition: { kind: "target-knocked-down" },
           amount: {
-            scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 56 },
+            scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 71 },
           },
         },
       },
@@ -2099,7 +2099,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: "elementalist.air-magic",
     cost: { kind: "energy", amount: 10 },
-    overcast: 0,
+    overcast: 10,
     activationSeconds: 1,
     rechargeSeconds: 5,
     range: RANGE_SPELL,
@@ -2126,7 +2126,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: "elementalist.earth-magic",
     cost: { kind: "energy", amount: 25 },
-    overcast: 0,
+    overcast: 10,
     activationSeconds: 3,
     rechargeSeconds: 15,
     range: RANGE_SPELL,
@@ -3410,7 +3410,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: "elementalist.fire-magic",
     cost: { kind: "energy", amount: 5 },
-    overcast: 0,
+    overcast: 10,
     activationSeconds: 2,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
@@ -3510,7 +3510,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: "elementalist.energy-storage",
     cost: { kind: "energy", amount: 5 },
-    overcast: 0,
+    overcast: 10,
     activationSeconds: 1,
     rechargeSeconds: 5,
     range: RANGE_SPELL,
@@ -4193,7 +4193,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: "elementalist.water-magic",
     // The wiki's 10 Energy; the corpus record reads 5.
-    cost: { kind: "energy", amount: 10 },
+    cost: { kind: "energy", amount: 5 },
     overcast: 5,
     activationSeconds: 1.5,
     rechargeSeconds: 7,
@@ -6431,7 +6431,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     profession: "elementalist",
     attributeId: undefined,
     cost: { kind: "energy", amount: 5 },
-    overcast: 0,
+    overcast: 5,
     activationSeconds: 1,
     rechargeSeconds: 5,
     range: RANGE_SPELL,
