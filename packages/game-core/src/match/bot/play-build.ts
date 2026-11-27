@@ -509,7 +509,7 @@ function teamTarget(
   if (diver !== undefined) {
     return { id: diver.id, fixed: false };
   }
-  const teams = heldTarget(context, foes, inRange);
+  const teams = heldTarget(context, cursor, foes, inRange);
   const held =
     teams !== undefined &&
     distance(teams.position, self.position) > RANGE_SPELL + FOCUS_REACH &&
@@ -602,9 +602,15 @@ function foeGhostOnAltar(
   return nearest;
 }
 
-/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+/**
+ * The first living foe a bot of `context.self`'s team targets, if it may
+ * be fought. Its own: the team target it last chose (`focusId`), not where
+ * its weapon went off a blocker (#4204), so it comes back once the block
+ * ends; before it chose one, what it targets.
+ */
 function heldTarget(
   context: BehaviourContext,
+  cursor: BehaviourCursor,
   foes: readonly Participant[],
   inRange: readonly Participant[],
 ): Participant | undefined {
@@ -625,7 +631,8 @@ function heldTarget(
     ) {
       continue;
     }
-    const held = foes.find((foe) => foe.id === ally.targetId);
+    const id = ally.id === self.id ? (cursor.focusId ?? ally.targetId) : ally.targetId;
+    const held = foes.find((foe) => foe.id === id);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
       return held;
     }

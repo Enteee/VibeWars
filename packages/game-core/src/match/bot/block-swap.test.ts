@@ -4,7 +4,15 @@ import { NO_RANKS, type StatusId } from "../../skills/status.js";
 import { vec2 } from "../../vec2.js";
 import { createCursor, decide, type BehaviourContext } from "../behaviour.js";
 import type { MatchSimulation, ParticipantSpec } from "../simulation.js";
-import { BOT, RANGER, WARRIOR, contextFor, fighter, match } from "./rules/test-support.js";
+import {
+  BOT,
+  ELEMENTALIST,
+  RANGER,
+  WARRIOR,
+  contextFor,
+  fighter,
+  match,
+} from "./rules/test-support.js";
 
 /** A bar of `skills`, the rest empty. */
 const bar = (...skills: string[]) => [...skills, ...Array<null>(8 - skills.length).fill(null)];
@@ -12,11 +20,16 @@ const bar = (...skills: string[]) => [...skills, ...Array<null>(8 - skills.lengt
 /**
  * Team 0: the bot `self` at (400, 400). Team 1: the warrior `t` at
  * (440, 400), hurt so it is the team's target, and the warrior `o` at
- * (470, 440) unless `alone`.
+ * (470, 440) unless `alone`; `team` joins the bot.
  */
-function field(self: ParticipantSpec, alone = false): MatchSimulation {
+function field(
+  self: ParticipantSpec,
+  alone = false,
+  team: ParticipantSpec[] = [],
+): MatchSimulation {
   const sim = match([
     self,
+    ...team,
     fighter("t", 1, WARRIOR, vec2(440, 400), { skillBar: bar() }),
     ...(alone ? [] : [fighter("o", 1, WARRIOR, vec2(470, 440), { skillBar: bar() })]),
   ]);
@@ -105,5 +118,31 @@ describe("block swap (#4204)", () => {
     });
     expect(recharging.useSkillId).toBeUndefined();
     expect(recharging.attackTargetId).toBe("o");
+  });
+
+  it("comes back to the team's target once the block ends, though it targets the other foe", () => {
+    const sim = field(warrior());
+    const cursor = createCursor();
+    const think = () => {
+      cursor.waitSeconds = 0;
+      const intent = decide(BOT, cursor, contextFor(sim, "w"));
+      sim.setTarget("w", intent.targetId);
+      return intent;
+    };
+    expect(think().attackTargetId).toBe("t");
+    blocks(sim, "bonettis-defense");
+    expect(think().attackTargetId).toBe("o");
+    expect(think().attackTargetId).toBe("o");
+    sim.get("t")?.combatant.statuses.clear();
+    expect(think().attackTargetId).toBe("t");
+  });
+
+  it("pulls a later teammate's team target onto the foe it swapped to: accepted", () => {
+    const sim = field(warrior(), false, [
+      fighter("e", 0, ELEMENTALIST, vec2(300, 400), { skillBar: bar("elementalist.flare") }),
+    ]);
+    blocks(sim, "bonettis-defense");
+    sim.setTarget("w", ask(sim, "w").targetId);
+    expect(ask(sim, "e")).toMatchObject({ useSkillId: "elementalist.flare", targetId: "o" });
   });
 });
