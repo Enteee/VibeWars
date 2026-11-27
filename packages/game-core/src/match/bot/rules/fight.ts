@@ -66,7 +66,8 @@ const SPIKE_TOLERANCE = 1e-6;
  * fires so the hits land together: the slowest skill at once, a faster
  * one the difference later. Before it, a bot with a strip ready casts it
  * at the team's target while a defence enchantment is on it (#2634),
- * and its teammates hold for it.
+ * and its teammates hold for it. Its weapon and attack skills go to
+ * `attackTarget`, off a foe that blocks them (#4204); its spells stay.
  */
 const fight: BotRule = {
   order: 100,
@@ -81,6 +82,7 @@ const fight: BotRule = {
     spikeHold,
     targetId,
     targetFixed,
+    attackTarget,
     nearestFirst,
     mayUse,
     use,
@@ -177,7 +179,9 @@ const fight: BotRule = {
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : (freshFoe(held) ?? aside(held) ?? targetId);
+        : (freshFoe(held) ??
+          aside(held) ??
+          (held.attack === undefined ? targetId : (attackTarget(held) ?? targetId)));
     // The team's target is `play-build`'s: a guard's own, or a ghost on
     // the altar (#2600), is fought as it comes.
     if (cursor.spikeTargetId !== targetId) {
@@ -262,24 +266,27 @@ const fight: BotRule = {
     if (skill !== undefined) {
       return use(skill, castOn(skill));
     }
-    // The weapon, from where it stands while a step would end what it holds
-    // or take a healer off its post.
+    // The weapon, at a foe that does not block it (#4204), from where it
+    // stands while a step would end what it holds or take a healer off its
+    // post.
+    const swingId = attackTarget(undefined);
+    const swingAt = context.participants.find((other) => other.id === swingId);
     const { weapon } = self.combatant.equipment.mainHand;
     const reach = holding
       ? RANGE_MELEE
-      : target === undefined || !feelsHeight(weapon.id)
+      : swingAt === undefined || !feelsHeight(weapon.id)
         ? weapon.range
         : heightRange(
             weapon.range,
-            heightStep(self.floors, self.layer, target.floors, target.layer),
+            heightStep(self.floors, self.layer, swingAt.floors, swingAt.layer),
           );
     if (
       (holding || covering) &&
-      (target === undefined || distance(self.position, target.position) > reach)
+      (swingAt === undefined || distance(self.position, swingAt.position) > reach)
     ) {
       return { ...NOTHING, targetId };
     }
-    return { ...NOTHING, targetId, attackTargetId: targetId };
+    return { ...NOTHING, targetId: swingId, attackTargetId: swingId };
   },
 };
 

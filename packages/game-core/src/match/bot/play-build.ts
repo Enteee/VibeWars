@@ -1,6 +1,6 @@
 import { RANGE_SPELL } from "../../distances.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
-import { isSpell, type Skill } from "../../skills/types.js";
+import { isSpell, type Skill, type Surroundings } from "../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../vec2.js";
 import type {
   Behaviour,
@@ -14,6 +14,7 @@ import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { idleWander } from "./rules/idle-wander.js";
 import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
+import { blocksMe } from "./block-swap.js";
 import { diverOn } from "./peel.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -361,6 +362,10 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   markHealth(cursor, context.now, healthFraction(self));
+  // Built only when a rule weighs a blow at a blocker (#4204).
+  let around: Surroundings | undefined;
+  const surroundings = (): Surroundings =>
+    (around ??= new Map(context.participants.map((body) => [body.id, body])));
   const punished = punishments(self);
   const rule: RuleContext = {
     context,
@@ -370,6 +375,8 @@ function think(
     allies,
     targetId,
     targetFixed,
+    attackTarget: (attackSkill) =>
+      attackTarget(context, foes, targetId, attackSkill, surroundings()),
     nearestFirst: (bodies) =>
       [...bodies].sort(
         (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -411,9 +418,21 @@ function think(
     ),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
+  cursor.swapId = undefined;
   for (const each of BOT_RULES) {
     const intent = each.decide(rule);
     if (intent !== undefined) {
+      // Its weapon off a blocking team target (#4204): `heldTarget` reads
+      // the team target for it, so it comes back once the block ends.
+      const attack = rule.bar.find((held) => held.id === intent.useSkillId);
+      const weapon =
+        intent.useSkillId === undefined
+          ? intent.attackTargetId !== undefined
+          : attack?.attack !== undefined;
+      cursor.swapId =
+        weapon && intent.targetId !== targetId && intent.targetId === rule.attackTarget(attack)
+          ? intent.targetId
+          : undefined;
       // Any other answer, a fight first among them, ends a wait for the team (#2621).
       if (each !== regroup) {
         cursor.regrouping = false;
@@ -482,6 +501,41 @@ function forbidden(
 }
 
 /**
+ * The foe `context.self` hits with `attackSkill`, or a plain swing when
+ * `undefined` (#4204): the team's `targetId`, unless that foe blocks at
+ * least `BLOCK_SWAP_CHANCE` of the blow (`blocksMe`). Then, as in GW1 PvP,
+ * it swings at the `focusPick` of the other foes in spell range that do
+ * not, and goes back the think the block ends. Never off a human's call
+ * (#4188); with no other foe to hit, at the blocker still. A creature
+ * only while no fighter is in range.
+ */
+function attackTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  targetId: string | undefined,
+  attackSkill: Skill | undefined,
+  surroundings: Surroundings,
+): string | undefined {
+  const self = context.self;
+  const target = foes.find((foe) => foe.id === targetId);
+  if (
+    target === undefined ||
+    target.id === context.calledTargetId ||
+    !blocksMe(self.combatant, target.combatant, attackSkill, surroundings)
+  ) {
+    return targetId;
+  }
+  const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  const eligible = fightable([target, ...near]);
+  const others = near.filter(
+    (foe) =>
+      foe.id !== target.id &&
+      eligible(foe) &&
+      !blocksMe(self.combatant, foe.combatant, attackSkill, surroundings),
+  );
+  return focusPick(self, others)?.id ?? targetId;
+}
+/**
  * The foe a bot fights, and whether it is `fixed` (#4147): called, a
  * ghost on the altar or a kill being finished, so not one an area skill
  * leaves for a clump of foes.
@@ -533,7 +587,7 @@ function teamTarget(
   if (diver !== undefined) {
     return { id: diver.id, fixed: false };
   }
-  const teams = heldTarget(context, foes, inRange);
+  const teams = heldTarget(context, cursor, foes, inRange);
   const held =
     teams !== undefined &&
     distance(teams.position, self.position) > RANGE_SPELL + FOCUS_REACH &&
@@ -626,9 +680,15 @@ function foeGhostOnAltar(
   return nearest;
 }
 
-/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+/**
+ * The first living foe a bot of `context.self`'s team targets, if it may
+ * be fought. Its own, while its weapon went off a blocker (`swapId`), is
+ * the team target it last chose (`focusId`, #4204), so it comes back once
+ * the block ends.
+ */
 function heldTarget(
   context: BehaviourContext,
+  cursor: BehaviourCursor,
   foes: readonly Participant[],
   inRange: readonly Participant[],
 ): Participant | undefined {
@@ -649,7 +709,11 @@ function heldTarget(
     ) {
       continue;
     }
-    const held = foes.find((foe) => foe.id === ally.targetId);
+    const id =
+      ally.id === self.id && cursor.swapId !== undefined && ally.targetId === cursor.swapId
+        ? cursor.focusId
+        : ally.targetId;
+    const held = foes.find((foe) => foe.id === id);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
       return held;
     }

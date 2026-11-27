@@ -275,6 +275,8 @@ export interface BehaviourCursor {
   front: number | undefined;
   /** `play-build`: the team target its last think chose (#4188), `undefined` before it chose one. */
   focusId: string | undefined;
+  /** `play-build`: the foe its weapon went to last think off a team target that blocks it (#4204), else `undefined`. */
+  swapId: string | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
@@ -554,6 +556,7 @@ export function createCursor(): BehaviourCursor {
     regroupSpent: false,
     front: undefined,
     focusId: undefined,
+    swapId: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
     spikeReadySeconds: undefined,
