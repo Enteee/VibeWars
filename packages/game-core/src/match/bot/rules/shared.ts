@@ -345,6 +345,15 @@ export function onErrand(
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
 export const ELBOW_DISTANCE = 100;
 
+/** A dived ranged bot or healer kites a melee foe at most this share of its own speed (#4166). */
+export const KITE_SPEED_EDGE = 0.9;
+
+/** How far a kiting bot steps away from its slowed foe between shots (#4166). */
+export const KITE_STEP = 150;
+
+/** A kiting bot steps only within this share of a swing, the shot just gone off (#4166). */
+export const KITE_SWING_WINDOW = 0.25;
+
 /** A healer looks after another ally only once that one is this much more hurt than its own (#2615). */
 export const WARD_SWITCH = 0.15;
 
