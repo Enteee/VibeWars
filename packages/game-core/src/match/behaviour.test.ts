@@ -112,8 +112,8 @@ describe("cast-loop", () => {
   });
 
   // Troll Unguent: 3 s to cast, 10 s recharge. Fireball: 1.5 s, 7 s. The
-  // first cast begins at the end of tick 1, t=0.05; sixty 0.05 s ticks
-  // leave a floating-point sliver of it, so it lands one tick later, at 3.1.
+  // first cast begins at the end of tick 1, t=0.05, and lands 3 s on, at
+  // 3.05 (#4231).
   const inOrder = (gapSeconds: number): (string | number | undefined)[][] => {
     const troll = "ranger.troll-unguent";
     const sim = new MatchSimulation({
@@ -137,19 +137,19 @@ describe("cast-loop", () => {
   };
 
   it("takes skills in order without firstLegal, the next one queued for the end of the aftercast", () => {
-    // Troll Unguent resolves at 3.1; its 0.75 s aftercast (#317) holds
-    // Fireball's 1.5 s cast back until 3.85. The Fireball lands 150 units
+    // Troll Unguent resolves at 3.05; its 0.75 s aftercast (#317) holds
+    // Fireball's 1.5 s cast back until 3.8. The Fireball lands 150 units
     // on, 0.4 s after its release (#535).
     expect(inOrder(0)).toEqual([
-      ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 5.35],
-      [FIREBALL, 5.75],
+      ["ranger.troll-unguent", 3.05],
+      [FIREBALL, 5.3],
+      [FIREBALL, 5.7],
     ]);
   });
 
   it("waits gapSeconds from the start of one cast to the start of the next", () => {
     expect(inOrder(5)).toEqual([
-      ["ranger.troll-unguent", 3.1],
+      ["ranger.troll-unguent", 3.05],
       [FIREBALL, 6.6],
       [FIREBALL, 7],
     ]);
