@@ -88,13 +88,7 @@ async function observe(
 ): Promise<{ viewer: ObserverConnection; transport: Transport }> {
   const transport = match.network.join(peerId);
   await settle();
-  const viewing = connectObserver({
-    transport,
-    hostId: "host",
-    matchId,
-    timeoutMs: 1000,
-    waitFrom: Promise.resolve(),
-  });
+  const viewing = connectObserver({ transport, hostId: "host", matchId, timeoutMs: 1000 });
   await settle();
   return { viewer: await viewing, transport };
 }
@@ -136,7 +130,6 @@ describe("a match's observers (#480)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 1000,
-      waitFrom: Promise.resolve(),
     });
     await settle();
     const before = ticks;
@@ -167,7 +160,6 @@ describe("a match's observers (#480)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 1000,
-      waitFrom: Promise.resolve(),
     });
     await settle();
     const viewer = await connecting;
@@ -200,13 +192,7 @@ describe("a match's observers (#480)", () => {
   it("are a spectator the lobby has on no team, of the match being played", async () => {
     const { match, a } = await twoPlayers(["viewer"]);
     const refusal = async (transport: Transport, matchId = TEST_MATCH_ID): Promise<unknown> =>
-      connectObserver({
-        transport,
-        hostId: "host",
-        matchId,
-        timeoutMs: 1000,
-        waitFrom: Promise.resolve(),
-      }).then(
+      connectObserver({ transport, hostId: "host", matchId, timeoutMs: 1000 }).then(
         () => undefined,
         (error: unknown) => (error instanceof MatchRefusedError ? error.reason : error),
       );
@@ -244,7 +230,6 @@ describe("a match's observers (#480)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 1000,
-      waitFrom: Promise.resolve(),
     });
     // On its way before the observe was heard, as a draining match's end is.
     const ended: WireEnded = {
@@ -298,13 +283,7 @@ describe("a match's observers (#480)", () => {
 
     // Asking again, now the end has gone out.
     await expect(
-      connectObserver({
-        transport,
-        hostId: "host",
-        matchId: TEST_MATCH_ID,
-        timeoutMs: 1000,
-        waitFrom: Promise.resolve(),
-      }),
+      connectObserver({ transport, hostId: "host", matchId: TEST_MATCH_ID, timeoutMs: 1000 }),
     ).rejects.toMatchObject({ reason: "match-over" });
   });
 
@@ -348,7 +327,6 @@ describe("an observe said again (#1805)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 10_000,
-      waitFrom: Promise.resolve(),
     });
     await vi.advanceTimersByTimeAsync(3000);
     createMatchHost({
@@ -375,43 +353,6 @@ describe("an observe said again (#1805)", () => {
     await vi.advanceTimersByTimeAsync(5 * HELLO_RESEND_MS);
     expect(observes()).toBe(said);
     expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it("is said at once, but waited on only from `waitFrom` on: a page booting its arena (#4139)", async () => {
-    const network = createMemoryNetwork();
-    network.join("host");
-    const transport = network.join("viewer");
-    await settle();
-    const sent = vi.spyOn(transport, "send");
-    let booted = (): void => undefined;
-    const waitFrom = new Promise<void>((resolve) => {
-      booted = resolve;
-    });
-    let outcome: unknown;
-    void connectObserver({
-      transport,
-      hostId: "host",
-      matchId: TEST_MATCH_ID,
-      timeoutMs: 10_000,
-      waitFrom,
-    })
-      .then(
-        () => "joined",
-        (error: unknown) => error,
-      )
-      .then((settled) => {
-        outcome = settled;
-      });
-    expect(sent.mock.calls.filter(([type]) => type === "observe")).toHaveLength(1);
-
-    // However long the boot froze the page, no wait has run yet.
-    await vi.advanceTimersByTimeAsync(30_000);
-    expect(outcome).toBeUndefined();
-    booted();
-    await vi.advanceTimersByTimeAsync(9_999);
-    expect(outcome).toBeUndefined();
-    await vi.advanceTimersByTimeAsync(1);
-    expect(outcome).toBeInstanceOf(MatchTimeoutError);
   });
 
   it("is told it observes each time, as one observer", async () => {
@@ -482,6 +423,21 @@ describe("an observer whose host's peer goes (#4105)", () => {
     expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
   });
 
+  it("watches on when only the host saw it go and come back (#4139)", async () => {
+    const { match, viewer, states, observes } = await watching();
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+
+    // A page frozen past the transport's timeout, which never saw the host go.
+    match.network.blip("host", "viewer");
+    await settle();
+    expect(states).toEqual([]);
+    expect(observes()).toBe(0);
+
+    // Taken back as it was: the delay fills again, and the stream runs on.
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
+  });
+
   it("says one observe at a time however often the host flaps", async () => {
     const { match, states, observes } = await watching();
     match.network.stall("viewer", "host");
@@ -522,7 +478,6 @@ describe("an observer whose host's peer goes (#4105)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 10_000,
-      waitFrom: Promise.resolve(),
     });
     viewing.catch((error: unknown) => {
       failed = error;
@@ -554,7 +509,6 @@ describe("an observer whose host's peer goes (#4105)", () => {
       hostId: "host",
       matchId: TEST_MATCH_ID,
       timeoutMs: 10_000,
-      waitFrom: Promise.resolve(),
     });
     viewing.catch((error: unknown) => {
       failed = error;

@@ -747,6 +747,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   /** The peers watching (#480): no seat, and nothing sent but `delayed`. */
   const observers = new Set<string>();
   /**
+   * The observers this host saw leave, until they are heard again (#4139).
+   * Like a seat's drop, it may be the host's alone: a page frozen past the
+   * transport's timeout never saw the host go, so never says observe again.
+   */
+  const droppedObservers = new Set<string>();
+  /**
    * The last `OBSERVER_DELAY_SECONDS` of ticks, oldest first, for every
    * observer at once (#480). Kept only while one is watching.
    */
@@ -1016,6 +1022,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       }
       if (entry.ended !== undefined) {
         observers.clear();
+        droppedObservers.clear();
         delayed = [];
       }
     }
@@ -1507,6 +1514,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     challenges.delete(peerId);
     proving.delete(peerId);
+    if (observers.has(peerId)) {
+      droppedObservers.add(peerId);
+    }
     unobserve(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
@@ -1530,6 +1540,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A dropped peer heard again is told its seat is held, or that it is
   // gone (#3772); a peer the host never dropped hears nothing.
   transport.onPeerJoin((peerId) => {
+    // An observer heard again watches on, the delay filling again first.
+    if (droppedObservers.delete(peerId) && !retired && !(finished && delayed.length === 0)) {
+      observers.add(peerId);
+      return;
+    }
     const playerId = droppedPeers.get(peerId);
     if (playerId === undefined || finished || retired) {
       return;
@@ -1854,6 +1869,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       // Nothing more is ticked onto a transport that has left.
       finished = true;
       observers.clear();
+      droppedObservers.clear();
       delayed = [];
       const ended: WireEnded = {
         winningTeam: null,

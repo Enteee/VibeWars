@@ -71,16 +71,10 @@ export interface ConnectObserverOptions {
   readonly matchId: string;
   /** How long to wait for `observing`. */
   readonly timeoutMs: number;
-  /**
-   * When that wait starts (#4139). The observe is said at once, but a
-   * page that boots its arena meanwhile can freeze for seconds and could
-   * not take the answer: the wait runs from when it is ready to.
-   */
-  readonly waitFrom: Promise<void>;
 }
 
 export function connectObserver(options: ConnectObserverOptions): Promise<ObserverConnection> {
-  const { transport, hostId, matchId, timeoutMs, waitFrom } = options;
+  const { transport, hostId, matchId, timeoutMs } = options;
   const unsubscribe: (() => void)[] = [];
   let latest:
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
@@ -256,14 +250,9 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       stop();
       reject(error);
     };
-    let timer: unknown;
-    void waitFrom.then(() => {
-      if (!settled) {
-        timer = setTimeout(() => {
-          fail(new MatchTimeoutError(timeoutMs));
-        }, timeoutMs);
-      }
-    });
+    const timer = setTimeout(() => {
+      fail(new MatchTimeoutError(timeoutMs));
+    }, timeoutMs);
     onLostWhileJoining = () => {
       fail(new HostLeftError());
     };

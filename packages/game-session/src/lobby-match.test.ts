@@ -184,7 +184,6 @@ describe("a lobby's own match", () => {
       hostId,
       matchId,
       timeoutMs: 1000,
-      waitFrom: Promise.resolve(),
     });
     await settle();
     const viewer = await watching;
@@ -195,7 +194,6 @@ describe("a lobby's own match", () => {
         hostId,
         matchId,
         timeoutMs: 1000,
-        waitFrom: Promise.resolve(),
       }),
     ).rejects.toMatchObject({ reason: "not-a-spectator" });
 
@@ -224,7 +222,6 @@ describe("a lobby's own match", () => {
       hostId: spectator.connection.getSnapshot().hostId,
       matchId: watch.matchId,
       timeoutMs: 1000,
-      waitFrom: Promise.resolve(),
     });
     await settle();
     const viewer = await watching;
@@ -247,7 +244,6 @@ describe("a lobby's own match", () => {
         hostId: who.connection.getSnapshot().hostId,
         matchId: matchId(n),
         timeoutMs: 1000,
-        waitFrom: Promise.resolve(),
       });
     // One stays a viewer of the first match, one goes on to watch the
     // second, and one to play in it.

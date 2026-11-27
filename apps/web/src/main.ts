@@ -3446,7 +3446,7 @@ async function main(): Promise<void> {
         {
           kind: "observe",
           selfSessionId: from.selfSessionId,
-          connect: (booted) => observeMatchFor(from, watch, booted),
+          connect: () => observeMatchFor(from, watch),
         },
         ownOptions,
       );

@@ -1266,17 +1266,15 @@ export async function connectMatchFor(
   return connection;
 }
 
-/** Watch the lobby's match `watch` names (#480), from no team, waiting for its answer from `waitFrom` on. */
+/** Watch the lobby's match `watch` names (#480), from no team. */
 export function observeMatchFor(
   lobby: LobbyConnection,
   watch: MatchToWatch,
-  waitFrom: Promise<void>,
 ): Promise<ObserverConnection> {
   return connectObserver({
     transport: watch.transport,
     hostId: lobby.getSnapshot().hostId,
     matchId: watch.matchId,
     timeoutMs: MATCH_TIMEOUT_MS,
-    waitFrom,
   });
 }
