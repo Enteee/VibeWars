@@ -47,12 +47,13 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // "Heal target ally for 30...70...80 Health".
     effects: [
       {
         kind: "heal",
         received: "heal",
         amount: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 70 },
         },
       },
     ],
@@ -234,17 +235,17 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Heal target other ally for 15...51...60 Health and an additional
-    // 10...30...35 Health for each enchantment or hex on that ally" (#920):
+    // "Heal target other ally for 20...56...65 Health and an additional
+    // 15...35...40 Health for each enchantment or hex on that ally" (#920):
     // one heal (#1760).
     effects: [
       {
         kind: "heal",
         received: "heal",
-        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment", "hex"] },
-          amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
+          amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 35 } },
           max: undefined,
         },
       },
@@ -1012,9 +1013,9 @@ export const MONK_SKILLS: readonly Skill[] = [
     attributeId: "monk.healing-prayers",
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
-    // The PvP page (167): 1 s, 20 s. The PvE split (1330) is not imported.
+    // The PvP split (3232): 1 s, 10 s. The PvE numbers (287: 2 s, 2 s) are not used.
     activationSeconds: 1,
-    rechargeSeconds: 20,
+    rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
     // "Heal entire party": the caster and every living team-mate, however

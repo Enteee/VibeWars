@@ -443,3 +443,16 @@ describe("scales with its caster's rank (#2158)", () => {
     expect(lines).toContain(text);
   });
 });
+
+describe("Orison of Healing (#4168)", () => {
+  it("heals 70 at Healing Prayers 12: 'Heal target ally for 30...70...80 Health'", () => {
+    const caster = makeCombatant({
+      id: "m",
+      team: 0,
+      health: 200,
+      maxHealth: 500,
+      attributeRanks: new Map([["monk.healing-prayers", 12]]),
+    });
+    expect(healed(landed(ORISON, caster))).toEqual([70]);
+  });
+});
