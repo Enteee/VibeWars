@@ -798,6 +798,10 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+How a flyout with sub-pages navigates them (Help, Options): three proposals
+mocked in the real flyouts, with a recommendation:
+[`flyout-nav-study.md`](flyout-nav-study.md).
+
 ### Guild cape (decided: A of the motion study)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
