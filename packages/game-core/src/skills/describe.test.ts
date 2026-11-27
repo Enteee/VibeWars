@@ -496,7 +496,7 @@ describe("describeSkill", () => {
       "If that action was a spell: gain 13 energy",
     ]);
     expect(lines("monk.dwaynas-kiss")).toEqual([
-      "Heals for 51, +30 Health for each enchantment or hex on them",
+      "Heals for 56, +35 Health for each enchantment or hex on them",
     ]);
   });
 
@@ -669,10 +669,10 @@ describe("describeSkill", () => {
 
   it("leads with the number that matters at these ranks (#567)", () => {
     const healing = skill("monk.orison-of-healing");
-    expect(describeSkill(healing, undefined, EN_WORDS, EN_NAMES).headline).toBe("heals 20");
+    expect(describeSkill(healing, undefined, EN_WORDS, EN_NAMES).headline).toBe("heals 30");
     expect(
       describeSkill(healing, new Map([["monk.healing-prayers", 12]]), EN_WORDS, EN_NAMES).headline,
-    ).toBe("heals 60");
+    ).toBe("heals 70");
     expect(
       describeSkill(skill("elementalist.fireball"), undefined, EN_WORDS, EN_NAMES).headline,
     ).toMatch(/^\d+ fire damage$/);

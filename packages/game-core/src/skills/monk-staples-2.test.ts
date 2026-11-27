@@ -258,3 +258,12 @@ describe("Healing Breeze (#1013), in a match", () => {
     }
   });
 });
+
+describe("Heal Party (#4168)", () => {
+  it("costs 15 Energy and recharges in 10 s, as its PvP split", () => {
+    expect(getSkill("monk.heal-party")).toMatchObject({
+      cost: { kind: "energy", amount: 15 },
+      rechargeSeconds: 10,
+    });
+  });
+});
