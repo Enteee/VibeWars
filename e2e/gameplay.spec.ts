@@ -645,6 +645,10 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
 test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
   page,
 }) => {
+  // A match started on two pages, then a dozen HUD clicks, seconds each on
+  // a software renderer and far more on a loaded one, outrun the default
+  // 60 s (#4140).
+  test.slow();
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const attacking = page.locator(".hud-attacking");
