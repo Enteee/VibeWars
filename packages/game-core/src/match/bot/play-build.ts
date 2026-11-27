@@ -405,9 +405,21 @@ function think(
     ),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
+  cursor.swapId = undefined;
   for (const each of BOT_RULES) {
     const intent = each.decide(rule);
     if (intent !== undefined) {
+      // Its weapon off a blocking team target (#4204): `heldTarget` reads
+      // the team target for it, so it comes back once the block ends.
+      const attack = rule.bar.find((held) => held.id === intent.useSkillId);
+      const weapon =
+        intent.useSkillId === undefined
+          ? intent.attackTargetId !== undefined
+          : attack?.attack !== undefined;
+      cursor.swapId =
+        weapon && intent.targetId !== targetId && intent.targetId === rule.attackTarget(attack)
+          ? intent.targetId
+          : undefined;
       // Any other answer, a fight first among them, ends a wait for the team (#2621).
       if (each !== regroup) {
         cursor.regrouping = false;
@@ -604,9 +616,9 @@ function foeGhostOnAltar(
 
 /**
  * The first living foe a bot of `context.self`'s team targets, if it may
- * be fought. Its own: the team target it last chose (`focusId`), not where
- * its weapon went off a blocker (#4204), so it comes back once the block
- * ends; before it chose one, what it targets.
+ * be fought. Its own, while its weapon went off a blocker (`swapId`), is
+ * the team target it last chose (`focusId`, #4204), so it comes back once
+ * the block ends.
  */
 function heldTarget(
   context: BehaviourContext,
@@ -631,7 +643,10 @@ function heldTarget(
     ) {
       continue;
     }
-    const id = ally.id === self.id ? (cursor.focusId ?? ally.targetId) : ally.targetId;
+    const id =
+      ally.id === self.id && cursor.swapId !== undefined && ally.targetId === cursor.swapId
+        ? cursor.focusId
+        : ally.targetId;
     const held = foes.find((foe) => foe.id === id);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
       return held;
