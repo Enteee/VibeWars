@@ -40,6 +40,8 @@ Dopóki jesteś aktywny, bot, którego walka odciągnęła daleko od ciebie, wra
 Bot z pierwszej linii odwraca się przeciw wrogowi, który atakuje uzdrowiciela lub czarodziejów jego drużyny, chyba że właśnie dobija własny cel.
 Bot z czarem obszarowym rzuca go tam, gdzie trzech lub więcej wrogów stoi razem, chyba że drużyna właśnie dobija wroga albo podąża za wskazanym celem.
 
+Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
+
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów. Dwa boty burzą też mur, który zasłania znacznie krótszą drogę, uderzając w niego bronią.

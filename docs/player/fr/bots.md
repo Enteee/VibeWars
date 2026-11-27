@@ -44,6 +44,8 @@ Tant que tu es actif, un bot qu'un combat a entraîné loin de toi revient vers 
 Un bot de première ligne se retourne contre un ennemi qui attaque le soigneur ou les lanceurs de sorts de son équipe, sauf s'il est sur le point d'achever sa propre cible.
 Un bot qui a un sort de zone le lance là où trois ennemis ou plus se tiennent ensemble, sauf si l'équipe achève un ennemi ou suit une cible annoncée.
 
+Face à une équipe qui a des compétences de zone, les bots à distance et les soigneurs restent écartés, pour qu'une seule explosion n'en touche pas deux. Ils ne renoncent jamais à un abri pour cela.
+
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.
 Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis. Deux bots abattent aussi un mur qui cache un chemin bien plus court, en le frappant de leurs armes.

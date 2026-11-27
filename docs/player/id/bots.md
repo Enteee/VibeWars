@@ -42,6 +42,8 @@ Selama kamu aktif, bot yang terseret pertarungan jauh darimu berjalan kembali ke
 Bot garis depan berbalik menyerang musuh yang menyerang penyembuh atau perapal mantra timnya, kecuali ia hampir menghabisi targetnya sendiri.
 Bot yang punya mantra area menjatuhkannya di tempat tiga musuh atau lebih berdiri berdekatan, kecuali timnya sedang menghabisi musuh atau mengikuti target yang ditandai.
 
+Melawan tim dengan skill area, bot jarak jauh dan healer saling menjaga jarak, agar satu ledakan tidak mengenai dua dari mereka. Mereka tidak pernah melepas perlindungan untuk itu.
+
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
 Saat tidak ada lawan di dekatnya, bot menarik tuas yang membuka jalan lebih pendek ke arah lawan. Dua bot juga merobohkan tembok yang menyembunyikan jalan yang jauh lebih pendek, dengan memukulnya memakai senjata mereka.

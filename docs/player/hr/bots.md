@@ -42,6 +42,8 @@ Dok si aktivan, bot kojeg je borba odvukla daleko od tebe vraća se k tebi, osim
 Bot u prvoj liniji okreće se protiv neprijatelja koji napada iscjelitelja ili bacače čarolija njegova tima, osim ako upravo ne dovršava vlastitu metu.
 Bot s čarolijom na području baca je tamo gdje tri ili više neprijatelja stoje zajedno, osim ako tim upravo ne dovršava neprijatelja ili ne prati najavljenu metu.
 
+Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
+
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja. Dva bota također sruše zid koji skriva mnogo kraći put, udarajući ga svojim oružjem.
