@@ -90,11 +90,12 @@ nothing, and neither do spells. Taking damage from a foe charges you too
 units, so a hit for a quarter of your health is a strike; degeneration,
 sacrifice and a killing blow give nothing. The damage counted is before
 the flat per-hit cuts (#4163): Shielding Hands, Shield of Absorption or a
-rune take health off the hit but not adrenaline. A hit they take to 0
-gives nothing. A status that makes adrenaline come **faster** (Onslaught,
+rune take health off the hit but not adrenaline, even a hit they take
+to 0. A status that makes adrenaline come **faster** (Onslaught,
 Natural Temper, Soldier's Fury, Infuriating Heat) speeds only what your
 blows earn, not damage taken nor a skill's own gain; Focused Anger alone
-speeds every source. Using an adrenaline skill
+speeds every source. Soothing's slowdown reaches every source too.
+Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. A skill that says **"Lose

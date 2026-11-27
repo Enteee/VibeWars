@@ -16,7 +16,7 @@ import { chargeAdrenaline, strikesOf, withAttackDuration } from "../skills/testi
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
-import { NO_RANKS } from "../skills/status.js";
+import { NO_RANKS, type StatusId } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -420,7 +420,7 @@ describe("adrenaline from damage taken (#827)", () => {
    */
   function firstBlow(
     maxHealth: number,
-    ...statuses: string[]
+    ...statuses: StatusId[]
   ): { amount: number; units: number; severArtery: number } {
     const match = sim(swordsman("a", vec2(0, 0)), victim(maxHealth));
     for (const status of statuses) {
@@ -453,7 +453,7 @@ describe("adrenaline from damage taken (#827)", () => {
     expect(firstBlow((4 * amount * 120) / 119).units).toBe(24);
   });
 
-  it.each(["shielding-hands", "shield-of-absorption"])(
+  it.each<StatusId>(["shielding-hands", "shield-of-absorption"])(
     "%s takes damage off the blow but not the adrenaline it charges (#4163)",
     (status) => {
       const { amount } = firstBlow(1e6);

@@ -238,6 +238,24 @@ describe("damage effect", () => {
     });
   });
 
+  it("still lands a hit a flat cut takes to 0, for what it would have dealt (#4163)", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("shielding-hands", 10, "monk", NO_RANKS);
+    const ctx = context(makeCombatant({ id: "caster" }), target);
+    const events = applyEffect(
+      { kind: "damage", amount: { flat: 10 }, type: "typeless", armorPenetration: 0 },
+      ctx,
+    );
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "target",
+      amount: 0,
+      unreduced: 10,
+      critical: false,
+    });
+    expect(target.health).toBe(target.maxHealth);
+  });
+
   it("clamps health at zero rather than going negative", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 30 });
     const ctx = context(makeCombatant({ id: "caster" }), target);

@@ -443,11 +443,17 @@ function landDamage(
   // `undefined`: a bond's share, never redirected again.
   source: DamageSource | undefined,
 ): void {
-  if (amount <= 0 || target.dead) {
+  if (target.dead || amount + reduced <= 0) {
     return;
   }
   if (isInvulnerable(target)) {
     events.push({ kind: "invulnerable", targetId: target.id });
+    return;
+  }
+  // A hit the flat cuts took to 0 still landed (#4163): it charges the
+  // struck from what it would have dealt, and touches no health.
+  if (amount <= 0) {
+    events.push({ kind: "damage", targetId: target.id, amount: 0, unreduced: reduced, critical });
     return;
   }
   // Mist Form's (#1951), Intimidating Aura's (#2207) and Armor of
