@@ -108,6 +108,7 @@ export default defineConfig({
       VITE_VIBEWARS_MENU_BACKGROUND: "off",
       VITE_VIBEWARS_TUTORIAL_STATION: "on",
       VITE_VIBEWARS_PRE_MATCH: "short",
+      VITE_VIBEWARS_BOTS: "hold",
       VITE_VIBEWARS_SUMMARY_FIXTURE: "on",
       // The bench's maps (#3444): the tutorial spec's flat map is bench-flat.
       VIBEWARS_BENCH_REFERENCE: "1",

@@ -344,6 +344,7 @@ describe("an observe said again (#1805)", () => {
       nowSeconds: () => 0,
       signetOf: testSignet,
       recordReplay: false,
+      holdBots: false,
       preMatch: null,
     });
     await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);

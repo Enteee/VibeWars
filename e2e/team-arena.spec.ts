@@ -63,17 +63,28 @@ async function press(page: Page, target: Locator): Promise<void> {
   await target.click();
 }
 
-/** `host` hosts Team Arena as `hostName`, and `guest` joins it as `guestName`. */
+/**
+ * Where a page opens so the bots of any match it hosts stand still
+ * (#4146): idle humans would be wiped, and the match over, before a slow
+ * runner checks it.
+ */
+const HOLD_BOTS = "./?bots=hold";
+
+/**
+ * `host` hosts Team Arena as `hostName`, and `guest` joins it as
+ * `guestName`, both at `url`.
+ */
 async function formParty(
   [host, guest]: readonly [Page, Page],
   [hostName, guestName]: readonly [string, string],
+  url = "./",
 ): Promise<void> {
-  await host.goto("./");
+  await host.goto(url);
   await namePlayer(host, hostName);
   await openRail(host, "Team Arena");
   await openToFriends(host);
   const invite = await copyInvite(host);
-  await guest.goto("./");
+  await guest.goto(url);
   await namePlayer(guest, guestName);
   await joinFriend(guest, invite);
   // One side only: no second team, no bots to add, no Start.
@@ -195,7 +206,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await ann.getByRole("button", { name: "Save", exact: true }).click();
     await expect(ann.locator(".toast")).toHaveText("Saved");
 
-    await formParty([ann, bea], ["Ann", "Bea"]);
+    await formParty([ann, bea], ["Ann", "Bea"], HOLD_BOTS);
     await runTeamLobby([ann, bea], () => voteTeam(ann, bea, "Quad"));
     // The queue is the top bar's icon's (#2743).
     for (const page of [ann, bea]) {
@@ -209,7 +220,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(ann.getByRole("button", { name: "Find a match", exact: true })).toHaveCount(0);
 
     // The other party votes for the Quad too, so no stage runs its clock (#2872).
-    await formParty([cid, dot], ["Cid", "Dot"]);
+    await formParty([cid, dot], ["Cid", "Dot"], HOLD_BOTS);
     await runTeamLobby([cid, dot], () => voteTeam(cid, dot, "Quad"));
     // Ann's party may have warmed up against bots while Cid's voted
     // (#3899): its warmup HUD plays the same builds, so wait it out.
@@ -227,13 +238,14 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
       });
     }
     await expectPlays(ann, QUAD[0]);
-    await expectPlays(bea, QUAD[1]);
-    await expectPlays(cid, QUAD[0]);
-    await expectPlays(dot, QUAD[1]);
-    // Four a side: the party's two and two bots.
+    // Four a side: the party's two and two bots, still marked bots
+    // while they hold.
     await ann.bringToFront();
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
+    await expectPlays(bea, QUAD[1]);
+    await expectPlays(cid, QUAD[0]);
+    await expectPlays(dot, QUAD[1]);
 
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
     await bea.bringToFront();
