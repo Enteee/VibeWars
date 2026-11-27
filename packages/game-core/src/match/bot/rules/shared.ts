@@ -47,6 +47,13 @@ export const HEALER_PRIORITY = 0.25;
 /** How far past spell range a bot follows its team's target (#2573). */
 export const FOCUS_REACH = 150;
 
+/**
+ * A foe targeting a bot's healer or caster within this of it dives the
+ * backline (#4141): three melee ranges, so a warrior swinging at the
+ * healer, or stepping in to, counts, and a caster shooting from afar does not.
+ */
+export const PEEL_REACH = 120;
+
 export function nearestLiving(
   self: Participant,
   foes: readonly Participant[],

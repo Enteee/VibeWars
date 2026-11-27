@@ -37,6 +37,7 @@ trong đội của bạn thì ở cạnh bạn: tiền tuyến đi trước mộ
 cạnh bạn, hồi máu ở phía sau, và chúng đi theo bạn đến bất cứ đâu. Khi bạn
 đã đứng yên không làm gì một lúc, chúng chơi tiếp như một đội toàn bot.
 Khi bạn còn đang hoạt động, một bot bị trận đánh kéo ra xa bạn sẽ đi bộ quay về với bạn, trừ khi nó bị thương nặng hoặc có kẻ địch ngay sát bên.
+Một bot tiền tuyến sẽ quay sang đánh kẻ địch đang tấn công người hồi máu hoặc pháp sư của đội mình, trừ khi nó sắp hạ gục mục tiêu của chính nó.
 
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.

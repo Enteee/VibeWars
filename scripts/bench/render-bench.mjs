@@ -15,7 +15,9 @@
  * itself take more than `MIN_CALIBRATION_MS`. The baseline is a calibration run the script owns:
  * the frozen reference map, `packages/game-maps/bench/reference-map.json`, drawn
  * as the maps are, so whatever bounds a runner (fill, geometry, JS) bounds both
- * (#3255). It is measured in windows interleaved with the maps (one
+ * (#3255), but with no whole-screen pass (the vignette and the like,
+ * `apps/web/src/render/whole-screen-passes.ts`): a cost every map pays
+ * would land in the yardstick too and the ratio would hide it (#4129). It is measured in windows interleaved with the maps (one
  * before each, one after, after an unmeasured warm-up). Each map is judged against the mean
  * of the two windows around it, and a pair of windows differing by over
  * `MAX_CALIBRATION_SPREAD` is measured again, twice at most, then fails the run as too noisy to judge (exit 75, `verdict.mjs`). Prints p50 and p95 per map
@@ -25,7 +27,7 @@
  *
  *   BENCH_MAP=a,b      the maps, by id. Default: every map of more
  *                      than one layer.
- *   BENCH_MAX_RATIO=2.7 exit 1 when a map's p50 is more than this many
+ *   BENCH_MAX_RATIO=2.65 exit 1 when a map's p50 is more than this many
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *   --follow           only the follow case (#3240), below.
@@ -194,12 +196,13 @@ async function serve() {
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     // No splash: the menu, and its background, from load; the reference map
-    // in the lobby (#3255).
+    // in the lobby (#3255), drawn with no whole-screen pass (#4129).
     env: {
       ...process.env,
       VITE_VIBEWARS_TRANSPORT: "broadcast",
       VITE_VIBEWARS_SPLASH: "off",
       VIBEWARS_BENCH_REFERENCE: "1",
+      VIBEWARS_BENCH_BARE_REFERENCE: "1",
     },
     detached: true,
   });

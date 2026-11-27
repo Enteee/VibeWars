@@ -80,6 +80,11 @@ export class Vignette {
     }
   }
 
+  /** Draw the vignette over the view, or not (#4129); its deck tops are `setDecks`'. */
+  public setShown(shown: boolean): void {
+    this.image.setVisible(shown);
+  }
+
   /** Darken `tops`, by deck layer, as `deckVignetteTops` gives them; replaces the last ones. */
   public setDecks(tops: ReadonlyMap<number, readonly (readonly Vec2[])[]>): void {
     this.dropDecks();
