@@ -418,9 +418,8 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
 near the gate for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. Elonian-plateau, cinder-sanctum, hollow-deep,
-brazen-causeway and long-hall are listed (3.1-3.45) until #4130 makes the
-whole-screen passes cheaper. A listed map that measures at or under the gate ÷ 1.25
+issue that will cut it. It is empty since #4130 made the whole-screen
+passes cheaper. A listed map that measures at or under the gate ÷ 1.25
 (2.12 at 2.65) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.
