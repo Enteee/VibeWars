@@ -164,7 +164,7 @@ function mock({ flyout, kind, state, long, narrow }) {
     }
   };
   if (flyout === "options") {
-    original.hidden = true;
+    original.style.display = "none";
   }
   if (kind === "a") {
     const strip = el("div", "mock-tabs", undefined, {
@@ -217,7 +217,7 @@ function mock({ flyout, kind, state, long, narrow }) {
         }
       }
     } else {
-      original.hidden = false;
+      original.style.display = "";
       original.className = "mock-rail";
       [...original.children].forEach((b, i) => {
         b.className = "mock-entry";
@@ -227,7 +227,7 @@ function mock({ flyout, kind, state, long, narrow }) {
       if (narrow) {
         body.style.gridTemplateColumns = "minmax(0,1fr)";
         if (state === "page") {
-          original.hidden = true;
+          original.style.display = "none";
           const bar = el("div", "mock-back");
           bar.append(
             el("button", "", "‹ Options", { "aria-label": "Back to the list of sections" }),
@@ -308,7 +308,10 @@ async function shoot(name, { flyout, kind, state, long = false, narrow = false }
     await page.evaluate(mock, { flyout, kind, state, long, narrow });
   }
   await page.waitForTimeout(300);
-  await panel.screenshot({ path: `${out}/${name}.png` });
+  const file = `${out}/${name}.png`;
+  await panel.screenshot({ path: file });
+  // At most 800 px wide, 8-bit: the study loads over a LAN.
+  magick(file, "-resize", "800x>", `PNG8:${file}`);
 }
 
 const NAME = (k, f, v) => `${k}-${f}-${v}`;
