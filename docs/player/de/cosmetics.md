@@ -60,7 +60,7 @@ das Muster, auf das du zeigst oder das den Fokus hat, und was es freischaltet. E
 ist abgedunkelt, mit einem kleinen Vorhängeschloss. Deine Wahl gilt sofort. Andere Spieler sehen sie
 ab der nächsten Lobby, der du beitrittst.
 
-Über den Reihen trägt dein Charakter deinen Look und steht, geht und schlägt zu, sodass Aura, Spur und Waffenspur in Bewegung zu sehen sind. Halte ein Muster gedrückt, um es anzuprobieren, auch ein gesperrtes: Die Zeile sagt, was du dir ansiehst, und solange es gesperrt ist, womit du es verdienst. Lass bei einem verdienten Gegenstand los, um ihn zu tragen. Lass bei einem gesperrten los oder zieh vom Muster weg, und nichts ändert sich. Mit der Tastatur hältst du auf einem Muster die Leertaste.
+Neben den Reihen (auf dem Handy darüber) trägt dein Charakter deinen Look und läuft umher: Er geht, steht, schlägt zu und wirkt Zauber, sodass Aura, Spur und Waffenspur in Bewegung zu sehen sind. Beim Scrollen bleibt er im Blick. Die Auswahlen Primär und Sekundär darunter zeigen den Look mit jedem Berufspaar; sie ändern nur die Vorschau, nie deinen Charakter. Halte ein Muster gedrückt, um es anzuprobieren, auch ein gesperrtes: Die Zeile sagt, was du dir ansiehst, und solange es gesperrt ist, womit du es verdienst. Lass bei einem verdienten Gegenstand los, um ihn zu tragen. Lass bei einem gesperrten los oder zieh vom Muster weg, und nichts ändert sich. Mit der Tastatur hältst du auf einem Muster die Leertaste.
 
 ## Kosmetik anderer Spieler sehen
 

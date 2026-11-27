@@ -414,9 +414,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Κλειδωμένο",
   "cosmetics.previewing": "Προεπισκόπηση: {name}",
+  "cosmetics.previewPrimary": "Κύρια",
+  "cosmetics.previewSecondary": "Δευτερεύουσα",
   "cosmetics.none": "Κανένα",
-  "cosmetics.note":
-    "Καθαρά για την εμφάνιση: κανένα διακοσμητικό δεν αλλάζει το παιχνίδι. Κερδίζονται με βαθμολογημένες νίκες στον δημόσιο πίνακα κατάταξης και ισχύουν για όλους τους χαρακτήρες σου.",
   "cosmetics.requires.streak": {
     one: "{count} βαθμολογημένη νίκη στη σειρά",
     other: "{count} βαθμολογημένες νίκες στη σειρά",

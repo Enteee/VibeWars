@@ -426,9 +426,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zaključano",
   "cosmetics.previewing": "Pregled: {name}",
+  "cosmetics.previewPrimary": "Primarna",
+  "cosmetics.previewSecondary": "Sekundarna",
   "cosmetics.none": "Ništa",
-  "cosmetics.note":
-    "Samo za izgled: nijedna kozmetika ne mijenja igru. Osvaja se rangiranim pobjedama na javnoj ljestvici i dijele je svi tvoji likovi.",
   "cosmetics.requires.streak": {
     one: "{count} rangirana pobjeda zaredom",
     few: "{count} rangirane pobjede zaredom",

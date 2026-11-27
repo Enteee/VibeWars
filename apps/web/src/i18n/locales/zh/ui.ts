@@ -372,9 +372,9 @@ export default {
   "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "未解锁",
   "cosmetics.previewing": "预览：{name}",
+  "cosmetics.previewPrimary": "主职业",
+  "cosmetics.previewSecondary": "副职业",
   "cosmetics.none": "无",
-  "cosmetics.note":
-    "纯外观：任何装扮都不会影响玩法。通过公开排行榜上的排位胜场获得，你的所有角色共享。",
   "cosmetics.requires.streak": {
     other: "排位 {count} 连胜",
   },

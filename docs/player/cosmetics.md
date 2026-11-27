@@ -60,8 +60,11 @@ phone) names the swatch you point at or focus, and what earns it. A locked
 swatch is dimmed, with a small padlock. Your choice applies at once. Other
 players see it from the next lobby you join.
 
-Above the rows, your character wears your look and stands, walks and swings, so
-the aura, trail and weapon trail show as they move. Press and hold a swatch to
+Beside the rows (above them on a phone), your character wears your look and
+wanders about, walking, standing, swinging and casting, so the aura, trail and
+weapon trail show in motion. It stays in view while you scroll. The Primary and
+Secondary pickers under it show the look on any profession pair; they change
+only the preview, never your character. Press and hold a swatch to
 try it on, even a locked one: the line says what you are previewing and, while
 it is locked, what earns it. Let go on an earned item to wear it. Let go on a
 locked one, or slide off the swatch, and nothing changes. With a keyboard, hold

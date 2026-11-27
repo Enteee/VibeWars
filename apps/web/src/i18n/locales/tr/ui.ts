@@ -405,9 +405,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
   "cosmetics.previewing": "Önizleme: {name}",
+  "cosmetics.previewPrimary": "Birincil",
+  "cosmetics.previewSecondary": "İkincil",
   "cosmetics.none": "Yok",
-  "cosmetics.note":
-    "Yalnızca görünüş için: hiçbir kozmetik oynanışı değiştirmez. Herkese açık lider tablosunda dereceli galibiyetlerle kazanılır ve tüm karakterlerin tarafından paylaşılır.",
   "cosmetics.requires.streak": {
     one: "Üst üste {count} dereceli galibiyet",
     other: "Üst üste {count} dereceli galibiyet",

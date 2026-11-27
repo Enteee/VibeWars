@@ -58,7 +58,7 @@ Tekst pokraj reda (ispod njega na mobitelu) imenuje uzorak na koji pokazuješ il
 čime se zarađuje. Zaključan uzorak je zatamnjen, s malim lokotom. Tvoj izbor vrijedi odmah. Drugi
 igrači ga vide od sljedećeg predvorja kojem se pridružiš.
 
-Iznad redova tvoj lik nosi tvoj izgled te stoji, hoda i zamahuje, pa se aura, trag i trag oružja vide u pokretu. Pritisni i drži uzorak da ga isprobaš, čak i zaključan: redak kaže što pregledavaš i, dok je zaključan, čime se zarađuje. Pusti na zarađenom predmetu da ga nosiš. Pusti na zaključanom ili kliži s uzorka i ništa se ne mijenja. Tipkovnicom drži razmaknicu na uzorku.
+Pokraj redova (iznad njih na mobitelu) tvoj lik nosi tvoj izgled i šeće uokolo: hoda, stoji, zamahuje i baca čarolije, pa se aura, trag i trag oružja vide u pokretu. Ostaje na vidiku dok se pomičeš. Odabiri Primarna i Sekundarna ispod njega prikazuju izgled na bilo kojem paru profesija; mijenjaju samo pregled, nikad tvoj lik. Pritisni i drži uzorak da ga isprobaš, čak i zaključan: redak kaže što pregledavaš i, dok je zaključan, čime se zarađuje. Pusti na zarađenom predmetu da ga nosiš. Pusti na zaključanom ili kliži s uzorka i ništa se ne mijenja. Tipkovnicom drži razmaknicu na uzorku.
 
 ## Kozmetika drugih igrača
 

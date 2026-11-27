@@ -431,9 +431,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloccato",
   "cosmetics.previewing": "Anteprima: {name}",
+  "cosmetics.previewPrimary": "Primaria",
+  "cosmetics.previewSecondary": "Secondaria",
   "cosmetics.none": "Nessuno",
-  "cosmetics.note":
-    "Solo estetica: nessun cosmetico cambia il modo di giocare. Si ottengono con vittorie classificate nella classifica pubblica e sono condivisi da tutti i tuoi personaggi.",
   "cosmetics.requires.streak": {
     one: "{count} vittoria classificata di fila",
     many: "{count} vittorie classificate di fila",

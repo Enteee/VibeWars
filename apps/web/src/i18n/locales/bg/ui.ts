@@ -411,9 +411,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Заключено",
   "cosmetics.previewing": "Преглед: {name}",
+  "cosmetics.previewPrimary": "Основна",
+  "cosmetics.previewSecondary": "Второстепенна",
   "cosmetics.none": "Няма",
-  "cosmetics.note":
-    "Само за външния вид: никоя козметика не променя играта. Печелят се с класирани победи в публичната класация и са общи за всичките ти герои.",
   "cosmetics.requires.streak": {
     one: "{count} класирана победа подред",
     other: "{count} класирани победи подред",

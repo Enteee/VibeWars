@@ -428,9 +428,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
   "cosmetics.previewing": "Vista previa: {name}",
+  "cosmetics.previewPrimary": "Principal",
+  "cosmetics.previewSecondary": "Secundaria",
   "cosmetics.none": "Ninguno",
-  "cosmetics.note":
-    "Solo estético: ningún cosmético cambia cómo se juega. Se ganan con victorias clasificatorias en la clasificación pública y los comparten todos tus personajes.",
   "cosmetics.requires.streak": {
     one: "{count} victoria clasificatoria seguida",
     many: "{count} victorias clasificatorias seguidas",

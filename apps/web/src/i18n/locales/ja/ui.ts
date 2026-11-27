@@ -382,9 +382,9 @@ export default {
   "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "ロック中",
   "cosmetics.previewing": "プレビュー中：{name}",
+  "cosmetics.previewPrimary": "メイン",
+  "cosmetics.previewSecondary": "サブ",
   "cosmetics.none": "なし",
-  "cosmetics.note":
-    "見た目だけの要素です。どのコスメティックもプレイには影響しません。公開ランキングのランク戦勝利で獲得でき、すべてのキャラクターで共有されます。",
   "cosmetics.requires.streak": {
     other: "ランク戦{count}連勝",
   },

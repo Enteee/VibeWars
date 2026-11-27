@@ -60,7 +60,7 @@ amelyre mutatsz vagy amelyen a fókusz van, és hogy mivel szerezhető meg. A z�
 rajta egy kis lakattal. A választásod azonnal érvényes. Más játékosok a következő lobbitól kezdve
 látják, amelyhez csatlakozol.
 
-A sorok fölött a karaktered a kinézetedet viseli, áll, sétál és suhint, így az aura, a nyom és a fegyvernyom mozgás közben látszik. Tarts lenyomva egy mintát, hogy felpróbáld, akár zároltat is: a sor megmondja, mit nézel előnézetben, és amíg zárolt, mivel szerezhető meg. Engedd el egy megszerzett tárgyon, hogy viseld. Engedd el egy zároltan, vagy csússz le a mintáról, és semmi sem változik. Billentyűzettel tartsd lenyomva a szóközt egy mintán.
+A sorok mellett (telefonon fölöttük) a karaktered a kinézetedet viseli és fel-alá járkál: sétál, áll, suhint és varázsol, így az aura, a nyom és a fegyvernyom mozgás közben látszik. Görgetés közben is látható marad. Az alatta lévő Elsődleges és Másodlagos választó bármely hivatáspáron megmutatja a kinézetet; csak az előnézetet változtatják meg, a karakteredet soha. Tarts lenyomva egy mintát, hogy felpróbáld, akár zároltat is: a sor megmondja, mit nézel előnézetben, és amíg zárolt, mivel szerezhető meg. Engedd el egy megszerzett tárgyon, hogy viseld. Engedd el egy zároltan, vagy csússz le a mintáról, és semmi sem változik. Billentyűzettel tartsd lenyomva a szóközt egy mintán.
 
 ## Más játékosok kozmetikumainak megtekintése
 
