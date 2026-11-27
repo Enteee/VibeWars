@@ -798,6 +798,16 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+The stacked figure's outfit follows its primary profession and carries one
+accent of its secondary (#4175, #4179, #4180). `node
+scripts/assets/profession-outfit-study.mjs` draws the ten outfits and three
+accents, ally and foe, at the four zooms and on the menu figure:
+[`profession-outfit-study.svg`](profession-outfit-study.svg). The torso or
+robe keeps the team colour; the primary changes the head, sleeves, shoulders,
+hem and back.
+
+![Profession outfit study](profession-outfit-study.png)
+
 ### Guild cape (decided: A of the motion study)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
