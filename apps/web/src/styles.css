@@ -10084,6 +10084,12 @@ body:has(> .splash) #app {
     width: 84px;
   }
 
+  /* The chosen mode's bar inside the rail (#4238): at -6px it stood past
+     the rail's edge, which then scrolled sideways. */
+  .screen .mode-rail-entry[aria-pressed="true"]::after {
+    inset-inline-end: -3px;
+  }
+
   .mode-rail-label {
     font-size: 0.75rem;
     text-align: center;
