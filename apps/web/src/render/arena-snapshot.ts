@@ -271,6 +271,8 @@ export interface MapStructure {
   readonly atmosphere?: MapAtmosphere;
   /** Its roads, squares and tracks (#3210), drawn on their layer's floor; a map without it has none. */
   readonly paving?: readonly MapPaving[];
+  /** The render bench's reference map in its build (#4129): drawn with no whole-screen pass. */
+  readonly bare?: true;
   /** Each deck there is now, drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */

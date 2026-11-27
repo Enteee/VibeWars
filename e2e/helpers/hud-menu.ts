@@ -20,9 +20,13 @@ export function hudCorner(page: Page): Locator {
 export async function hudMenuRow(page: Page, row: HudRow): Promise<Locator> {
   const toggle = hudCorner(page);
   await expect(toggle).toBeVisible();
-  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
-    await toggle.click();
-  }
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  // A click can be lost on a page just brought to front (#4136): retry,
+  // but click only a closed ☰, so a retry never closes an open one.
+  await expect(async () => {
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+      await toggle.click();
+    }
+    await expect(toggle).toHaveAttribute("aria-expanded", "true", { timeout: 2_000 });
+  }).toPass({ timeout: 15_000 });
   return page.locator(`.hud-menu .hud-${row}`);
 }

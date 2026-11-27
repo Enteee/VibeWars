@@ -40,6 +40,7 @@ de primă linie cu un pas înainte, cei la distanță lângă tine, vindecători
 spate, și te urmează oriunde mergi. După ce ai stat inactiv de ceva vreme, joacă
 mai departe așa cum ar juca o echipă de boți.
 Cât timp ești activ, un bot pe care o luptă l-a tras departe de tine se întoarce la tine, în afară de cazul în care e grav rănit sau are un inamic chiar lângă el.
+Un bot din prima linie se întoarce împotriva unui inamic care atacă vindecătorul sau magicienii echipei sale, doar dacă nu e pe cale să-și termine propria țintă.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.
