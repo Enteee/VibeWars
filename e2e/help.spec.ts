@@ -11,8 +11,11 @@ import { startSoloMatch } from "./helpers/peers.js";
  * docs as a window (#3552), beside what runs under it, and Esc puts them away.
  */
 
-/** Help's page picker. */
-const picker = (help: Locator): Locator => help.getByRole("combobox", { name: "help pages" });
+/** Help's rail of pages (#4216). */
+const rail = (help: Locator): Locator => help.getByRole("navigation", { name: "help pages" });
+/** The rail's entry for the page `id`. */
+const entry = (help: Locator, id: string): Locator =>
+  rail(help).locator(`.flyout-rail-entry[data-id="${id}"]`);
 
 for (const viewport of OVERLAY_VIEWPORTS) {
   test(`Help's × sits at its own top right at ${String(viewport.width)} px; it and Esc close it (#2381)`, async ({
@@ -53,8 +56,8 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   // The bar over the match has no status: it once still said "entering
   // match…" (#1272).
   await expect(page.locator("#status")).toBeHidden();
-  await expect(picker(help)).toBeFocused();
-  await expect(picker(help)).toHaveValue("getting-started");
+  await expect(entry(help, "getting-started")).toBeFocused();
+  await expect(entry(help, "getting-started")).toHaveAttribute("aria-current", "page");
   // Markdown, rendered: headings and lists, no raw syntax.
   await expect(help.locator(".help-page h2", { hasText: "Make a character" })).toBeVisible();
   await expect(help.locator(".help-page ol li").first()).toContainText("New character");
@@ -79,10 +82,10 @@ test("[?] stays in the bar, shown open, while Help is open; a second press close
   await expect(icon).toBeVisible();
   await expect(icon).toHaveAttribute("aria-expanded", "true");
 
-  // An in-page link switches the page in place, and the picker follows.
+  // An in-page link switches the page in place, and the rail follows.
   await help.locator('.help-page a[data-page="modes"]').first().click();
-  await expect(picker(help)).toHaveValue("modes");
-  await picker(help).selectOption("controls");
+  await expect(entry(help, "modes")).toHaveAttribute("aria-current", "page");
+  await entry(help, "controls").click();
   await expect(help.locator(".help-page")).toHaveAttribute("data-page", "controls");
   await expect(icon).toBeVisible();
 
@@ -129,7 +132,7 @@ test("a Help link to a section opens its page at that heading, not the top (#381
   await page.goto("./");
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
-  await picker(help).selectOption("ranking");
+  await entry(help, "ranking").click();
   await help.locator('.help-page a[data-anchor="heroes-ascent"]').first().click();
   const pane = help.locator(".help-page");
   await expect(pane).toHaveAttribute("data-page", "modes");
@@ -150,15 +153,15 @@ async function openLicences(page: Page): Promise<Locator> {
   await page.goto("./");
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
-  await picker(help).selectOption({ label: "Third-party licences" });
+  await rail(help).getByRole("button", { name: "Third-party licences", exact: true }).click();
   return help;
 }
 
 test("Help's last page is the third-party licences, not Options' (#2559)", async ({ page }) => {
   const help = await openLicences(page);
   // After the docs; the source link, then the release and build, at the foot.
-  await expect(picker(help).locator("option").last()).toHaveText("Third-party licences");
-  await expect(picker(help)).toHaveValue("licences");
+  await expect(rail(help).locator(".flyout-rail-entry").last()).toHaveText("Third-party licences");
+  await expect(entry(help, "licences")).toHaveAttribute("aria-current", "page");
   await expect(help.locator(".help-page")).toHaveAttribute("data-page", "licences");
   const foot = help.locator(".help-footer > *");
   await expect(foot.last()).toHaveClass("help-version");
@@ -184,8 +187,8 @@ test("Help's Trailer page, first after the docs, fetches nothing from GitHub unt
   await page.goto("./");
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
-  await expect(picker(help).locator("option").nth(-2)).toHaveText("Trailer");
-  await picker(help).selectOption({ label: "Trailer" });
+  await expect(rail(help).locator(".flyout-rail-entry").nth(-2)).toHaveText("Trailer");
+  await entry(help, "trailer").click();
   await expect(help.locator(".help-page")).toHaveAttribute("data-page", "trailer");
   const video = help.locator("video.trailer-video");
   await expect(video).toBeVisible();

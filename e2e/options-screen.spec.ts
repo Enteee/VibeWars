@@ -36,7 +36,11 @@ async function openKeys(page: Page): Promise<void> {
   await expect(page.locator(".options-screen")).toBeVisible();
   // Options opens on its first section, Player (#1513).
   await optionsEntry(page, "controls").click();
-  await expect(optionsEntry(page, "controls")).toHaveAttribute("aria-current", "page");
+  // Narrow, the list is hidden once a section is drilled into (#4216).
+  await expect(page.locator('.flyout-rail-entry[data-id="controls"]')).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.locator(".keys-screen")).toBeVisible();
 }
 
@@ -395,6 +399,10 @@ for (const width of [320, 360]) {
     await page.getByRole("textbox", { name: "Guild tag", exact: true }).fill("VW");
     const pane = page.locator(".options-pane");
     await expect(page.locator(".emblem-editor-grid")).toBeVisible();
+    // Measured once the drill-down's slide (#4216) has settled.
+    await expect
+      .poll(() => pane.evaluate((element) => element.parentElement?.getAnimations().length ?? 0))
+      .toBe(0);
 
     const overflow = await pane.evaluate((element) => element.scrollWidth - element.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);

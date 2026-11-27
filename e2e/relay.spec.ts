@@ -41,7 +41,7 @@ async function savedSharing(page: Page): Promise<string | null> {
 
 async function openRelayOptions(page: Page): Promise<void> {
   await page.locator(".topbar-options").click();
-  await optionsEntry(page, "relay").click();
+  await optionsEntry(page, "relay (TURN)").click();
   await expect(page.locator(".relay-section")).toBeVisible();
 }
 
