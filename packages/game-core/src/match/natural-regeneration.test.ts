@@ -236,3 +236,41 @@ describe("net pips (#504)", () => {
     expect(sim.pips(get(sim, "a"))).toEqual({ health: 0, energy: 0 });
   });
 });
+
+describe("a Vampiric weapon's -1 (#4119)", () => {
+  /** a holds a set whose mods come to −1 Health regeneration, as Vampiric's do. */
+  function vampiric(): MatchSimulation {
+    const a = wounded("a", 0, vec2(0, 0));
+    return new MatchSimulation({
+      seed: "natural-regeneration",
+      participants: [
+        { ...a, equipment: { ...a.equipment, healthPips: -1 } },
+        wounded("b", 1, vec2(200, 0)),
+      ],
+    });
+  }
+
+  it("stops natural regeneration when it is the net", () => {
+    const sim = vampiric();
+    stepFor(sim, 10);
+    expect(sim.pips(get(sim, "a")).health).toBe(-1);
+    expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(-1, 6);
+  });
+
+  it("lets it run once a regeneration brings the net to 0", () => {
+    const sim = vampiric();
+    get(sim, "a").combatant.statuses.apply("succor", 60, "a", NO_RANKS);
+    stepFor(sim, 10);
+    // Succor +1, Vampiric −1, and natural +3 at 10 s out of combat.
+    expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(3, 6);
+  });
+
+  it("still lets a degeneration stop it", () => {
+    const sim = vampiric();
+    const a = get(sim, "a").combatant;
+    a.health = a.maxHealth;
+    a.statuses.apply("bleeding", 60, "b", NO_RANKS);
+    stepFor(sim, 6);
+    expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(-4, 6);
+  });
+});
