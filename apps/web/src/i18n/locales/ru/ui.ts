@@ -436,9 +436,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрыто",
   "cosmetics.previewing": "Предпросмотр: {name}",
+  "cosmetics.previewPrimary": "Основная",
+  "cosmetics.previewSecondary": "Вторичная",
   "cosmetics.none": "Нет",
-  "cosmetics.note":
-    "Только для вида: никакая косметика не влияет на игру. Зарабатывается рейтинговыми победами в публичной таблице лидеров и общая для всех твоих персонажей.",
   "cosmetics.requires.streak": {
     one: "{count} рейтинговая победа подряд",
     few: "{count} рейтинговые победы подряд",

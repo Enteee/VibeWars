@@ -61,7 +61,7 @@ que tens em foco, e o que a desbloqueia. Uma amostra bloqueada aparece esbatida,
 cadeado. A tua escolha aplica-se de imediato. Os outros jogadores veem-na a partir do próximo lobby
 em que entrares.
 
-Acima das filas, a tua personagem veste o teu visual e fica parada, anda e golpeia, para veres a aura, o rasto e o rasto da arma em movimento. Mantém premida uma amostra para a experimentar, mesmo bloqueada: a linha diz o que estás a pré-visualizar e, enquanto estiver bloqueada, o que a desbloqueia. Larga num item conquistado para o usar. Larga num bloqueado, ou desliza para fora da amostra, e nada muda. Com teclado, mantém Espaço premido numa amostra.
+Ao lado das filas (acima delas num telemóvel), a tua personagem veste o teu visual e anda por ali: caminha, fica parada, golpeia e lança feitiços, para veres a aura, o rasto e o rasto da arma em movimento. Continua à vista enquanto deslizas. Os seletores Principal e Secundária por baixo mostram o visual em qualquer par de profissões; mudam só a pré-visualização, nunca a tua personagem. Mantém premida uma amostra para a experimentar, mesmo bloqueada: a linha diz o que estás a pré-visualizar e, enquanto estiver bloqueada, o que a desbloqueia. Larga num item conquistado para o usar. Larga num bloqueado, ou desliza para fora da amostra, e nada muda. Com teclado, mantém Espaço premido numa amostra.
 
 ## Ver os cosméticos de outros jogadores
 

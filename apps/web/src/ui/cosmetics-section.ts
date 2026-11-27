@@ -1,3 +1,4 @@
+import { PROFESSIONS, type ProfessionId } from "@vibewars/game-core";
 import type { WireCape } from "@vibewars/game-protocol";
 
 import {
@@ -11,6 +12,7 @@ import {
 import { ownCosmetics, type WornCosmetics } from "../cosmetics/selection.js";
 import type { CosmeticsStore } from "../cosmetics/store.js";
 import { isUnlocked } from "../cosmetics/unlocks.js";
+import { professionName } from "../i18n/game-names.js";
 import { locale, t, type MessageKey } from "../i18n/index.js";
 import { LANGUAGES } from "../i18n/languages.js";
 import type { FigureLook } from "./character-card.js";
@@ -487,6 +489,84 @@ export function shownLook(
   return entry === undefined ? rest : { ...rest, [preview.slot]: entry };
 }
 
+const PROFESSION_IDS = Object.keys(PROFESSIONS) as ProfessionId[];
+
+/** `primary` and a secondary other than it: `secondary` if it is, else the first other. */
+export function professionPair(
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): { readonly primary: ProfessionId; readonly secondary: ProfessionId } {
+  const other = PROFESSION_IDS.find((id) => id !== primary) ?? primary;
+  return {
+    primary,
+    secondary: secondary === undefined || secondary === primary ? other : secondary,
+  };
+}
+
+/** The preview's profession pickers (#4177). */
+interface ProfessionPickers {
+  readonly element: HTMLElement;
+  /** Show `primary`/`secondary` picked, telling no one. */
+  set(primary: ProfessionId, secondary: ProfessionId | undefined): void;
+  /** The pair picked now. */
+  shown(): { readonly primary: ProfessionId; readonly secondary: ProfessionId };
+}
+
+/**
+ * The Primary and Secondary pickers under the preview (#4177): every
+ * profession, Secondary never the picked Primary. A look only: nothing
+ * picked is kept or sent.
+ */
+function professionPickers(
+  picked: (primary: ProfessionId, secondary: ProfessionId) => void,
+): ProfessionPickers {
+  const element = h("div", "cosmetics-professions");
+  const picker = (label: MessageKey, className: string): HTMLSelectElement => {
+    const field = h("label", "field");
+    field.appendChild(h("span", "field-label", t(label)));
+    const select = document.createElement("select");
+    select.className = className;
+    field.appendChild(select);
+    element.appendChild(field);
+    return select;
+  };
+  const primaryPicker = picker("cosmetics.previewPrimary", "cosmetics-primary");
+  const secondaryPicker = picker("cosmetics.previewSecondary", "cosmetics-secondary");
+  const options = (select: HTMLSelectElement, ids: readonly ProfessionId[]): void => {
+    select.replaceChildren(
+      ...ids.map((id) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = professionName(id);
+        return option;
+      }),
+    );
+  };
+  options(primaryPicker, PROFESSION_IDS);
+  let shown = professionPair(PROFESSION_IDS[0] ?? "warrior", undefined);
+  const set = (primary: ProfessionId, secondary: ProfessionId | undefined): void => {
+    shown = professionPair(primary, secondary);
+    options(
+      secondaryPicker,
+      PROFESSION_IDS.filter((id) => id !== shown.primary),
+    );
+    primaryPicker.value = shown.primary;
+    secondaryPicker.value = shown.secondary;
+  };
+  const read = (select: HTMLSelectElement): ProfessionId | undefined =>
+    PROFESSION_IDS.find((id) => id === select.value);
+  primaryPicker.addEventListener("change", () => {
+    set(read(primaryPicker) ?? shown.primary, shown.secondary);
+    picked(shown.primary, shown.secondary);
+  });
+  secondaryPicker.addEventListener("change", () => {
+    set(shown.primary, read(secondaryPicker) ?? shown.secondary);
+    picked(shown.primary, shown.secondary);
+  });
+  set(shown.primary, shown.secondary);
+  return { element, set, shown: () => shown };
+}
+
 /** What the section draws the figure with: the page's own, or a test's. */
 export interface SectionFigure {
   /** Your character's look, once it is known; `undefined` for none. */
@@ -514,11 +594,33 @@ export function cosmeticsSection(
       let groups: HTMLElement[] = [];
       let held: { readonly slot: CosmeticSlot; readonly item: SwatchItem } | null = null;
       const presses: Presses = { state: NO_PRESS, pointer: undefined, timer: undefined };
+      const character = figure.look();
       const preview = figure.preview(
         () => shownLook(ownCosmetics(store.choice(), store.lastFacts()), held),
-        figure.look(),
+        character,
         () => ({ name: loadPlayerName(), guildTag: playerGuildTag() }),
       );
+      // The pickers start on the character's professions, once known, unless one was picked first.
+      let picked = false;
+      const professions = professionPickers((primary, secondary) => {
+        picked = true;
+        preview.setProfessions(primary, secondary);
+      });
+      character
+        .then((known) => {
+          if (picked) {
+            return;
+          }
+          if (known === undefined) {
+            // No character: the figure wears the pickers' first pair, as they show it.
+            const first = professions.shown();
+            preview.setProfessions(first.primary, first.secondary);
+          } else {
+            professions.set(known.primary, known.secondary);
+          }
+        })
+        // The preview says when the character could not be read.
+        .catch(() => undefined);
       const onPreview =
         (slot: CosmeticSlot) =>
         (item: { readonly item: SwatchItem } | null): void => {
@@ -530,11 +632,12 @@ export function cosmeticsSection(
         };
       // The rows close together, not spaced as the pane's sections are.
       const slots = h("div", "cosmetics-slots");
-      container.replaceChildren(
-        h("p", "cosmetics-note", t("cosmetics.note")),
-        preview.element,
-        slots,
-      );
+      // The figure stays in view at the side, or on top on a phone, while the rows scroll.
+      const column = h("div", "cosmetics-preview-column");
+      column.append(preview.element, professions.element);
+      const layout = h("div", "cosmetics-layout");
+      layout.append(column, slots);
+      container.replaceChildren(layout);
       const draw = (): void => {
         // The rows drawn again end any press on the old ones: a pick's click lands on no swatch.
         if (presses.timer !== undefined) {

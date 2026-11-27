@@ -61,7 +61,7 @@ enfocas, y lo que la consigue. Una muestra bloqueada aparece atenuada, con un pe
 elección se aplica al instante. Los demás jugadores la ven a partir del siguiente lobby al que te
 unas.
 
-Sobre las filas, tu personaje lleva tu aspecto y se queda quieto, camina y golpea, para que el aura, el rastro y la estela del arma se vean en movimiento. Mantén pulsada una muestra para probártela, aunque esté bloqueada: la línea dice qué estás previsualizando y, mientras esté bloqueada, qué la consigue. Suelta sobre un objeto conseguido para llevarlo. Suelta sobre uno bloqueado, o desliza fuera de la muestra, y no cambia nada. Con teclado, mantén Espacio sobre una muestra.
+Junto a las filas (encima de ellas en un móvil), tu personaje lleva tu aspecto y deambula: camina, se queda quieto, golpea y lanza hechizos, para que el aura, el rastro y la estela del arma se vean en movimiento. Sigue a la vista mientras te desplazas. Los selectores Principal y Secundaria que hay debajo muestran el aspecto con cualquier par de profesiones; solo cambian la vista previa, nunca tu personaje. Mantén pulsada una muestra para probártela, aunque esté bloqueada: la línea dice qué estás previsualizando y, mientras esté bloqueada, qué la consigue. Suelta sobre un objeto conseguido para llevarlo. Suelta sobre uno bloqueado, o desliza fuera de la muestra, y no cambia nada. Con teclado, mantén Espacio sobre una muestra.
 
 ## Ver los cosméticos de otros jugadores
 

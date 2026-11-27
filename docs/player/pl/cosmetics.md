@@ -60,7 +60,7 @@ wskazujesz lub która ma fokus, i to, za co się ją zdobywa. Zablokowana próbk
 małą kłódką. Twój wybór działa od razu. Inni gracze widzą go od następnego lobby, do którego
 dołączysz.
 
-Nad rzędami twoja postać nosi twój wygląd, stoi, chodzi i wymachuje bronią, więc aurę, ślad i smugę broni widać w ruchu. Przytrzymaj próbkę, aby ją przymierzyć, nawet zablokowaną: wiersz mówi, co oglądasz, a dopóki jest zablokowana, czym się ją zdobywa. Puść na zdobytym przedmiocie, aby go nosić. Puść na zablokowanym albo zsuń palec z próbki, a nic się nie zmieni. Na klawiaturze przytrzymaj spację na próbce.
+Obok rzędów (nad nimi na telefonie) twoja postać nosi twój wygląd i krąży wokoło: chodzi, stoi, wymachuje bronią i rzuca czary, więc aurę, ślad i smugę broni widać w ruchu. Zostaje na widoku, gdy przewijasz. Wybory Główna i Drugorzędna pod nią pokazują wygląd na dowolnej parze profesji; zmieniają tylko podgląd, nigdy twoją postać. Przytrzymaj próbkę, aby ją przymierzyć, nawet zablokowaną: wiersz mówi, co oglądasz, a dopóki jest zablokowana, czym się ją zdobywa. Puść na zdobytym przedmiocie, aby go nosić. Puść na zablokowanym albo zsuń palec z próbki, a nic się nie zmieni. Na klawiaturze przytrzymaj spację na próbce.
 
 ## Kosmetyki innych graczy
 

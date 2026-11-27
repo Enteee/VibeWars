@@ -407,9 +407,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
   "cosmetics.previewing": "Förhandsvisning: {name}",
+  "cosmetics.previewPrimary": "Primär",
+  "cosmetics.previewSecondary": "Sekundär",
   "cosmetics.none": "Ingen",
-  "cosmetics.note":
-    "Bara för utseendet: ingen kosmetik ändrar hur något spelar. Tjänas in med rankade vinster på den offentliga topplistan och delas av alla dina karaktärer.",
   "cosmetics.requires.streak": {
     one: "{count} rankad vinst i rad",
     other: "{count} rankade vinster i rad",

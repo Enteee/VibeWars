@@ -429,9 +429,9 @@ export default {
   "cosmetics.detail": "{name} : {requirement}",
   "cosmetics.locked": "Verrouillé",
   "cosmetics.previewing": "Aperçu : {name}",
+  "cosmetics.previewPrimary": "Principale",
+  "cosmetics.previewSecondary": "Secondaire",
   "cosmetics.none": "Aucun",
-  "cosmetics.note":
-    "Purement esthétique : aucun cosmétique ne change la façon de jouer. Ils s'obtiennent par des victoires classées au classement public et sont partagés par tous tes personnages.",
   "cosmetics.requires.streak": {
     one: "{count} victoire classée d'affilée",
     many: "{count} victoires classées d'affilée",

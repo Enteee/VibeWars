@@ -408,9 +408,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zárolva",
   "cosmetics.previewing": "Előnézet: {name}",
+  "cosmetics.previewPrimary": "Elsődleges",
+  "cosmetics.previewSecondary": "Másodlagos",
   "cosmetics.none": "Nincs",
-  "cosmetics.note":
-    "Csak a külső miatt: egyik kozmetikum sem változtat a játékon. Rangsorolt győzelmekkel szerezhetők a nyilvános ranglistán, és minden karaktered osztozik rajtuk.",
   "cosmetics.requires.streak": {
     one: "{count} rangsorolt győzelem zsinórban",
     other: "{count} rangsorolt győzelem zsinórban",

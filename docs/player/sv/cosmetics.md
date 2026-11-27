@@ -59,7 +59,7 @@ har en blå ring. Texten bredvid raden (under den på en telefon) namnger rutan 
 fokus på, och vad som låser upp den. En låst ruta är nedtonad, med ett litet hänglås. Ditt val
 gäller direkt. Andra spelare ser det från nästa lobby du går med i.
 
-Ovanför raderna bär din karaktär din stil och står, går och svingar, så att auran, spåret och vapenspåret syns i rörelse. Tryck och håll på ett prov för att prova det, även ett låst: raden säger vad du förhandsvisar och, så länge det är låst, vad som ger det. Släpp på ett intjänat föremål för att bära det. Släpp på ett låst, eller dra av provet, så ändras ingenting. Med tangentbord håller du ned mellanslag på ett prov.
+Bredvid raderna (ovanför dem på en telefon) bär din karaktär din stil och vandrar omkring: går, står, svingar och kastar besvärjelser, så att auran, spåret och vapenspåret syns i rörelse. Den stannar i bild medan du skrollar. Väljarna Primär och Sekundär under den visar stilen på valfritt yrkespar; de ändrar bara förhandsvisningen, aldrig din karaktär. Tryck och håll på ett prov för att prova det, även ett låst: raden säger vad du förhandsvisar och, så länge det är låst, vad som ger det. Släpp på ett intjänat föremål för att bära det. Släpp på ett låst, eller dra av provet, så ändras ingenting. Med tangentbord håller du ned mellanslag på ett prov.
 
 ## Se andra spelares kosmetik
 

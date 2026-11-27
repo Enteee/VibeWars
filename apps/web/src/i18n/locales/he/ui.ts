@@ -422,9 +422,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "נעול",
   "cosmetics.previewing": "תצוגה מקדימה: {name}",
+  "cosmetics.previewPrimary": "ראשי",
+  "cosmetics.previewSecondary": "משני",
   "cosmetics.none": "ללא",
-  "cosmetics.note":
-    "למראה בלבד: שום פריט קוסמטי לא משנה את המשחק. מושגים בניצחונות מדורגים בטבלת המובילים הציבורית, ומשותפים לכל הדמויות שלך.",
   "cosmetics.requires.streak": {
     one: "ניצחון מדורג {count} ברצף",
     two: "{count} ניצחונות מדורגים ברצף",

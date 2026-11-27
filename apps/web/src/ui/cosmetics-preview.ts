@@ -1,4 +1,4 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, isWeaponId } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, isWeaponId, type ProfessionId } from "@vibewars/game-core";
 
 import type { WornCosmetics } from "../cosmetics/selection.js";
 import { REST_FRAME, type AttackFrame } from "../render/attack-clock.js";
@@ -16,7 +16,7 @@ import {
   spawnStyleOf,
 } from "../render/cosmetic-reactions.js";
 import { swingRibbon } from "../render/cosmetic-trail.js";
-import { stackPose } from "../render/sprite-stack.js";
+import { STACK_HEADINGS, bucketFacing, stackPose } from "../render/sprite-stack.js";
 import { WEAPON_MOTION, type WeaponMotion } from "../render/weapon-pose.js";
 import type { FigureLook } from "./character-card.js";
 import {
@@ -34,9 +34,10 @@ import { prefersReducedMotion } from "./recharge-overlay.js";
 /**
  * The cosmetics preview (#3989): your character at the top of Options >
  * Cosmetics, wearing the shown look, which is your choice with any held
- * preview on top. It idles, walks in place with its footsteps drifting
- * away behind, and swings once, round and round, its aura breathing under
- * its feet; the frame, title and flame are its nameplate, as the lobby's.
+ * preview on top. It wanders (#4177): random beats of walking, standing,
+ * swinging and casting, the camera following it so its footsteps fall
+ * behind, its aura breathing under its feet; the frame, title and flame
+ * are its nameplate, as the lobby's.
  * Drawn through the arena's own Phaser-free painters, so it is what a
  * match shows. Under reduced motion it stands still.
  */
@@ -47,11 +48,15 @@ const BODY_RADIUS = RULES.collision.playerRadius;
 const VIEW_HEIGHT = 96;
 /** Where the body stands, a share of the canvas down: its cape and aura fit round it. */
 const BODY_DOWN = 0.55;
-/** The loop: idle, walk, then one swing, seconds. */
-export const IDLE_SECONDS = 2;
-export const WALK_SECONDS = 3;
-/** Rest after the swing before the loop starts again, seconds. */
+/** How long a walk and a stand last, seconds: the shortest, and how much longer at most. */
+const WALK_SECONDS = { least: 0.8, spread: 0.8 };
+const IDLE_SECONDS = { least: 0.4, spread: 0.4 };
+/** How long a cast is held, seconds. */
+const CAST_SECONDS = 1;
+/** Rest after a swing before the next beat, seconds. */
 const SWING_REST_SECONDS = 0.4;
+/** At most this many beats in a row go by without a swing or a cast. */
+const MOST_CALM_BEATS = 3;
 /** One breath while idle, seconds, and how far it lifts the body, arena units. */
 const BOB_SECONDS = 2;
 const BOB_UNITS = 0.8;
@@ -59,8 +64,14 @@ const BOB_UNITS = 0.8;
 const WALK_SPEED = RULES.movement.maxSpeedUnitsPerSecond;
 /** The longest step a frame takes, seconds: a tab come back from the background does not jump. */
 const MAX_STEP_SECONDS = 0.1;
-/** The arena's facing for a body looking right, the way it walks. */
-const FACING = 0;
+/** One beat of the wander: what it does, for how long, seconds, facing which way, radians. */
+export interface Beat {
+  readonly kind: "walk" | "idle" | "swing" | "cast";
+  readonly seconds: number;
+  readonly facing: number;
+}
+/** Under reduced motion: standing, facing right. */
+const STILL_BEAT: Beat = { kind: "idle", seconds: 0, facing: 0 };
 /** The one body the footstep trail follows. */
 const SELF = "preview";
 
@@ -98,23 +109,45 @@ function swingSeconds(m: WeaponMotion): number {
   return m.windUp + m.strike + m.hold + m.recover;
 }
 
-/** What the loop is doing `t` seconds into it, and how far into that. */
-export type LoopBeat =
-  | { readonly kind: "idle"; readonly at: number }
-  | { readonly kind: "walk"; readonly at: number }
-  | { readonly kind: "swing"; readonly at: number };
-
-/** The loop's beat `t` seconds in, for a swing of `swing` seconds (0 for none). */
-export function loopBeat(t: number, swing: number): LoopBeat {
-  const length = IDLE_SECONDS + WALK_SECONDS + (swing > 0 ? swing + SWING_REST_SECONDS : 0);
-  const at = ((t % length) + length) % length;
-  if (at < IDLE_SECONDS) {
-    return { kind: "idle", at };
+/**
+ * The beat after `previous` (the latest last), for a swing of `swing`
+ * seconds (0 for no weapon, so no swing): never the same kind twice in a
+ * row, and a swing or a cast at least every fourth beat, so the worn
+ * swing and aura show often. A walk, swing or cast turns to one of the
+ * eight headings; a stand keeps the facing it had.
+ */
+export function nextBeat(previous: readonly Beat[], random: () => number, swing: number): Beat {
+  const last = previous.at(-1);
+  const calm = previous.slice(-MOST_CALM_BEATS);
+  const due =
+    calm.length === MOST_CALM_BEATS &&
+    calm.every((beat) => beat.kind === "walk" || beat.kind === "idle");
+  const kinds = (["walk", "idle", "swing", "cast"] as const).filter(
+    (kind) =>
+      kind !== last?.kind &&
+      (kind !== "swing" || swing > 0) &&
+      (!due || kind === "swing" || kind === "cast"),
+  );
+  const kind = kinds[Math.min(kinds.length - 1, Math.floor(random() * kinds.length))] ?? "idle";
+  const heading = bucketFacing(Math.min(STACK_HEADINGS - 1, Math.floor(random() * STACK_HEADINGS)));
+  switch (kind) {
+    case "walk":
+      return {
+        kind,
+        seconds: WALK_SECONDS.least + random() * WALK_SECONDS.spread,
+        facing: heading,
+      };
+    case "idle":
+      return {
+        kind,
+        seconds: IDLE_SECONDS.least + random() * IDLE_SECONDS.spread,
+        facing: last?.facing ?? 0,
+      };
+    case "swing":
+      return { kind, seconds: swing + SWING_REST_SECONDS, facing: heading };
+    case "cast":
+      return { kind, seconds: CAST_SECONDS, facing: heading };
   }
-  if (at < IDLE_SECONDS + WALK_SECONDS) {
-    return { kind: "walk", at: at - IDLE_SECONDS };
-  }
-  return { kind: "swing", at: at - IDLE_SECONDS - WALK_SECONDS };
 }
 
 /** A cape for a player with none, so a cape pattern previews on something: plain grey cloth. */
@@ -128,6 +161,8 @@ export interface PreviewHost {
   /** Whether the page is shown: hidden, the loop sleeps. */
   readonly visible: () => boolean;
   readonly onVisibility: (listener: () => void) => () => void;
+  /** Where the wander's beats come from. */
+  readonly random: () => number;
 }
 
 const PAGE: PreviewHost = {
@@ -143,6 +178,7 @@ const PAGE: PreviewHost = {
       document.removeEventListener("visibilitychange", listener);
     };
   },
+  random: Math.random,
 };
 
 /** Who the nameplate names. */
@@ -159,6 +195,8 @@ export interface CosmeticsPreview {
   stop(): void;
   /** Dissolve, then spawn back, once, as the shown look does it: a spawn or dissolve preview's start. */
   replayReactions(): void;
+  /** Wear `primary`/`secondary` instead of the character's professions: a look only, never kept. */
+  setProfessions(primary: ProfessionId, secondary: ProfessionId): void;
 }
 
 /**
@@ -181,16 +219,32 @@ export function createCosmeticsPreview(
   let shown: FigureLook | undefined;
   let glyph: HTMLImageElement | undefined;
   let tinted: { readonly pixels: number; readonly canvas: HTMLCanvasElement } | undefined;
+  /** The profession whose glyph is worn: the last asked for wins, however the loads finish. */
+  let wanted: ProfessionId | undefined;
+  const wear = (profession: ProfessionId): void => {
+    wanted = profession;
+    loadGlyph(profession)
+      .then((loaded) => {
+        if (wanted === profession) {
+          glyph = loaded;
+          tinted = undefined;
+        }
+      })
+      .catch((error: unknown) => {
+        // No glyph, the figure goes without its profession mark: not worth more than a warning.
+        console.warn("[web] could not load the preview's glyph", error);
+      });
+  };
   figure
-    .then(async (known) => {
+    .then((known) => {
       shown = known;
-      if (known !== undefined) {
-        glyph = await loadGlyph(known.primary);
+      // Professions picked before the character was known stay picked.
+      if (known !== undefined && wanted === undefined) {
+        wear(known.primary);
       }
     })
     .catch((error: unknown) => {
-      // No glyph, the figure goes without its profession mark: not worth more than a warning.
-      console.warn("[web] could not load the preview's glyph", error);
+      console.warn("[web] could not load the preview's figure", error);
     });
 
   const trails = new FootstepTrails();
@@ -200,8 +254,11 @@ export function createCosmeticsPreview(
   /** Seconds the loop has run, and the frame clock's last reading, ms. */
   let clock = 0;
   let last: number | undefined;
-  /** How far it has walked, arena units: the trail stays where it was dropped. */
-  let walked = 0;
+  /** Where it has walked to, arena units: the trail stays where it was dropped. */
+  const position = { x: 0, y: 0 };
+  /** The latest beats, the current one last, and how far into it, seconds. */
+  let beats: readonly Beat[] = [];
+  let beatAt = 0;
   /** When the replayed dissolve started, on `clock`. */
   let reactedAt: number | undefined;
   let plateKey: string | undefined;
@@ -229,6 +286,20 @@ export function createCosmeticsPreview(
     }
   };
 
+  /** The beat `dt` seconds on, for a swing of `swing` seconds: the next drawn as each ends. */
+  const step = (dt: number, swing: number): Beat => {
+    beatAt += dt;
+    let beat = beats.at(-1);
+    while (beat === undefined || beatAt >= beat.seconds) {
+      if (beat !== undefined) {
+        beatAt -= beat.seconds;
+      }
+      beat = nextBeat(beats, host.random, swing);
+      beats = [...beats.slice(-MOST_CALM_BEATS), beat];
+    }
+    return beat;
+  };
+
   const paint = (dt: number): void => {
     const worn = look();
     paintPlate(worn);
@@ -249,33 +320,33 @@ export function createCosmeticsPreview(
     const weaponId = shown?.appearance.weaponId;
     const motion =
       weaponId !== undefined && isWeaponId(weaponId) ? WEAPON_MOTION[weaponId] : undefined;
-    const beat = still
-      ? ({ kind: "idle", at: 0 } as const)
-      : loopBeat(clock, motion === undefined ? 0 : swingSeconds(motion));
+    const beat = still ? STILL_BEAT : step(dt, motion === undefined ? 0 : swingSeconds(motion));
+    const at = still ? 0 : beatAt;
     const speed = beat.kind === "walk" ? WALK_SPEED : 0;
-    walked += speed * dt;
+    const vx = speed * Math.cos(beat.facing);
+    const vy = speed * Math.sin(beat.facing);
+    position.x += vx * dt;
+    position.y += vy * dt;
     const bob =
-      beat.kind === "idle" && !still
-        ? -BOB_UNITS * Math.sin((2 * Math.PI * beat.at) / BOB_SECONDS)
-        : 0;
+      beat.kind === "idle" && !still ? -BOB_UNITS * Math.sin((2 * Math.PI * at) / BOB_SECONDS) : 0;
     const ground: GroundBody = {
       id: SELF,
-      position: { x: walked, y: 0 },
+      position: { x: position.x, y: position.y },
       radius: BODY_RADIUS,
       layer: 0,
       dead: false,
       cosmetics: worn,
     };
     trails.step([ground], dt, still);
-    stepCapeMotion(cape, dt, { x: walked, y: 0, r: BODY_RADIUS, vx: speed, vy: 0 });
+    stepCapeMotion(cape, dt, { x: position.x, y: position.y, r: BODY_RADIUS, vx, vy });
 
     const attack =
-      beat.kind === "swing" && motion !== undefined ? swingFrame(motion, beat.at) : REST_FRAME;
+      beat.kind === "swing" && motion !== undefined ? swingFrame(motion, at) : REST_FRAME;
     const swing = worn.swing?.look;
     const ribbon =
       swing?.kind === "swing"
         ? swingRibbon(
-            { x: 0, y: bob, r: BODY_RADIUS, facing: FACING },
+            { x: 0, y: bob, r: BODY_RADIUS, facing: beat.facing },
             weaponId,
             attack,
             undefined,
@@ -286,7 +357,7 @@ export function createCosmeticsPreview(
       x: 0,
       y: bob,
       r: BODY_RADIUS,
-      facing: FACING,
+      facing: beat.facing,
       team: "ally",
       weaponId,
       offhandId: shown?.appearance.offhandId,
@@ -318,7 +389,7 @@ export function createCosmeticsPreview(
     }
     // The trail lies where it was dropped: the body walks on past it.
     context.save();
-    context.translate(-walked, 0);
+    context.translate(-position.x, -position.y);
     paintMotes(painter, trails.motes());
     context.restore();
     context.globalAlpha = paintReaction(painter, ground, still);
@@ -327,7 +398,7 @@ export function createCosmeticsPreview(
       const made = tintedGlyph(glyph, pixels);
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
-    const pose = stackPose(beat.kind === "walk", false, clock, still);
+    const pose = stackPose(beat.kind === "walk", beat.kind === "cast", clock, still);
     const decor = matchDecor(body);
     paintFigure(painter, context, body, pose, decor, () => {
       if (tinted !== undefined) {
@@ -418,6 +489,9 @@ export function createCosmeticsPreview(
     },
     replayReactions() {
       reactedAt = clock;
+    },
+    setProfessions(primary) {
+      wear(primary);
     },
   };
 }
