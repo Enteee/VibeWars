@@ -1,12 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars -- an untyped SVG generator: points and slices are plain arrays and numbers go into strings. */
-// Figure build study (#4176, epic #3974): the Gender cosmetic changes the stacked
-// figure's build (shoulder, waist and hip width, one hair cue) on top of any outfit.
-// Male, female and three nonbinary options on the warrior, monk and ranger outfits,
-// ally and foe, at the four camera zooms (view height 640 / 860 / 1100 / 1400 on a
-// 1080 px canvas) and on the menu figure.
+/* eslint-disable @typescript-eslint/no-base-to-string, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars -- an untyped SVG generator: points and slices are plain arrays and numbers go into strings. */
+// Figure body study (#4176, epic #3974): height, build and hair, three options each,
+// freely combined, on top of any outfit. Height scales the stack's lift 0.92 / 1 / 1.08;
+// build changes shoulder, chest, waist and limb widths and the lean (posture);
+// hair is a neutral dark cue behind or below the headgear. No gender anywhere.
+// Shown on the warrior, monk and ranger outfits, ally and foe, at the four camera zooms
+// (view height 640 / 860 / 1100 / 1400 on a 1080 px canvas) and on the menu figure,
+// plus a strip of mixed combinations.
 // Units are sprite-stack.ts's: body radii, x forward, y right, one lift = 1/12.
 // Generic gothic fantasy, not any GW1 armour set.
-// Usage: node scripts/assets/figure-build-study.mjs   (writes docs/art/figure-build-study.svg, and the .png when inkscape is there)
+// Usage: node scripts/assets/figure-body-study.mjs   (writes docs/art/figure-body-study.svg, and the .png when inkscape is there)
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
@@ -139,41 +141,57 @@ const ACCENTS = {
   ranger: { kind: "belt", tone: "#7aa04a" },
 };
 
-// A build scales the slices' width (y) by region and adds a hair cue behind the head.
-const BUILDS = {
-  male: { shoulder: 1.25, waist: 1.0, hip: 0.85, hair: undefined },
-  female: { shoulder: 0.78, waist: 0.8, hip: 1.2, hair: "braid" },
-  "nb-a": { shoulder: 1.0, waist: 0.92, hip: 1.0, hair: "fringe" },
-  "nb-b": { shoulder: 0.88, waist: 0.84, hip: 1.1, hair: "bun" },
-  "nb-c": { shoulder: 1.15, waist: 0.82, hip: 0.92, hair: "tail" },
+const HEIGHT_SCALE = { short: 0.92, average: 1, tall: 1.08 };
+// Widths by region (y), and lean: the forward shift of the upper body (x), in body radii.
+const BUILD_SHAPES = {
+  lean: { shoulder: 0.84, chest: 0.8, waist: 0.76, limb: 0.82, lean: 0 },
+  average: { shoulder: 1, chest: 1, waist: 1, limb: 1, lean: 0.04 },
+  heavy: { shoulder: 1.24, chest: 1.22, waist: 1.24, limb: 1.2, lean: 0.12 },
 };
-function applyBuild(slices, b) {
+const HAIR_TONE = "#3a2e26";
+function applyBody(slices, body) {
+  const b = BUILD_SHAPES[body.build];
   const k = {
-    legs: b.hip,
-    hip: b.hip,
-    torso: (b.waist + b.shoulder) / 2,
+    legs: b.limb,
+    hip: b.waist,
+    torso: b.chest,
     arm: b.shoulder,
     shoulder: b.shoulder,
     head: 1,
   };
+  // posture: the upper body leans forward, the head most; a heavy stance is wider (limb)
+  const fwd = {
+    legs: 0,
+    hip: 0,
+    torso: b.lean * 0.6,
+    arm: b.lean * 0.8,
+    shoulder: b.lean,
+    head: b.lean * 1.3,
+  };
   const out = slices.map((sl) => ({
     ...sl,
-    parts: sl.parts.map((part) => part.map(([x, y]) => [x, +(y * k[sl.reg]).toFixed(3)])),
+    parts: sl.parts.map((part) =>
+      part.map(([x, y]) => [+(x + fwd[sl.reg]).toFixed(3), +(y * k[sl.reg]).toFixed(3)]),
+    ),
   }));
   const headAt = out.findIndex((sl) => sl.reg === "head");
   const base = out.slice(0, headAt).filter((sl) => !sl.same).length;
-  const hair = (parts, abs, tone = "#7a5a34") =>
-    out.push({ parts, tone, light: 0.9, same: false, alpha: 1, abs });
-  if (b.hair === "braid")
-    for (let i = 0; i < 7; i++) hair([el(-0.3 - 0.12 * i, 0, 0.15, 0.12, 6)], base + 4 - 1.5 * i);
-  if (b.hair === "tail")
-    for (let i = 0; i < 4; i++) hair([el(-0.3 - 0.14 * i, 0, 0.17, 0.14, 6)], base + 4 - i);
-  if (b.hair === "bun") hair([el(-0.32, 0, 0.22, 0.22, 8)], base + 5);
-  if (b.hair === "fringe") hair([el(0.3, 0, 0.14, 0.3, 8)], base + 5);
+  const f = fwd.head;
+  const hair = (parts, abs) =>
+    out.push({ parts, tone: HAIR_TONE, light: 0.9, same: false, alpha: 1, abs });
+  if (body.hair === "cropped") hair([el(-0.24 + f, 0, 0.12, 0.2, 8)], base + 3);
+  if (body.hair === "long")
+    for (let i = 0; i < 6; i++)
+      hair([el(-0.3 + f - 0.05 * i, 0, 0.2, 0.3 - 0.015 * i, 8)], base + 5 - i);
+  if (body.hair === "tied") {
+    hair([el(-0.3 + f, 0, 0.1, 0.1, 6)], base + 4); // the tie
+    for (let i = 0; i < 5; i++)
+      hair([el(-0.42 + f - 0.13 * i, 0, 0.13, 0.1, 6)], base + 4 - 0.8 * i);
+  }
   return out;
 }
 
-function figure(pose, o, accent, build) {
+function figure(pose, o, accent, body) {
   let reg = "legs";
   const st = pose === "stride-a" ? 1 : pose === "stride-b" ? -1 : 0;
   const f = 0.3 * st;
@@ -376,7 +394,7 @@ function figure(pose, o, accent, build) {
         1.05,
       );
   });
-  return build ? applyBuild(s, build) : s;
+  return applyBody(s, body);
 }
 
 // ---- rendering -----------------------------------------------------------------
@@ -396,11 +414,12 @@ const shade = (c, l) => {
 };
 const defs = [];
 const used = new Map();
-// One def per outfit, accent, team, heading and pose, in unit space (R = 1).
-function defId(id, build, team, heading, pose) {
-  const key = `${id}-${build}-${team}-${heading}-${pose}`;
+// One def per outfit, body, team, heading and pose, in unit space (R = 1).
+function defId(id, body, team, heading, pose) {
+  const key = `${id}-${body.height}-${body.build}-${body.hair}-${team}-${heading}-${pose}`;
   if (used.has(key)) return key;
-  const slices = figure(pose, OUTFITS[id], undefined, BUILDS[build]);
+  const slices = figure(pose, OUTFITS[id], undefined, body);
+  const hs = HEIGHT_SCALE[body.height];
   const facing = (heading * Math.PI) / 4;
   const ca = Math.cos(facing),
     sa = Math.sin(facing);
@@ -412,7 +431,7 @@ function defId(id, build, team, heading, pose) {
       part
         .map(
           ([x, y]) =>
-            `${(x * ca - y * sa).toFixed(2)},${((x * sa + y * ca) * 0.9 - STEP * lift).toFixed(2)}`,
+            `${(x * ca - y * sa).toFixed(2)},${((x * sa + y * ca) * 0.9 - STEP * lift * hs).toFixed(2)}`,
         )
         .join(" "),
     );
@@ -447,8 +466,8 @@ function defId(id, build, team, heading, pose) {
   used.set(key, true);
   return key;
 }
-const place = (id, build, team, x, y, px, heading = 0, pose = "stand") =>
-  `<use href="#${defId(id, build, team, heading, pose)}" transform="translate(${x} ${y}) scale(${px})"/>`;
+const place = (id, body, team, x, y, px, heading = 0, pose = "stand") =>
+  `<use href="#${defId(id, body, team, heading, pose)}" transform="translate(${x} ${y}) scale(${px})"/>`;
 const plate = (x, y, px, c) =>
   `<polygon points="${[0, 1, 2, 3, 4, 5].map((i) => `${(x + px * 0.95 * Math.cos((i * Math.PI) / 3)).toFixed(1)},${(y + px * 0.86 * Math.sin((i * Math.PI) / 3)).toFixed(1)}`).join(" ")}" fill="${c}" opacity="0.55" stroke="${c}" stroke-width="1"/>`;
 const txt = (x, y, t, s = 12, c = "#d7dee8", anchor = "start") =>
@@ -461,56 +480,94 @@ const ZOOMS = [
   [1400, 9.4],
 ];
 const OUT = ["warrior", "monk", "ranger"];
-const BS = Object.keys(BUILDS);
-const NAMES = {
-  male: "male",
-  female: "female",
-  "nb-a": "nonbinary A",
-  "nb-b": "nonbinary B",
-  "nb-c": "nonbinary C",
-};
-const COL = 250,
-  X0 = 60;
-const W = X0 + COL * 5 + 20,
-  H = 1030;
+const AVG = { height: "average", build: "average", hair: "cropped" };
+const AXES = [
+  [
+    "height",
+    "Height: stack scaled 0.92 / 1 / 1.08 (build average, hair cropped)",
+    ["short", "average", "tall"],
+  ],
+  [
+    "build",
+    "Build: lean / average / heavy; posture follows (height average, hair cropped)",
+    ["lean", "average", "heavy"],
+  ],
+  [
+    "hair",
+    "Hair: cropped / long / tied, neutral dark, behind the headgear (height and build average)",
+    ["cropped", "long", "tied"],
+  ],
+];
+const COL = 330,
+  X0 = 50,
+  PANEL = 900;
+const W = X0 + COL * 3 + 20;
+const H = 70 + PANEL * 3 + 420;
 let body = txt(
   20,
   28,
-  "Figure build study (#4176): male, female and three nonbinary options on the warrior, monk and ranger outfits. Build = shoulder, waist, hip width and one hair cue; team colour, badge, cape and weapon marks unchanged.",
+  "Figure body study (#4176): height, build and hair, three options each, freely combined, on the warrior, monk and ranger outfits.",
   14,
 );
 body += txt(
   20,
   48,
-  "Nonbinary A: even build, side fringe. B: soft shoulders, narrow waist, bun. C: broad shoulders, narrow waist, short tail. Operator picks one (the pick goes in the .md).",
+  "Each panel varies one axis; ally east, foe west, the four zooms, and the menu figure (monk, facing the viewer). Team colour, badge, cape and weapon marks unchanged.",
   12,
   "#9aa4b2",
 );
-BS.forEach((b, c) => {
-  const cx = X0 + COL * c + COL / 2;
-  body += txt(cx, 76, NAMES[b], 15, "#e8eef6", "middle");
-  OUT.forEach((id, r) => {
-    const y = 230 + r * 190;
-    body += plate(cx - 50, y, 46, TEAMS.ally) + place(id, b, "ally", cx - 50, y, 46, 0);
-    body += plate(cx + 50, y, 46, TEAMS.foe) + place(id, b, "foe", cx + 50, y, 46, 4);
-    // the four zooms in a row below
-    ZOOMS.forEach(([h, px], j) => {
-      const x = cx - 78 + j * 52;
-      body += plate(x, y + 72, px, TEAMS.ally) + place(id, b, "ally", x, y + 72, px, 1);
+AXES.forEach(([axis, title, values], p) => {
+  const top = 70 + p * PANEL;
+  body += txt(20, top + 20, title, 14, "#e8eef6");
+  values.forEach((v, c) => {
+    const cx = X0 + COL * c + COL / 2;
+    const bd = { ...AVG, [axis]: v };
+    body += txt(cx, top + 50, v, 15, "#e8eef6", "middle");
+    OUT.forEach((id, r) => {
+      const y = top + 225 + r * 210;
+      body += plate(cx - 60, y, 52, TEAMS.ally) + place(id, bd, "ally", cx - 60, y, 52, 0);
+      body += plate(cx + 60, y, 52, TEAMS.foe) + place(id, bd, "foe", cx + 60, y, 52, 4);
+      ZOOMS.forEach(([h, px], j) => {
+        const x = cx - 100 + j * 66;
+        body += plate(x, y + 78, px, TEAMS.ally) + place(id, bd, "ally", x, y + 78, px, 1);
+      });
+      if (c === 0) body += txt(8, y - 90, id, 12, "#9aa4b2");
     });
-    if (c === 0) body += txt(8, y - 60, id, 12, "#9aa4b2");
+    body += plate(cx, top + 830, 46, TEAMS.ally) + place("monk", bd, "ally", cx, top + 830, 46, 2);
   });
-  // the menu figure, facing the viewer
-  body += plate(cx, 930, 62, TEAMS.ally) + place("monk", b, "ally", cx, 930, 62, 2);
 });
-body += txt(8, 1015, "menu figure (monk, facing the viewer)", 12, "#9aa4b2");
+// a strip of mixed combinations
+const MIX = [
+  ["warrior", { height: "tall", build: "heavy", hair: "cropped" }],
+  ["monk", { height: "short", build: "lean", hair: "long" }],
+  ["ranger", { height: "average", build: "lean", hair: "tied" }],
+  ["warrior", { height: "short", build: "heavy", hair: "tied" }],
+  ["monk", { height: "tall", build: "average", hair: "long" }],
+];
+const sy = 70 + PANEL * 3;
+body += txt(
+  20,
+  sy + 20,
+  "Mixed strip: freely combined, ally and foe (height / build / hair)",
+  14,
+  "#e8eef6",
+);
+MIX.forEach(([id, bd], i) => {
+  const cx = 100 + i * 190;
+  body += plate(cx, sy + 235, 58, i % 2 ? TEAMS.foe : TEAMS.ally);
+  body += place(id, bd, i % 2 ? "foe" : "ally", cx, sy + 235, 58, i % 2 ? 4 : 0);
+  body += plate(cx, sy + 335, 20.6, TEAMS.ally) + place(id, bd, "ally", cx, sy + 335, 20.6, 1);
+  body += txt(cx, sy + 385, `${id}: ${bd.height} ${bd.build} ${bd.hair}`, 11, "#9aa4b2", "middle");
+});
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="sans-serif"><rect width="${W}" height="${H}" fill="#1b1d22"/><defs>${defs.join("")}</defs>${body}</svg>`;
-writeFileSync("docs/art/figure-build-study.svg", svg);
+writeFileSync("docs/art/figure-body-study.svg", svg);
 try {
   execFileSync(
     "inkscape",
-    ["docs/art/figure-build-study.svg", "-o", "docs/art/figure-build-study.png"],
-    { stdio: "ignore" },
+    ["docs/art/figure-body-study.svg", "-o", "docs/art/figure-body-study.png"],
+    {
+      stdio: "ignore",
+    },
   );
 } catch {
   console.error("inkscape failed: the png was not written");
