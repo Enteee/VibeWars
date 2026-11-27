@@ -6,6 +6,12 @@ değiştirilebilir; Esc, Enter, F10 ve fare düğmeleri sabittir. Orada bir
 zaten kullanılan bir tuş yeni eyleme geçer ve ekran hangi eylemin onu
 kaybettiğini söyler. Değişiklikler hemen kaydedilir.
 
+Bir tuş bir kombinasyon da olabilir: Shift, Ctrl ya da Alt'ı basılı tutup
+tuşa bas, örneğin **Shift + X**. Hareket ve Adları göster yalnızca tek bir
+tuş alır, ve tarayıcı bazı kombinasyonları kendine ayırır, örneğin Ctrl + W.
+Adları göstermek için Shift'i basılı tutmak düz tuşlarının çalışmasını
+engellemez, meğer ki o Shift kombinasyonu kendisi bir şeye atanmış olsun.
+
 ## Tuşlar
 
 Varsayılan hazır ayar **Klasik**'tir, GW1'e alışkın eller içindir. **VibeWars**

@@ -7,6 +7,13 @@ billentyűcellára, és nyomd meg a kívánt billentyűt; a már használt
 billentyű átkerül az új művelethez, és a képernyő kiírja, melyiktől
 vette el. A módosítások azonnal mentődnek.
 
+Egy billentyű kombináció is lehet: tartsd nyomva a Shiftet, a Ctrl-t vagy az
+Altot, és nyomd meg a billentyűt, például **Shift + X**. A Mozgás és a Nevek
+mutatása csak egyetlen billentyűt fogad el, és a böngésző néhány kombinációt
+megtart magának, például a Ctrl + W-t. Ha a nevek mutatásához nyomva tartod
+a Shiftet, a sima billentyűid továbbra is működnek, kivéve, ha maga az a
+Shift-kombináció valamihez hozzá van rendelve.
+
 ## Billentyűk
 
 Az alapértelmezett előbeállítás a **Klasszikus**, a GW1-hez szokott kezeknek. A

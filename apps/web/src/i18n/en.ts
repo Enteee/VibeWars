@@ -331,6 +331,7 @@ export const en = {
   "controls.browserKey": "{key} belongs to the browser.",
   "controls.callTarget": "Call your target",
   "controls.cancelAction": "Cancel action; again: clear target",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Custom",
   "controls.displacedKeeps": "{key} was {action}; {action} keeps {left}.",
   "controls.displacedNoKey": "{key} was {action}; {action} now has no key.",
@@ -348,9 +349,10 @@ export const en = {
   "controls.preset": "Preset",
   "controls.presetClassic": "Classic (1-8 skills, WASD move)",
   "controls.presetVibeWars": "VibeWars (Q-F skills, arrows move)",
+  "controls.noComboHere": "This action takes a single key.",
   "controls.pressAKey": "press a key...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt and the Windows/Command key are never used: the browser owns them.",
+  "controls.reservedCombo": "{combo} belongs to the browser.",
+  "controls.shortcutRefusal": "The Windows/Command key is never used: the system owns it.",
   "controls.showNames": "Show names (hold)",
   "controls.skill1": "Skill 1",
   "controls.skill2": "Skill 2",
@@ -370,7 +372,6 @@ export const en = {
   "controls.weaponSet3": "Weapon set 3",
   "controls.weaponSet4": "Weapon set 4",
   "controls.weaponSets": "Weapon sets",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Ember aura",
   "cosmetics.item.auraFrost": "Frost aura",
@@ -744,9 +745,11 @@ export const en = {
   "jukebox.stopPreview": "Stop the preview",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -757,6 +760,7 @@ export const en = {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

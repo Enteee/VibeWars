@@ -298,6 +298,7 @@ export default {
   "controls.browserKey": "{key} thuộc về trình duyệt.",
   "controls.callTarget": "Gọi mục tiêu",
   "controls.cancelAction": "Hủy hành động; nhấn lại: bỏ mục tiêu",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Tùy chỉnh",
   "controls.displacedKeeps": "{key} từng là {action}; {action} vẫn còn {left}.",
   "controls.displacedNoKey": "{key} từng là {action}; {action} giờ không có phím.",
@@ -315,9 +316,10 @@ export default {
   "controls.preset": "Mẫu",
   "controls.presetClassic": "Classic (kỹ năng 1-8, đi bằng WASD)",
   "controls.presetVibeWars": "VibeWars (kỹ năng Q-F, đi bằng mũi tên)",
+  "controls.noComboHere": "Hành động này chỉ nhận một phím.",
   "controls.pressAKey": "nhấn một phím...",
-  "controls.shortcutRefusal":
-    "Không dùng Ctrl, Alt và phím Windows/Command: chúng thuộc về trình duyệt.",
+  "controls.reservedCombo": "{combo} thuộc về trình duyệt.",
+  "controls.shortcutRefusal": "Không dùng phím Windows/Command: phím này thuộc về hệ thống.",
   "controls.showNames": "Hiện tên (giữ)",
   "controls.skill1": "Kỹ năng 1",
   "controls.skill2": "Kỹ năng 2",
@@ -337,7 +339,6 @@ export default {
   "controls.weaponSet3": "Bộ vũ khí 3",
   "controls.weaponSet4": "Bộ vũ khí 4",
   "controls.weaponSets": "Bộ vũ khí",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Hào quang than hồng",
   "cosmetics.item.auraFrost": "Hào quang sương giá",
@@ -694,9 +695,11 @@ export default {
   "jukebox.stopPreview": "Dừng nghe thử",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -707,6 +710,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

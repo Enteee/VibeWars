@@ -329,6 +329,7 @@ export default {
   "controls.browserKey": "{key} متعلق به مرورگر است.",
   "controls.callTarget": "اعلام هدف",
   "controls.cancelAction": "لغو کار؛ دوباره: حذف هدف",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "سفارشی",
   "controls.displacedKeeps": "{key} برای {action} بود؛ {action} کلید {left} را نگه می‌دارد.",
   "controls.displacedNoKey": "{key} برای {action} بود؛ {action} حالا کلیدی ندارد.",
@@ -346,9 +347,10 @@ export default {
   "controls.preset": "پیش‌تنظیم",
   "controls.presetClassic": "کلاسیک (مهارت‌ها 1-8، حرکت WASD)",
   "controls.presetVibeWars": "VibeWars (مهارت‌ها Q-F، حرکت با پیکان‌ها)",
+  "controls.noComboHere": "این عمل فقط یک کلید می‌پذیرد.",
   "controls.pressAKey": "کلیدی را بزن...",
-  "controls.shortcutRefusal":
-    "Ctrl، Alt و کلید Windows/Command هرگز استفاده نمی‌شوند: متعلق به مرورگرند.",
+  "controls.reservedCombo": "{combo} متعلق به مرورگر است.",
+  "controls.shortcutRefusal": "کلید Windows/Command هرگز استفاده نمی‌شود: متعلق به سیستم است.",
   "controls.showNames": "نمایش نام‌ها (نگه دار)",
   "controls.skill1": "مهارت 1",
   "controls.skill2": "مهارت 2",
@@ -368,7 +370,6 @@ export default {
   "controls.weaponSet3": "ست سلاح 3",
   "controls.weaponSet4": "ست سلاح 4",
   "controls.weaponSets": "ست‌های سلاح",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "هاله اخگر",
   "cosmetics.item.auraFrost": "هاله یخبندان",
@@ -742,9 +743,11 @@ export default {
   "jukebox.stopPreview": "توقف پیش‌نمایش",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -755,6 +758,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

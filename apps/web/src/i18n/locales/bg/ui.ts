@@ -334,6 +334,7 @@ export default {
   "controls.browserKey": "{key} е запазен за браузъра.",
   "controls.callTarget": "Обяви целта си",
   "controls.cancelAction": "Отмени действие; пак: махни целта",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Лични",
   "controls.displacedKeeps": "{key} беше за {action}; {action} запазва {left}.",
   "controls.displacedNoKey": "{key} беше за {action}; {action} вече няма клавиш.",
@@ -351,9 +352,10 @@ export default {
   "controls.preset": "Шаблон",
   "controls.presetClassic": "Класически (умения 1-8, движение WASD)",
   "controls.presetVibeWars": "VibeWars (умения Q-F, движение със стрелки)",
+  "controls.noComboHere": "Това действие приема само един клавиш.",
   "controls.pressAKey": "натисни клавиш...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt и клавишът Windows/Command никога не се ползват: те са за браузъра.",
+  "controls.reservedCombo": "{combo} е запазена за браузъра.",
+  "controls.shortcutRefusal": "Клавишът Windows/Command никога не се ползва: той е за системата.",
   "controls.showNames": "Покажи имената (задръж)",
   "controls.skill1": "Умение 1",
   "controls.skill2": "Умение 2",
@@ -373,7 +375,6 @@ export default {
   "controls.weaponSet3": "Оръжеен комплект 3",
   "controls.weaponSet4": "Оръжеен комплект 4",
   "controls.weaponSets": "Оръжейни комплекти",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Жарава аура",
   "cosmetics.item.auraFrost": "Ледена аура",
@@ -747,9 +748,11 @@ export default {
   "jukebox.stopPreview": "Спри прегледа",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -760,6 +763,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

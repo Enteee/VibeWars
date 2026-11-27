@@ -6,6 +6,13 @@ Choisis-y un **Profil**, ou clique sur une case de touche et appuie sur la
 touche voulue ; une touche déjà prise passe à la nouvelle action, et l'écran
 dit laquelle l'a perdue. Les changements sont enregistrés tout de suite.
 
+Une touche peut aussi être une combinaison : maintiens Shift, Ctrl ou Alt et
+appuie sur la touche, par exemple **Shift + X**. Déplacement et Noms ne
+prennent qu'une seule touche, et le navigateur garde quelques combinaisons
+pour lui, comme Ctrl + W. Maintenir Shift pour afficher les noms laisse tes
+touches simples fonctionner, sauf si cette combinaison avec Shift est
+elle-même attribuée à quelque chose.
+
 ## Touches
 
 Le profil par défaut est **Classique**, fait pour les mains habituées à GW1.

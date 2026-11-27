@@ -2,6 +2,8 @@
 
 Ogni tasto della tabella qui sotto si può cambiare in **Opzioni**, nella sezione **comandi**; Esc, Enter, F10 e i pulsanti del mouse sono fissi. Scegli lì un **Preset**, oppure clicca su una casella tasto e premi il tasto che vuoi; un tasto già in uso passa alla nuova azione, e la schermata dice quale l'ha perso. Le modifiche si salvano subito.
 
+Un tasto può anche essere una combinazione: tieni premuto Shift, Ctrl o Alt e premi il tasto, per esempio **Shift + X**. Movimento e Nomi accettano un solo tasto, e il browser si tiene alcune combinazioni, come Ctrl + W. Tenere premuto Shift per vedere i nomi lascia funzionare i tuoi tasti semplici, a meno che quella combinazione con Shift non sia assegnata a qualcosa.
+
 ## Tasti
 
 Il preset predefinito è **Classico**, per chi viene da GW1. **VibeWars** lancia con la mano sinistra e si muove con i tasti freccia.

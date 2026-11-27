@@ -1,14 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
-import { DEFAULT_KEYMAP, KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
+import {
+  DEFAULT_KEYMAP,
+  KEYMAP_PRESETS,
+  bindingLabel,
+  type KeyBinding,
+  type KeyPress,
+  type Keymap,
+  type Modifier,
+} from "../input/keymap.js";
 
-import { controlsSection, KeysEditor, noKeyWarning, type KeyPress } from "./controls-section.js";
+import { controlsSection, KeysEditor, noKeyWarning } from "./controls-section.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 
 function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress {
-  return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };
+  return { code, ctrlKey: false, altKey: false, shiftKey: false, metaKey: false, ...held };
 }
+
+/** A binding: `code` with `mods` held. */
+const bound = (code: string, ...mods: Modifier[]): KeyBinding => ({ code, mods });
 
 function editor(map: Keymap = KEYMAP_PRESETS.vibewars): {
   readonly editor: KeysEditor;
@@ -27,7 +38,7 @@ describe("KeysEditor (#309)", () => {
     expect(keys.cellText(SKILL_1)).toBe(t("controls.pressAKey"));
 
     expect(keys.press(key("KeyZ"))).toBe(true);
-    expect(keys.map["skill-1"]).toEqual(["KeyZ"]);
+    expect(keys.map["skill-1"]).toEqual([bound("KeyZ")]);
     expect(keys.capturing).toBeUndefined();
     expect(keys.cellText(SKILL_1)).toBe("Z");
     expect(save).toHaveBeenCalledOnce();
@@ -52,10 +63,10 @@ describe("KeysEditor (#309)", () => {
     expect(save).toHaveBeenCalledOnce();
   });
 
-  it("refuses Ctrl+Z with the reason, and keeps waiting", () => {
+  it("refuses Meta+Z with the reason, and keeps waiting", () => {
     const { editor: keys, save } = editor();
     keys.startCapture(SKILL_1);
-    expect(keys.press(key("KeyZ", { ctrlKey: true }))).toBe(false);
+    expect(keys.press(key("KeyZ", { metaKey: true }))).toBe(false);
     expect(keys.line).toBe(t("controls.shortcutRefusal"));
     expect(keys.capturing).toEqual(SKILL_1);
     expect(save).not.toHaveBeenCalled();
@@ -66,14 +77,10 @@ describe("KeysEditor (#309)", () => {
     expect(keys.line).toBe(t("controls.shortcutRefusal"));
   });
 
-  it("refuses a modifier key on its own, Alt and Meta as Ctrl", () => {
+  it("refuses Meta, alone or held with a key", () => {
     const { editor: keys } = editor();
     keys.startCapture(SKILL_1);
-    for (const press of [
-      key("ControlLeft", { ctrlKey: true }),
-      key("KeyQ", { altKey: true }),
-      key("MetaLeft"),
-    ]) {
+    for (const press of [key("MetaLeft", { metaKey: true }), key("KeyX", { metaKey: true })]) {
       expect(keys.press(press)).toBe(false);
       expect(keys.line).toBe(t("controls.shortcutRefusal"));
     }
@@ -93,17 +100,18 @@ describe("KeysEditor (#309)", () => {
     const { editor: keys } = editor();
     keys.startCapture(SKILL_1);
     expect(keys.press(key("Tab"))).toBe(true);
-    expect(keys.map["skill-1"]).toEqual(["Tab"]);
+    expect(keys.map["skill-1"]).toEqual([bound("Tab")]);
     keys.startCapture(SKILL_1);
-    expect(keys.press(key("ShiftLeft"))).toBe(true);
-    expect(keys.map["skill-1"]).toEqual(["ShiftLeft"]);
+    expect(keys.press(key("ShiftLeft", { shiftKey: true }))).toBe(true);
+    expect(keys.release(key("ShiftLeft"))).toBe(true);
+    expect(keys.map["skill-1"]).toEqual([bound("ShiftLeft")]);
   });
 
   it("moves Q off Skill 1 when Skill 2 takes it, flashes the emptied cell and says so", () => {
     const { editor: keys } = editor();
     keys.startCapture({ action: "skill-2", index: 0 });
     keys.press(key("KeyQ"));
-    expect(keys.map["skill-2"]).toEqual(["KeyQ"]);
+    expect(keys.map["skill-2"]).toEqual([bound("KeyQ")]);
     expect(keys.map["skill-1"]).toEqual([]);
     expect(keys.flashed).toEqual(SKILL_1);
     expect(keys.line).toBe(
@@ -115,7 +123,7 @@ describe("KeysEditor (#309)", () => {
     const { editor: keys } = editor(KEYMAP_PRESETS.classic);
     keys.startCapture(SKILL_1);
     keys.press(key("KeyW"));
-    expect(keys.map["move-up"]).toEqual(["ArrowUp"]);
+    expect(keys.map["move-up"]).toEqual([bound("ArrowUp")]);
     expect(keys.flashed).toEqual({ action: "move-up", index: 0 });
     expect(keys.line).toBe(
       t("controls.displacedKeeps", { key: "W", action: t("controls.moveUp"), left: "↑" }),
@@ -138,7 +146,7 @@ describe("KeysEditor (#309)", () => {
     expect(keys.map).toBe(KEYMAP_PRESETS.vibewars);
     expect(save.mock.calls.map(([map]) => map)).toEqual([
       KEYMAP_PRESETS.vibewars,
-      expect.objectContaining({ "skill-1": ["KeyZ"] }),
+      expect.objectContaining({ "skill-1": [bound("KeyZ")] }),
       KEYMAP_PRESETS.vibewars,
     ]);
   });
@@ -169,16 +177,131 @@ describe("KeysEditor (#309)", () => {
 
 describe("KeysEditor's Previous target (#3630)", () => {
   it("reads Shift with each Next target key, and no key where Shift cannot go", () => {
-    const { editor: keys } = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab", "KeyX"] });
-    expect(keys.previousTargetText(0)).toBe(t("controls.withShift", { key: "Tab" }));
-    expect(keys.previousTargetText(1)).toBe(t("controls.withShift", { key: "X" }));
+    const { editor: keys } = editor({
+      ...KEYMAP_PRESETS.vibewars,
+      "target-next": [bound("Tab"), bound("KeyX")],
+    });
+    expect(keys.previousTargetText(0)).toBe(bindingLabel(bound("Tab", "shift")));
+    expect(keys.previousTargetText(1)).toBe(bindingLabel(bound("KeyX", "shift")));
 
-    const one = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["Tab"] }).editor;
+    const one = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": [bound("Tab")] }).editor;
     expect(one.previousTargetText(1)).toBe("");
     const none = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": [] }).editor;
     expect(none.previousTargetText(0)).toBe(t("controls.noKey"));
-    const shift = editor({ ...KEYMAP_PRESETS.vibewars, "target-next": ["ShiftLeft"] }).editor;
+    const shift = editor({
+      ...KEYMAP_PRESETS.vibewars,
+      "target-next": [bound("ShiftLeft")],
+    }).editor;
     expect(shift.previousTargetText(0)).toBe(t("controls.noKey"));
+  });
+});
+
+describe("KeysEditor's combinations (#4183)", () => {
+  const shift = key("ShiftLeft", { shiftKey: true });
+  const ctrl = key("ControlLeft", { ctrlKey: true });
+
+  it("waits on Shift, showing it, and binds Shift+X on X", () => {
+    const { editor: keys } = editor();
+    keys.startCapture(SKILL_1);
+    expect(keys.press(shift)).toBe(true);
+    expect(keys.capturing).toEqual(SKILL_1);
+    expect(keys.cellText(SKILL_1)).toBe(t("controls.combo", { mods: t("keys.shift"), key: "…" }));
+    expect(keys.press(key("KeyX", { shiftKey: true }))).toBe(true);
+    expect(keys.map["skill-1"]).toEqual([bound("KeyX", "shift")]);
+    expect(keys.cellText(SKILL_1)).toBe(bindingLabel(bound("KeyX", "shift")));
+    // Letting Shift go after binds nothing more.
+    expect(keys.release(key("ShiftLeft"))).toBe(false);
+    expect(keys.map["skill-1"]).toEqual([bound("KeyX", "shift")]);
+  });
+
+  it("names every modifier held, Ctrl first, and binds Ctrl+Alt+1", () => {
+    const { editor: keys } = editor();
+    keys.startCapture(SKILL_1);
+    keys.press(key("AltLeft", { altKey: true }));
+    keys.press(key("ControlLeft", { ctrlKey: true, altKey: true }));
+    expect(keys.cellText(SKILL_1)).toBe(
+      t("controls.combo", { mods: `${t("keys.control")} + ${t("keys.alt")}`, key: "…" }),
+    );
+    keys.press(key("Digit1", { ctrlKey: true, altKey: true }));
+    expect(keys.map["skill-1"]).toEqual([bound("Digit1", "ctrl", "alt")]);
+  });
+
+  it("still waits when one of two modifiers is let go, and binds the last alone", () => {
+    const { editor: keys } = editor();
+    keys.startCapture(SKILL_1);
+    keys.press(ctrl);
+    keys.press(key("ShiftLeft", { ctrlKey: true, shiftKey: true }));
+    expect(keys.release(key("ControlLeft"))).toBe(true);
+    expect(keys.capturing).toEqual(SKILL_1);
+    expect(keys.cellText(SKILL_1)).toBe(t("controls.combo", { mods: t("keys.shift"), key: "…" }));
+    expect(keys.release(key("ShiftLeft"))).toBe(true);
+    expect(keys.map["skill-1"]).toEqual([bound("ShiftLeft")]);
+  });
+
+  it("refuses Ctrl alone as the browser's, and keeps waiting", () => {
+    const { editor: keys, save } = editor();
+    keys.startCapture(SKILL_1);
+    expect(keys.press(ctrl)).toBe(true);
+    expect(keys.release(key("ControlLeft"))).toBe(false);
+    expect(keys.line).toBe(t("controls.browserKey", { key: t("keys.control") }));
+    expect(keys.capturing).toEqual(SKILL_1);
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("refuses Ctrl+W, which the browser keeps", () => {
+    const { editor: keys, save } = editor();
+    keys.startCapture(SKILL_1);
+    keys.press(ctrl);
+    expect(keys.press(key("KeyW", { ctrlKey: true }))).toBe(false);
+    expect(keys.line).toBe(
+      t("controls.reservedCombo", { combo: bindingLabel(bound("KeyW", "ctrl")) }),
+    );
+    expect(keys.capturing).toEqual(SKILL_1);
+    // Ctrl let go after the refused W binds nothing.
+    keys.release(key("ControlLeft"));
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("refuses a combination on a move key, and binds nothing when Shift is let go", () => {
+    const { editor: keys, save } = editor();
+    const moveUp = { action: "move-up", index: 0 } as const;
+    keys.startCapture(moveUp);
+    keys.press(shift);
+    expect(keys.press(key("KeyW", { shiftKey: true }))).toBe(false);
+    expect(keys.line).toBe(t("controls.noComboHere"));
+    keys.release(key("ShiftLeft"));
+    expect(keys.capturing).toEqual(moveUp);
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("takes Shift+Backspace as a key, never as clearing the cell", () => {
+    const { editor: keys } = editor();
+    keys.startCapture(SKILL_1);
+    keys.press(shift);
+    expect(keys.press(key("Backspace", { shiftKey: true }))).toBe(false);
+    expect(keys.map["skill-1"]).toEqual([bound("KeyQ")]);
+  });
+
+  it("moves a combination off the action that had it, and names it", () => {
+    const { editor: keys } = editor({ ...KEYMAP_PRESETS.vibewars, mute: [bound("KeyX", "shift")] });
+    keys.startCapture(SKILL_1);
+    keys.press(shift);
+    keys.press(key("KeyX", { shiftKey: true }));
+    expect(keys.map.mute).toEqual([]);
+    expect(keys.line).toBe(
+      t("controls.displacedNoKey", {
+        key: bindingLabel(bound("KeyX", "shift")),
+        action: t("controls.mute"),
+      }),
+    );
+  });
+
+  it("reads no Previous target where Shift with Next target's key is bound itself", () => {
+    const { editor: keys } = editor({
+      ...KEYMAP_PRESETS.vibewars,
+      "skill-3": [bound("Tab", "shift")],
+    });
+    expect(keys.previousTargetText(0)).toBe(t("controls.noKey"));
   });
 });
 
@@ -259,7 +382,7 @@ describe("Options > Controls (#3631)", () => {
     const previous = (): string[] | undefined => rows(container)[next + 1];
     expect(previous()).toEqual([
       t("controls.targetPrevious"),
-      t("controls.withShift", { key: "Tab" }),
+      bindingLabel(bound("Tab", "shift")),
       "",
     ]);
     // Not a key of its own: no capture buttons, and a click starts nothing.
@@ -287,7 +410,7 @@ describe("Options > Controls (#3631)", () => {
       preventDefault: () => undefined,
       stopPropagation: () => undefined,
     });
-    expect(previous()?.[1]).toBe(t("controls.withShift", { key: "X" }));
+    expect(previous()?.[1]).toBe(bindingLabel(bound("KeyX", "shift")));
     unmount();
   });
 });

@@ -305,6 +305,7 @@ export default {
   "controls.browserKey": "{key}はブラウザが使用しています。",
   "controls.callTarget": "ターゲットをコール",
   "controls.cancelAction": "行動をキャンセル、再度押すとターゲット解除",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "カスタム",
   "controls.displacedKeeps": "{key}は{action}に割り当て済みでした。{action}には{left}が残ります。",
   "controls.displacedNoKey": "{key}は{action}に割り当て済みでした。{action}はキーなしになります。",
@@ -322,9 +323,10 @@ export default {
   "controls.preset": "プリセット",
   "controls.presetClassic": "クラシック (スキル1-8、WASD移動)",
   "controls.presetVibeWars": "VibeWars (スキルQ-F、矢印キー移動)",
+  "controls.noComboHere": "この操作には単一のキーのみ割り当てられます。",
   "controls.pressAKey": "キーを押してください...",
-  "controls.shortcutRefusal":
-    "Ctrl、Alt、Windows/Commandキーはブラウザが使用するため割り当てられません。",
+  "controls.reservedCombo": "{combo}はブラウザが使用しています。",
+  "controls.shortcutRefusal": "Windows/Commandキーはシステムが使用するため割り当てられません。",
   "controls.showNames": "名前を表示 (長押し)",
   "controls.skill1": "スキル1",
   "controls.skill2": "スキル2",
@@ -344,7 +346,6 @@ export default {
   "controls.weaponSet3": "武器セット3",
   "controls.weaponSet4": "武器セット4",
   "controls.weaponSets": "武器セット",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "残り火のオーラ",
   "cosmetics.item.auraFrost": "霜のオーラ",
@@ -701,9 +702,11 @@ export default {
   "jukebox.stopPreview": "試聴を停止",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -714,6 +717,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 
