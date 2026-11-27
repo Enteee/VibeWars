@@ -73,6 +73,7 @@ funguje rovnako ako na teba.
 
 Boti obchádzajú horiacu zem a iné škodlivé miesta, keď cesta okolo nie je o
 veľa dlhšia, a z takého miesta vystúpia, keď v ňom stoja.
+Vystúpia aj zo škodlivej oblasti nepriateľa, ako je studňa, ochrana proti nim alebo búrka, a bojujú z jej okraja.
 
 Bot s prerušením si ho šetrí na zosielania, na ktorých záleží: najprv
 oživenie alebo Prízračný hrdina, ktorý si nárokuje oltár, potom liečenie alebo

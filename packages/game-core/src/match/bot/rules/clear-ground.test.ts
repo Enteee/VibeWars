@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { pointInPolygon } from "../../../geometry.js";
-import { vec2 } from "../../../vec2.js";
-import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
+import { distance, vec2 } from "../../../vec2.js";
+import { NO_OBJECTIVES, type BotObjectives, type HostileGround } from "../../behaviour.js";
 import type { CapturePoint } from "../../capture-points.js";
 import { MatchSimulation } from "../../simulation.js";
 import type { MatchZone } from "../../zones.js";
@@ -92,5 +92,39 @@ describe("clear-ground: a bot in a fight steps out of harmful ground (#3026)", (
     const bot = sim.get("bot");
     if (bot === undefined) throw new Error("no bot");
     expect(pointInPolygon(bot.position, STRIP.polygon)).toBe(false);
+  });
+});
+
+describe("clear-ground: a bot in a fight steps out of a foe's well (#4193)", () => {
+  /** Team 1's well at (300, 400), radius 100. */
+  const WELL: HostileGround = {
+    team: 1,
+    hits: "foes",
+    position: vec2(300, 400),
+    layer: 0,
+    radius: 100,
+  };
+  const welled: BotObjectives = { ...NO_OBJECTIVES, hostileGround: [WELL] };
+
+  it("steps out only to a spot from which its foe is still in reach", () => {
+    // Unarmed, so melee; its foe just east of the well.
+    const sim = match([
+      body("bot", 0, vec2(390, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(450, 400)),
+    ]);
+    const rule = ruleFor(sim, "bot", { targetId: "foe" }, { objectives: welled });
+    const exit = clearGround.decide(rule)?.moveTo;
+    if (exit === undefined) throw new Error("no exit");
+    expect(distance(exit, WELL.position)).toBeGreaterThan(WELL.radius);
+    expect(distance(exit, vec2(450, 400))).toBeLessThanOrEqual(60);
+  });
+
+  it("fights in the well when its foe stands at the centre", () => {
+    const sim = match([
+      body("bot", 0, vec2(330, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(300, 400)),
+    ]);
+    const rule = ruleFor(sim, "bot", { targetId: "foe" }, { objectives: welled });
+    expect(clearGround.decide(rule)).toBeUndefined();
   });
 });

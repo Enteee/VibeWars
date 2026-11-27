@@ -83,6 +83,7 @@ fordulás náluk is ugyanúgy működik, mint nálad.
 
 A botok megkerülik az égő talajt és a többi ártalmas foltot, ha a kerülő nem
 sokkal hosszabb, és kilépnek abból, amelyikben állnak.
+Az ellenfél ártó területéből is kilépnek, például egy kútból, egy ellenük szóló védőkörből vagy egy viharból, és a széléről harcolnak.
 
 A megszakítással rendelkező bot a fontos varázslásokra tartogatja: elsőként
 egy feltámasztásra vagy egy oltárt elfoglaló Kísértethősre, aztán egy

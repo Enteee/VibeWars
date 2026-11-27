@@ -79,6 +79,7 @@ fungerar för dem som för dig.
 
 Bottar går runt brinnande mark och andra skadliga områden när omvägen inte
 är mycket längre, och kliver ut ur ett de står i.
+De kliver också ut ur en motståndares skadliga område, som en brunn, ett skydd mot dem eller en storm, och slåss från dess kant.
 
 En bot med ett avbrott sparar det till de kastningar som spelar roll: en
 återupplivning eller en spökhjälte som tar altaret först, sedan en

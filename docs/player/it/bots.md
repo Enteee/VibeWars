@@ -36,6 +36,7 @@ I bot schivano circa la metà dei colpi mirati diretti contro di loro, come una 
 
 I bot aggirano il terreno in fiamme e le altre zone dannose quando il giro
 non è molto più lungo, ed escono da quella in cui si trovano.
+Escono anche dall'area dannosa di un avversario, come un pozzo, una protezione contro di loro o una tempesta, e combattono dal suo bordo.
 
 Un bot con un'interruzione la conserva per i lanci che contano: prima una resurrezione o un Eroe spettrale che conquista l'altare, poi una cura o una protezione, un'abilità élite o un colpo forte come un'abilità d'attacco o un incantesimo di danno. Tutto il resto, e un semplice colpo d'arma, lo lascia passare. Come un giocatore, manca circa uno di questi lanci su quattro.
 

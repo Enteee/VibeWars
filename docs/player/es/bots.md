@@ -78,6 +78,7 @@ detenerse o girar les funciona igual que a ti.
 
 Los bots rodean el suelo en llamas y otras zonas dañinas cuando el rodeo no
 es mucho más largo, y salen de cualquiera en la que se encuentren.
+También salen del área dañina de un rival, como un pozo, una guarda contra ellos o una tormenta, y luchan desde su borde.
 
 Un bot con una interrupción la reserva para los lanzamientos que importan:
 primero una resurrección o un Héroe Fantasmal reclamando el altar, después

@@ -74,6 +74,7 @@ them as it does for you.
 
 Bots walk round burning ground and other harmful patches when the way round
 is not much longer, and step out of any they find themselves standing in.
+They also step out of a foe's harmful area, such as a well, a ward against them or a storm, and fight from its edge.
 
 A bot with an interrupt saves it for the casts that matter: a
 resurrection or a Ghostly Hero claiming the altar first, then a heal or a

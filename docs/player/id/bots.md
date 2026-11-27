@@ -75,6 +75,7 @@ mereka seperti halnya untukmu.
 Bot memutari tanah yang terbakar dan petak berbahaya lain bila jalan
 memutarnya tidak jauh lebih panjang, dan keluar dari petak yang mereka
 injak.
+Bot juga keluar dari area berbahaya milik lawan, seperti sumur, pelindung yang menangkal mereka, atau badai, lalu bertarung dari tepinya.
 
 Bot yang punya interupsi menyimpannya untuk rapalan yang penting: kebangkitan
 atau Ghostly Hero yang sedang merebut altar lebih dulu, lalu penyembuhan atau

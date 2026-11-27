@@ -76,6 +76,7 @@ ihnen also genauso wie bei dir.
 
 Bots gehen um brennenden Boden und andere schädliche Flächen herum, wenn der
 Umweg nicht viel länger ist, und treten aus einer heraus, in der sie stehen.
+Sie treten auch aus einer schädlichen Fläche des Gegners heraus, etwa einem Brunnen, einer Schutzzone gegen sie oder einem Sturm, und kämpfen von ihrem Rand aus.
 
 Ein Bot mit einer Unterbrechung spart sie für die Skills auf, die zählen: zuerst
 eine Wiederbelebung oder einen Geisterhelden, der den Altar einnimmt, dann eine

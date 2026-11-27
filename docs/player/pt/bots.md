@@ -78,6 +78,7 @@ funciona com eles como funciona com você.
 
 Os bots contornam o chão em chamas e outras zonas nocivas quando o desvio
 não é muito mais longo, e saem de qualquer uma em que estejam.
+Também saem da área nociva de um adversário, como um poço, uma proteção contra eles ou uma tempestade, e lutam a partir da borda.
 
 Um bot com interrupção a guarda para as conjurações que importam: uma
 ressurreição ou um Herói Fantasmagórico tomando o altar primeiro, depois

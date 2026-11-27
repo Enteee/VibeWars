@@ -72,6 +72,7 @@ na nie tak samo jak na ciebie.
 
 Boty omijają płonącą ziemię i inne szkodliwe miejsca, gdy obejście nie jest
 dużo dłuższe, i wychodzą z takiego, w którym stoją.
+Wychodzą też ze szkodliwego obszaru przeciwnika, takiego jak studnia, osłona przeciw nim czy burza, i walczą z jego skraju.
 
 Bot z przerwaniem zachowuje je na rzucania, które mają znaczenie: najpierw
 wskrzeszenie albo Upiornego Bohatera przejmującego ołtarz, potem leczenie lub
