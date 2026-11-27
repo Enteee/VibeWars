@@ -6818,12 +6818,15 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* The 2px an elite's frame reaches past its box (#459) is padded in, so
+   the list neither clips the frame nor scrolls sideways (#4238). */
 .skill-groups {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 0.8rem;
   min-height: 0;
+  padding-inline: 2px;
   overflow-y: auto;
 }
 

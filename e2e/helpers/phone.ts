@@ -59,11 +59,14 @@ export async function phoneOffenders(
         return `${node.tagName.toLowerCase()}.${node.className} "${text || label}"`;
       };
       // A pane that scrolls sideways inside itself (#4238): the page fits,
-      // but a row is still wider than the phone.
+      // but a row is still wider than the phone. Some boxes are made to:
+      // the team's counter chips are one swiped row on a phone, and a
+      // match summary's table keeps its columns and scrolls (#3563).
       for (const node of document.querySelectorAll(within("*"))) {
         const { overflowX } = getComputedStyle(node);
         if (
           (overflowX === "auto" || overflowX === "scroll") &&
+          !node.matches(".team-counters, .match-summary-panel") &&
           node.scrollWidth > node.clientWidth + 1 &&
           shown(node)
         ) {
