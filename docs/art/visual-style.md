@@ -244,6 +244,8 @@ outlines, and the noise fill on a map without one.
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
   shadow lies on the ground under it, not in its frame. Creatures and fallen
   bodies stay discs.
+  Its outfit follows its primary profession, one accent its secondary, the
+  team colour staying torso and skirt ([study](profession-outfit-study.svg)).
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
