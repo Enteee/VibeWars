@@ -949,8 +949,8 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
     await watcher.getByRole("button", { name: "Watch", exact: true }).click();
 
     // Booting its arena beside two pages that draw a match, the watcher's
-    // page freezes 10-14 s on software GL before it can say observe (#4139,
-    // the boot's cost is #4130's).
+    // page freezes 10-14 s on software GL before it can say observe: Watching
+    // came 10-16 s after the click, locally (#4139; the boot's cost is #4130's).
     await expect(watcher.locator(".hud-watching")).toHaveText("Watching · 10 s delay", {
       timeout: 25_000,
     });
