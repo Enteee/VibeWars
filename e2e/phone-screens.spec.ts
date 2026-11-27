@@ -153,6 +153,16 @@ test("Options, every section, fits the phone, drilled into from a list of 44 px 
   }
 });
 
+test("Options > Controls fits a 360 px phone: every key row stacks (#4238)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await openPhone(page);
+  await clickTopbarIcon(page, ".topbar-options");
+  await optionsEntry(page, "controls").click();
+  await drilledIn(page);
+  await expect(page.locator(".keys-table")).toBeVisible();
+  await expectFitsPhone(page, "Options: Controls, 360 px");
+});
+
 test("Help, every page, fits the phone (#3776)", async ({ page }) => {
   await openPhone(page);
   await clickTopbarIcon(page, ".topbar-help");
