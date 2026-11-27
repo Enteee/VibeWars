@@ -78,6 +78,7 @@ ya da dönmek onlara karşı da sana karşı olduğu gibi işe yarar.
 
 Botlar, dolaşmak çok daha uzun değilse yanan zeminin ve diğer zararlı
 alanların çevresinden dolaşır, içinde durdukları alandan da çıkarlar.
+Rakibin kuyu, onlara karşı bir koruma ya da fırtına gibi zararlı bir alanından da çıkar ve kenarından savaşırlar.
 
 Kesintisi olan bir bot onu önemli yapımlar için saklar: önce bir
 diriliş ya da sunağı ele geçiren bir Ghostly Hero, sonra bir

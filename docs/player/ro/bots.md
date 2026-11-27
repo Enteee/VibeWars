@@ -77,6 +77,7 @@ sau schimbarea direcției funcționează pentru ei ca și pentru tine.
 
 Boții ocolesc pământul în flăcări și alte zone dăunătoare când ocolul nu e
 mult mai lung și ies din cea în care stau.
+Ies și din zona dăunătoare a unui adversar, cum ar fi o fântână, o protecție împotriva lor sau o furtună, și luptă de la marginea ei.
 
 Un bot cu o întrerupere o păstrează pentru lansările care contează: mai întâi o
 înviere sau un Erou Fantomatic care revendică altarul, apoi o vindecare sau o

@@ -81,6 +81,7 @@ toimii niille kuten sinullekin.
 
 Botit kiertävät palavan maan ja muut haitalliset alueet, kun kiertotie ei
 ole paljon pidempi, ja astuvat pois alueelta, jolla seisovat.
+Ne astuvat myös pois vastustajan vahingolliselta alueelta, kuten kaivosta, niitä vastaan suunnatusta suojasta tai myrskystä, ja taistelevat sen reunalta.
 
 Keskeytystaidolla varustettu botti säästää sen tärkeitä käyttöjä varten:
 ensin henkiin herättäminen tai alttaria valtaava aavesankari, sitten

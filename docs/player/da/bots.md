@@ -78,6 +78,7 @@ vende virker på dem, som det gør på dig.
 
 Bots går uden om brændende jord og andre skadelige områder, når vejen udenom
 ikke er meget længere, og træder ud af et, de står i.
+De træder også ud af en fjendes skadelige område, som en brønd, et værn mod dem eller en storm, og kæmper fra kanten af det.
 
 En bot med en afbrydelse gemmer den til de kast, der betyder noget: en
 genoplivning eller en Spøgelseshelt, der tager alteret, først, derefter

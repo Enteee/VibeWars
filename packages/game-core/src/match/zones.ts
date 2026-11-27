@@ -290,12 +290,3 @@ export function zonesHolding(
 ): MatchZone[] {
   return zones.filter((zone) => zone.layer === layer && pointInPolygon(position, zone.polygon));
 }
-
-/** The harmful zones a body at `position` on `layer` stands in (#3026). */
-export function harmfulZonesHolding(
-  zones: readonly MatchZone[],
-  position: Vec2,
-  layer: number,
-): MatchZone[] {
-  return zonesHolding(zones, position, layer).filter((zone) => ZONE_RULES[zone.kind].harmful);
-}

@@ -74,6 +74,7 @@ na njih kao i na tebe.
 
 Botovi zaobilaze zapaljeno tlo i druga štetna mjesta kad zaobilazak nije
 puno duži, i izlaze iz onog u kojem stoje.
+Izlaze i iz štetnog područja protivnika, poput zdenca, zaštite protiv njih ili oluje, i bore se s njegova ruba.
 
 Bot s prekidom čuva ga za bacanja koja su važna: najprije
 uskrsnuće ili Sablasnog heroja koji zauzima oltar, zatim liječenje ili

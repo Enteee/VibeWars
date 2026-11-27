@@ -72,6 +72,7 @@ chúng như với bạn.
 
 Bot đi vòng qua mặt đất đang cháy và các vùng có hại khác khi đường vòng
 không dài hơn nhiều, và bước ra khỏi vùng mà chúng đang đứng.
+Chúng cũng bước ra khỏi vùng gây hại của đối thủ, như một giếng, một lá chắn chống lại chúng hay một cơn bão, và chiến đấu từ mép của nó.
 
 Bot có kỹ năng ngắt sẽ dành nó cho những lần thi triển quan trọng: trước hết
 là hồi sinh hoặc Anh hùng Ma đang chiếm tế đàn, sau đó là hồi máu hoặc bảo

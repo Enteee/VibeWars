@@ -79,6 +79,7 @@ marche pour eux comme pour toi.
 
 Les bots contournent le sol en feu et les autres zones nocives quand le
 détour n'est pas beaucoup plus long, et sortent de celle où ils se trouvent.
+Ils sortent aussi d'une zone nuisible d'un adversaire, comme un puits, une protection contre eux ou une tempête, et combattent depuis son bord.
 
 Un bot avec une interruption la garde pour les incantations qui comptent :
 d'abord une résurrection ou un Héros fantomatique qui prend l'autel, puis un

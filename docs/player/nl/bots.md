@@ -77,6 +77,7 @@ net als voor jou.
 
 Bots lopen om brandende grond en andere schadelijke plekken heen als de
 omweg niet veel langer is, en stappen uit een plek waar ze in staan.
+Ze stappen ook uit een schadelijk gebied van een tegenstander, zoals een put, een afweer tegen hen of een storm, en vechten vanaf de rand.
 
 Een bot met een onderbreking bewaart die voor de casts die ertoe doen: eerst
 een reanimatie of een Spookheld die het altaar claimt, dan een genezing of een
