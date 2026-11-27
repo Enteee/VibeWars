@@ -1472,7 +1472,16 @@ export function landCaughtCondition(
   events: CombatEvent[],
   surroundings: Surroundings,
 ): void {
-  landOnTaker(target, id, remainingSeconds, sourceId, ranks, events, surroundings, null);
+  landOnTaker(
+    target,
+    id,
+    { base: remainingSeconds, scaled: remainingSeconds },
+    sourceId,
+    ranks,
+    events,
+    surroundings,
+    null,
+  );
 }
 
 /**
@@ -1514,7 +1523,17 @@ function conditionDurationScale(statusId: StatusId, caster: Combatant): number {
 }
 
 /**
- * `statusId` aimed at `target`, for `durationSeconds` before its taker's
+ * A status's seconds as aimed (#4165): `base`, its own, and `scaled`,
+ * after every multiplier the applying side puts on it. `landOnTaker`
+ * rounds once, after the taker's own shortening.
+ */
+interface AimedSeconds {
+  readonly base: number;
+  readonly scaled: number;
+}
+
+/**
+ * `statusId` aimed at `target`, for `seconds` before its taker's
  * own lengthening, landed on whoever takes it (#1915): every status a
  * skill aims at a combatant comes through here, so Infuse Condition sends
  * each condition to a minion however it arrives.
@@ -1522,7 +1541,7 @@ function conditionDurationScale(statusId: StatusId, caster: Combatant): number {
 function landOnTaker(
   target: Combatant,
   statusId: StatusId,
-  durationSeconds: number,
+  { base, scaled }: AimedSeconds,
   sourceId: string,
   ranks: ReadonlyMap<string, number>,
   events: CombatEvent[],
@@ -1534,7 +1553,7 @@ function landOnTaker(
   landStatus(
     taker,
     statusId,
-    wholeSeconds(durationSeconds, scaledStatusDuration(taker, statusId, durationSeconds)),
+    wholeSeconds(base, scaledStatusDuration(taker, statusId, scaled)),
     sourceId,
     ranks,
     events,
@@ -1804,7 +1823,7 @@ function gatherConditions(
       landOnTaker(
         target,
         id,
-        wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
+        { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
         caster.id,
         ranks,
         events,
@@ -2428,9 +2447,10 @@ export function applyEffect(
       landOnTaker(
         bearer,
         effect.statusId,
-        wholeSeconds(
+        {
           base,
-          base *
+          scaled:
+            base *
             (context.own?.durationMultiplier ?? 1) *
             inflictedScale(effect.statusId, bearer, context) *
             conditionDurationScale(effect.statusId, caster) *
@@ -2442,7 +2462,7 @@ export function applyEffect(
             (getStatusDefinition(effect.statusId).category === "enchantment"
               ? caster.equipment.spellMods.enchantmentDurationScale
               : 1),
-        ),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2512,7 +2532,7 @@ export function applyEffect(
         landOnTaker(
           taker,
           id,
-          wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
+          { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
           caster.id,
           ranks,
           events,
@@ -2523,7 +2543,7 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
+            { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
             caster.id,
             ranks,
             events,
@@ -2571,7 +2591,7 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            remainingSeconds,
+            { base: remainingSeconds, scaled: remainingSeconds },
             caster.id,
             ranks,
             events,
@@ -2608,10 +2628,13 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            wholeSeconds(
-              remainingSeconds,
-              Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
-            ),
+            {
+              base: remainingSeconds,
+              scaled: Math.min(
+                remainingSeconds * extend,
+                effect.maxSeconds ?? Number.POSITIVE_INFINITY,
+              ),
+            },
             caster.id,
             ranks,
             events,
@@ -2855,10 +2878,10 @@ export function applyEffect(
       landOnTaker(
         caster,
         effect.statusId,
-        wholeSeconds(
-          effect.durationSeconds,
-          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-        ),
+        {
+          base: effect.durationSeconds,
+          scaled: effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2886,11 +2909,12 @@ export function applyEffect(
       landOnTaker(
         pet,
         effect.statusId,
-        wholeSeconds(
-          resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
-          resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
+        {
+          base: resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
+          scaled:
+            resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
             (context.own?.durationMultiplier ?? 1),
-        ),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
