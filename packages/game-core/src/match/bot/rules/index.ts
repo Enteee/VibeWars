@@ -17,6 +17,7 @@ import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import keepErrand from "./keep-errand.js";
 import keepLever from "./keep-lever.js";
+import kite from "./kite.js";
 import leadGhost from "./lead-ghost.js";
 import leaveZone from "./leave-zone.js";
 import levers from "./levers.js";
@@ -64,6 +65,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   interrupt,
   keepErrand,
   keepLever,
+  kite,
   leadGhost,
   leaveZone,
   levers,

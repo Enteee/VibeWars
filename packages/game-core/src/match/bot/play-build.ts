@@ -388,6 +388,7 @@ function think(
     escort,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
+    speedOf: (participant) => context.speedOf(participant.id),
     plan: teamPlan(
       context.seed,
       self.combatant.team,

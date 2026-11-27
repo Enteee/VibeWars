@@ -44,7 +44,7 @@ Bot so schopnosťou, ktorá mrzačí alebo spomaľuje, ju použije na nepriateľ
 
 Proti tímu s plošnými skillmi sa boti na diaľku a liečitelia držia od seba, aby jeden výbuch nezasiahol dvoch z nich. Krytie kvôli tomu nikdy neopustia.
 
-Bot na diaľku alebo liečiteľ, ku ktorému sa nepriateľ dostane príliš blízko, najprv ustúpi k najbližšiemu spojencovi v prvej línii, ak je dosť blízko, a bojuje tam.
+Bot na diaľku alebo liečiteľ, ku ktorému sa nepriateľ dostane príliš blízko, najprv ustúpi k najbližšiemu spojencovi v prvej línii, ak je dosť blízko, a bojuje tam. Spomalený útočník na blízko, napríklad zmrzačený, nestíha, takže pred ním bot namiesto toho medzi výstrelmi cúva.
 
 Lukostrelci a kopijníci zaujmú vyvýšené miesto, keď je to bezpečné.
 Bot, na ktorého sa zameria dvaja nepriatelia alebo ktorý má menej ako polovicu zdravia a rýchlo ho stráca, sa im až na tri sekundy skryje z dohľadu: za múr, pod plošinu alebo na vyvýšené miesto.

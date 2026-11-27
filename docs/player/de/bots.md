@@ -45,7 +45,7 @@ Ein Bot mit einem verkrüppelnden oder verlangsamenden Skill setzt ihn gegen ein
 
 Gegen ein Team mit Flächen-Skills halten Fernkämpfer und Heiler Abstand voneinander, damit eine Explosion nicht zwei von ihnen trifft. Deckung geben sie dafür nie auf.
 
-Ein Fernkämpfer oder Heiler, dem ein Gegner zu nah kommt, weicht zuerst zu seinem nächsten Frontkämpfer zurück, wenn einer nah genug ist, und kämpft dort.
+Ein Fernkämpfer oder Heiler, dem ein Gegner zu nah kommt, weicht zuerst zu seinem nächsten Frontkämpfer zurück, wenn einer nah genug ist, und kämpft dort. Ein verlangsamter Nahkämpfer, etwa ein verkrüppelter, kommt nicht hinterher, also weicht der Bot vor ihm stattdessen zwischen den Schüssen zurück.
 
 Bogenschützen und Speerwerfer besetzen die Anhöhe, wenn es sicher ist.
 Ein Bot, auf den sich zwei Gegner stürzen oder der unter halber Gesundheit schnell weiter verliert, duckt sich bis zu drei Sekunden aus ihrer Sicht: hinter eine Mauer, unter eine Plattform oder auf eine Anhöhe.
