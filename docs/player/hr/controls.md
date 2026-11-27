@@ -94,7 +94,7 @@ osim Sobe, u **☰** gore desno na zaslonu, zajedno s **Izađi**;
 **M** i dalje isključuje zvuk, a **F10** i dalje izlazi i bez njega. U uskom prozoru te se ikone i
 ostali gumbi zaslona sklapaju u **☰**; vani ostaje samo glavni gumb.
 ⚙ otvara Opcije kao prozor ispod trake, a zaslon ostaje iza njega; zatvaraju ga Esc, × ili klik izvan njega.
-[?] otvara Pomoć na isti način, kao prozor ispod njega s biračem stranica na vrhu; meč se iza njega nastavlja.
+[?] otvara Pomoć na isti način, kao prozor ispod njega sa svojim stranicama navedenima lijevo; meč se iza njega nastavlja.
 Pomoć se zatvara svojim ×, s Esc, klikom izvan nje ili ponovnim pritiskom na [?].
 
 **Podijeli ritam sa sobom.** U uređivaču ritma (♪, zatim **Uredi**),

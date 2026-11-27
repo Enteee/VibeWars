@@ -1,6 +1,6 @@
 # Ajutor
 
-Paginile ferestrei de Ajutor din joc, în ordinea în care le listează selectorul de pagină.
+Paginile ferestrei de Ajutor din joc, în ordinea în care le arată lista sa de pagini.
 Fiecare pagină din acest director apare aici exact o dată.
 
 - [Primii pași](getting-started.md)

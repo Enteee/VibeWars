@@ -97,7 +97,7 @@ poza Lobby, są w **☰** w prawym górnym rogu ekranu, razem z **Opuść**;
 **M** nadal wycisza, a **F10** nadal opuszcza mecz bez niego. W wąskim oknie te ikony oraz
 pozostałe przyciski ekranu chowają się pod **☰**; na wierzchu zostaje tylko główny przycisk.
 ⚙ otwiera Opcje jako okno pod paskiem, z ekranem wciąż widocznym za nim; zamyka je Esc, × lub kliknięcie poza oknem.
-[?] otwiera Pomoc tak samo, jako okno pod nim z wyborem strony u góry; mecz toczy się za nim dalej.
+[?] otwiera Pomoc tak samo, jako okno pod nim z listą stron po lewej; mecz toczy się za nim dalej.
 Pomoc zamyka jej ×, Esc, kliknięcie poza oknem lub ponowne naciśnięcie [?].
 
 **Podziel się bitem ze swoim lobby.** W edytorze bitów (♪, potem **Edytuj**)

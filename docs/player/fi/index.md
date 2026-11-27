@@ -1,6 +1,6 @@
 # Ohje
 
-Pelin Ohje-ikkunan sivut siinä järjestyksessä, jossa sen sivuvalitsin ne luettelee.
+Pelin Ohje-ikkunan sivut siinä järjestyksessä, jossa sen sivuluettelo ne näyttää.
 Jokainen tämän kansion sivu on lueteltu tässä täsmälleen kerran.
 
 - [Aloittaminen](getting-started.md)

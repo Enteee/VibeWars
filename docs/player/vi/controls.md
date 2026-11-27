@@ -103,7 +103,7 @@ các nút đó, trừ Sảnh, nằm trong **☰** ở góc trên bên phải mà
 biểu tượng này và các nút khác của màn hình được gộp vào **☰**; chỉ nút chính
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
 ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. [?] mở Hỗ trợ theo cùng
-cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp
+cách, thành một cửa sổ dưới nó với các trang được liệt kê ở bên trái; trận vẫn tiếp
 diễn phía sau. Hỗ trợ đóng bằng dấu × của nó, Esc, nhấn ra ngoài, hoặc nhấn
 [?] lần nữa.
 

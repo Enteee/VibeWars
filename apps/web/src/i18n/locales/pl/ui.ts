@@ -504,6 +504,7 @@ export default {
   "effects.untilEnds": "do zakończenia",
   "effects.you": "ty",
 
+  "flyout.back": "Wróć do listy",
   "fullscreen.enter": "Pełny ekran",
   "fullscreen.leave": "Wyjdź z pełnego ekranu",
 
