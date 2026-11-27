@@ -206,7 +206,8 @@ export type MatchViewOptions =
   | {
       readonly kind: "observe";
       readonly selfSessionId: string;
-      readonly connect: () => Promise<ObserverConnection>;
+      /** Joins at once; its wait for the host runs from `booted` on (#4139). */
+      readonly connect: (booted: Promise<void>) => Promise<ObserverConnection>;
     };
 
 /**
@@ -229,8 +230,10 @@ interface ViewedMatch {
   disconnect(): Promise<void>;
 }
 
-async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
+async function viewedMatch(options: MatchViewOptions, booted: Promise<void>): Promise<ViewedMatch> {
   if (options.kind === "play") {
+    // A seat joins once the arena is up, as it always has.
+    await booted;
     const seat = await options.connect();
     return {
       map: seat.map,
@@ -249,7 +252,19 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
     };
   }
   const { selfSessionId } = options;
-  const watched = await options.connect();
+  const watched = await options.connect(booted);
+  // Joined while the arena boots (#4139), so the view may not listen yet:
+  // the last state said before it does is said to it when it starts.
+  let unheard: ConnectionState | undefined;
+  const listeners: ((state: ConnectionState) => void)[] = [];
+  watched.onConnectionChange((state) => {
+    if (listeners.length === 0) {
+      unheard = state;
+    }
+    for (const listener of listeners) {
+      listener(state);
+    }
+  });
   return {
     map: watched.map,
     timeLimitSeconds: watched.timeLimitSeconds,
@@ -266,7 +281,11 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
       watched.onCombat(handler);
     },
     onConnectionChange: (handler) => {
-      watched.onConnectionChange(handler);
+      listeners.push(handler);
+      if (unheard !== undefined) {
+        handler(unheard);
+        unheard = undefined;
+      }
     },
     disconnect: () => watched.disconnect(),
   };
@@ -642,15 +661,29 @@ export async function startMatchView(
   options: MatchViewOptions,
   owner: OptionsOwner,
 ): Promise<MatchView> {
+  // A watcher joins while its arena boots (#4139): booting beside two
+  // pages that draw a match, a page can freeze for seconds, and the
+  // host's answer is then waiting for it rather than asked for after.
+  const booting = createArenaViewport(parent);
+  const joining = viewedMatch(
+    options,
+    booting.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  // Awaited below, or let go when the arena fails: never unhandled.
+  joining.catch(() => undefined);
   // With no WebGL there is no arena, said plainly where it would be
   // (#655). The match itself goes on: the HUD still shows it, and a host
   // keeps hosting for its peers.
   let viewport: ArenaViewport | undefined;
   let notice: HTMLElement | undefined;
   try {
-    viewport = await createArenaViewport(parent);
+    viewport = await booting;
   } catch (error) {
     if (!(error instanceof NoWebGlError)) {
+      void joining.then((joined) => joined.disconnect());
       throw error;
     }
     console.warn("[web] no arena in this match", error);
@@ -660,7 +693,7 @@ export async function startMatchView(
 
   let viewed: ViewedMatch;
   try {
-    viewed = await viewedMatch(options);
+    viewed = await joining;
   } catch (error) {
     // Refused, or the host never answered: no arena to leave behind.
     void viewport?.destroy();
