@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
 import {
   botUses,
+  defenceAgainst,
   isDefenceStatus,
   onlyInterrupts,
   removedCategories,
@@ -556,5 +557,29 @@ describe("strip before the spike (#2634)", () => {
     for (const id of ["elementalist.flare", "monk.remove-hex"]) {
       expect(stripsEnchantment(skill(id)), id).toBe(false);
     }
+  });
+});
+
+describe("defenceAgainst (#4214)", () => {
+  const against = (id: string) => defenceAgainst(skill(id));
+
+  it("classes a block stance as against attacks", () => {
+    expect(against("warrior.shield-stance")).toEqual({ attacks: true, spells: false });
+  });
+
+  it("classes an anti-spell enchantment as against spells", () => {
+    expect(against("monk.holy-veil")).toEqual({ attacks: false, spells: true });
+  });
+
+  it("classes an armor buff as general", () => {
+    expect(against("elementalist.armor-of-earth")).toEqual({ attacks: true, spells: true });
+  });
+
+  it("classes Aegis as against both", () => {
+    expect(against("monk.aegis")).toEqual({ attacks: true, spells: true });
+  });
+
+  it("classes Protector's Defense by the block it projects", () => {
+    expect(against("warrior.protectors-defense")).toEqual({ attacks: true, spells: false });
   });
 });
