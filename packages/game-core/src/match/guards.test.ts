@@ -135,7 +135,9 @@ describe("the Guild Lord's guard on its Health (#1223)", () => {
     const target = lord(true);
     const events: CombatEvent[] = [];
     applyDamage(target, 20, "slashing", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "lord", amount: 20, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "lord", amount: 20, unreduced: 20, critical: false },
+    ]);
   });
 });
 

@@ -21,7 +21,7 @@ function hit(atSeconds: number, sourceId: string | undefined, amount: number): C
     attributeId: undefined,
     area: undefined,
     doubleStrike: false,
-    events: [{ kind: "damage", targetId: "target", amount, critical: false }],
+    events: [{ kind: "damage", targetId: "target", amount, unreduced: amount, critical: false }],
   };
 }
 
@@ -89,7 +89,7 @@ describe("tallyCombat", () => {
         ...hit(3, "a", 0),
         events: [
           { kind: "heal", targetId: "a", amount: 40 },
-          { kind: "damage", targetId: "a", amount: 5, critical: false },
+          { kind: "damage", targetId: "a", amount: 5, unreduced: 5, critical: false },
         ],
       },
     ]);
@@ -188,6 +188,7 @@ describe("MatchTally (#1057)", () => {
     kind: "damage",
     targetId,
     amount,
+    unreduced: amount,
     critical: false,
   });
 

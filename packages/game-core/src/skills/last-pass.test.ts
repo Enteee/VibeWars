@@ -162,10 +162,10 @@ describe("what the last settle pass owes (#1837)", () => {
     // The 40 pierces unarmored `g` for 113: 56, half rounded down, is
     // redirected to `b`, and `g` keeps 57.
     expect(events.filter((event) => event.kind === "damage" && event.targetId === "g")).toEqual([
-      { kind: "damage", targetId: "g", amount: 57, critical: false },
+      { kind: "damage", targetId: "g", amount: 57, unreduced: 57, critical: false },
     ]);
     expect(events.filter((event) => event.kind === "damage" && event.targetId === "b")).toEqual([
-      { kind: "damage", targetId: "b", amount: 56, critical: false },
+      { kind: "damage", targetId: "b", amount: 56, unreduced: 56, critical: false },
     ]);
     expect(b.health).toBe(500 - 56);
   });

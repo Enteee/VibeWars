@@ -47,7 +47,7 @@ describe("impactsFor (#1139)", () => {
     expect(
       shapes(
         message("elementalist.immolate", [
-          { kind: "damage", targetId: "foe", amount: 50, critical: false },
+          { kind: "damage", targetId: "foe", amount: 50, unreduced: 50, critical: false },
         ]),
       ),
     ).toEqual([["foe", "burst", DAMAGE]]);
@@ -89,7 +89,7 @@ describe("impactsFor (#1139)", () => {
     expect(
       shapes(
         message("elementalist.immolate", [
-          { kind: "damage", targetId: "foe", amount: 30, critical: false },
+          { kind: "damage", targetId: "foe", amount: 30, unreduced: 30, critical: false },
           { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 15 },
         ]),
       ),
@@ -125,7 +125,7 @@ describe("impactsFor (#1139)", () => {
       shapes(
         message("elementalist.immolate", [
           { kind: "heal", targetId: "foe", amount: 5 },
-          { kind: "damage", targetId: "foe", amount: 50, critical: false },
+          { kind: "damage", targetId: "foe", amount: 50, unreduced: 50, critical: false },
         ]),
       ),
     ).toEqual([["foe", "burst", DAMAGE]]);
@@ -135,6 +135,7 @@ describe("impactsFor (#1139)", () => {
         kind: "damage" as const,
         targetId,
         amount: 40,
+        unreduced: 40,
         critical: false,
       })),
     );
@@ -142,7 +143,13 @@ describe("impactsFor (#1139)", () => {
   });
 
   it("flashes nothing for a swing, a tick, a lone miss or block, or a skill it does not know", () => {
-    const hit = { kind: "damage", targetId: "foe", amount: 10, critical: false } as const;
+    const hit = {
+      kind: "damage",
+      targetId: "foe",
+      amount: 10,
+      unreduced: 10,
+      critical: false,
+    } as const;
     expect(impactsFor(message("", [hit], "weapon"))).toEqual([]);
     expect(impactsFor(message("", [hit], "degeneration"))).toEqual([]);
     expect(
@@ -156,7 +163,13 @@ describe("impactsFor (#1139)", () => {
 });
 
 describe("impactsFor, flight and hit (#3292)", () => {
-  const hit = { kind: "damage", targetId: "foe", amount: 50, critical: false } as const;
+  const hit = {
+    kind: "damage",
+    targetId: "foe",
+    amount: 50,
+    unreduced: 50,
+    critical: false,
+  } as const;
 
   it("lands a flying spell that hit in a warm landing burst, and shows nothing for one that missed", () => {
     expect(shapes(message("elementalist.glowstone", [hit]))).toEqual([

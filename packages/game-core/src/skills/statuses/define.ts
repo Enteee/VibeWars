@@ -189,7 +189,7 @@ export function define(
     attackBackfire: undefined,
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,
-    adrenalineGainFasterFrom: "all",
+    adrenalineGainFasterFrom: "attacks",
     spellRechargeFaster: 0,
     doubleStrikeChanceBonus: 0,
     doubleStrikeChanceBonusWeapon: undefined,

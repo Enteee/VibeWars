@@ -15,7 +15,8 @@ import {
   type DamagePacket,
   type DamageSource,
   hitLocationOf,
-  mitigate,
+  type MitigatedDamage,
+  mitigateHit,
   skillDamage,
   withSkillArmorPenetration,
 } from "./damage.js";
@@ -115,6 +116,11 @@ export type CombatEvent =
       readonly kind: "damage";
       readonly targetId: string;
       readonly amount: number;
+      /**
+       * `amount` and what the flat per-hit cuts took off it first
+       * (#4163): what adrenaline charges from, as in GW1.
+       */
+      readonly unreduced: number;
       /** A weapon blow that crit (#533); `false` for everything else. */
       readonly critical: boolean;
     }
@@ -388,19 +394,31 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, "skill");
+  applyHit(target, { amount, reduced: 0 }, type, critical, events, dealer);
 }
 
-/** As `applyDamage`, for a weapon blow (#2291): what Life Bond answers. */
-export function applyAttackDamage(
+/** As `applyDamage`, for a hit with what its flat cuts took off (#4163). */
+export function applyHit(
   target: Combatant,
-  amount: number,
+  hit: MitigatedDamage,
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, "weapon");
+  landDamage(target, hit, type, critical, events, dealer, "skill");
+}
+
+/** As `applyHit`, for a weapon blow (#2291): what Life Bond answers. */
+export function applyAttackDamage(
+  target: Combatant,
+  hit: MitigatedDamage,
+  type: DamageType,
+  critical: boolean,
+  events: CombatEvent[],
+  dealer: Combatant | undefined,
+): void {
+  landDamage(target, hit, type, critical, events, dealer, "weapon");
 }
 
 /**
@@ -412,12 +430,12 @@ export function applyRedirectedDamage(
   amount: number,
   events: CombatEvent[],
 ): void {
-  landDamage(target, amount, "typeless", false, events, undefined, undefined);
+  landDamage(target, { amount, reduced: 0 }, "typeless", false, events, undefined, undefined);
 }
 
 function landDamage(
   target: Combatant,
-  amount: number,
+  { amount, reduced }: MitigatedDamage,
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
@@ -425,11 +443,17 @@ function landDamage(
   // `undefined`: a bond's share, never redirected again.
   source: DamageSource | undefined,
 ): void {
-  if (amount <= 0 || target.dead) {
+  if (target.dead || amount + reduced <= 0) {
     return;
   }
   if (isInvulnerable(target)) {
     events.push({ kind: "invulnerable", targetId: target.id });
+    return;
+  }
+  // A hit the flat cuts took to 0 still landed (#4163): it charges the
+  // struck from what it would have dealt, and touches no health.
+  if (amount <= 0) {
+    events.push({ kind: "damage", targetId: target.id, amount: 0, unreduced: reduced, critical });
     return;
   }
   // Mist Form's (#1951), Intimidating Aura's (#2207) and Armor of
@@ -465,7 +489,13 @@ function landDamage(
   }
   const before = target.health;
   target.health -= applied;
-  events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
+  events.push({
+    kind: "damage",
+    targetId: target.id,
+    amount: applied,
+    unreduced: applied + reduced,
+    critical,
+  });
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   } else if (isElementalDamage(type)) {
@@ -2093,9 +2123,9 @@ export function applyEffect(
       );
       const packet: DamagePacket =
         landing !== undefined && isSpell(landing.type) ? { ...dealt, spell: true } : dealt;
-      applyDamage(
+      applyHit(
         target,
-        mitigate(
+        mitigateHit(
           packet,
           target,
           context.rules,

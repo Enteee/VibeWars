@@ -22,6 +22,12 @@ Rules the study holds:
   | Shout                    | one cool ring `#9fdcff` leaving the caster in 0.3 s, a chevron per ally   |
   | Attack skill             | a thick warm arc and an impact star over the plain swing's thin white arc |
 
+  Two kinds of area break the violet rule (#4054, `groundArt` in `ground-effect-look.ts`). A **fire
+  area**, a pulse whose damage is all fire (Fire Storm, Meteor Shower), is an orange pool `#ff9640`
+  with nine flickering flame tongues and a warm glow. A **ward** is a pale-blue translucent dome over
+  its circle, lit from the upper left. Both keep the dashed harm edge, the landing width and the
+  ending fade. Hexes, wells and every other area stay violet.
+
 - **Friend blue and foe red stay on bodies.** No effect is large in either.
 - **Harmful ground is dashed, help is solid** (`visual-style.md` §6.5). A strike goes 2.5× wide at once
   when it lands, and thins before it ends: width and brightness, not colour, tell the state.
