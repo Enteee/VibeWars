@@ -18,22 +18,39 @@ export type StackTone =
 
 /**
  * One slice: its polygons, its tone, how lit it is (1 full colour, less
- * darker toward the ground) and whether it shares the lift of the slice
- * before it, as a torso shares its shoulders' height.
+ * darker toward the ground), whether it shares the lift of the slice
+ * before it, as a torso shares its shoulders' height, and how many
+ * `STACK_STEP`s a breath or a stride's bob lifts it on top (#4060).
  */
 export interface StackSlice {
   readonly parts: readonly (readonly Point[])[];
   readonly tone: StackTone;
   readonly light: number;
   readonly same: boolean;
+  readonly rise: number;
 }
 
-/** Standing, the two walk frames and the cast lean. */
-export const STACK_POSES = ["stand", "stride-a", "stride-b", "cast"] as const;
+/**
+ * Standing, two breaths in (#4060), the four walk frames (a foot down,
+ * passing, the other foot down, passing) and the cast lean.
+ */
+export const STACK_POSES = [
+  "stand",
+  "breath-a",
+  "breath-b",
+  "contact-a",
+  "pass-a",
+  "contact-b",
+  "pass-b",
+  "cast",
+] as const;
 export type StackPose = (typeof STACK_POSES)[number];
 
-/** Heading buckets a figure turns in: ADR-0057's eight. */
-export const STACK_HEADINGS = 8;
+/**
+ * Heading buckets a figure turns in: sixteen (#4060), as #4031's turning
+ * sheet showed ADR-0057's eight step visibly.
+ */
+export const STACK_HEADINGS = 16;
 
 /**
  * How far each slice rises over the one below, in body radii: the
@@ -72,27 +89,55 @@ function ellipse(cx: number, cy: number, rx: number, ry: number, n = STACK_SEGME
   });
 }
 
-/** How far a pose swings the legs and arms, and how far it leans into a cast. */
-function poseMotion(pose: StackPose): { readonly stride: number; readonly lean: number } {
+/**
+ * How a pose moves the figure: how far it swings the legs and arms, leans
+ * into a cast, lifts the torso and helmet (a breath) or the helmet alone
+ * (a stride's bob), in `STACK_STEP`s, and sways the cape to one side and
+ * out behind. The cape trails the legs by one walk frame (#4060).
+ */
+interface PoseMotion {
+  readonly stride: number;
+  readonly lean: number;
+  readonly rise: number;
+  readonly bob: number;
+  readonly capeSide: number;
+  readonly capeOut: number;
+}
+
+const STILL: PoseMotion = { stride: 0, lean: 0, rise: 0, bob: 0, capeSide: 0, capeOut: 0 };
+
+function poseMotion(pose: StackPose): PoseMotion {
   switch (pose) {
     case "stand":
-      return { stride: 0, lean: 0 };
-    case "stride-a":
-      return { stride: 1, lean: 0 };
-    case "stride-b":
-      return { stride: -1, lean: 0 };
+      return STILL;
+    case "breath-a":
+      return { ...STILL, rise: 0.5 };
+    case "breath-b":
+      return { ...STILL, rise: 1 };
+    case "contact-a":
+      return { ...STILL, stride: 1, capeOut: 1 };
+    case "pass-a":
+      return { ...STILL, bob: 1, capeSide: 1, capeOut: 1 };
+    case "contact-b":
+      return { ...STILL, stride: -1, capeOut: 1 };
+    case "pass-b":
+      return { ...STILL, bob: 1, capeSide: -1, capeOut: 1 };
     case "cast":
-      return { stride: 0, lean: 1 };
+      return { ...STILL, lean: 1 };
   }
 }
 
 /** The slices of a figure in `pose`, boots first. */
 export function stackSlices(pose: StackPose): readonly StackSlice[] {
-  const { stride, lean } = poseMotion(pose);
+  const { stride, lean, rise: breath, bob, capeSide, capeOut } = poseMotion(pose);
   const slices: StackSlice[] = [];
+  let rise = 0;
   const push = (parts: Point[][], tone: StackTone, light: number, same = false): void => {
-    slices.push({ parts, tone, light, same });
+    slices.push({ parts, tone, light, same, rise });
   };
+  /** The cape's back at `hem` (1 at the hem, 0 at the shoulders), swayed. */
+  const capeBack = (x: number, rx: number, ry: number, hem: number): Point[] =>
+    ellipse(x - 0.12 * capeOut * hem, 0.15 * capeSide * hem, rx, ry, 14);
   const f = 0.3 * stride;
   for (let i = 0; i < 2; i += 1) {
     push(
@@ -110,7 +155,7 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
   }
   // The skirt, its cape behind it.
   [0.62, 0.6, 0.58, 0.56].forEach((r, i) => {
-    push([ellipse(-0.3 - 0.06 * lean, 0, 0.32, 0.66, 14)], "cape", 0.5 + 0.06 * i);
+    push([capeBack(-0.3 - 0.06 * lean, 0.32, 0.66, 1 - i / 11)], "cape", 0.5 + 0.06 * i);
     push([ellipse(0.03 * lean * i, 0, r * 0.72, r)], "team", 0.6 + 0.07 * i, true);
   });
   push([ellipse(0.12 * lean, 0, 0.4, 0.56)], "belt", 0.9);
@@ -123,9 +168,11 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
     ];
   };
   // The torso, the cape behind it and the arms beside it.
+  // A breath lifts it, and everything over it.
+  rise = breath;
   const torso = [0.56, 0.6, 0.64, 0.68, 0.7];
   for (let i = 0; i < 7; i += 1) {
-    push([ellipse(-0.3, 0, 0.3, 0.6 + 0.02 * i, 14)], "cape", 0.6 + 0.05 * i);
+    push([capeBack(-0.3, 0.3, 0.6 + 0.02 * i, (7 - i) / 11)], "cape", 0.6 + 0.05 * i);
     if (i >= 2) {
       const r = torso[Math.min(i - 2, 4)] ?? 0;
       push([ellipse(0.06 + 0.2 * lean * (i / 7), 0, r * 0.66, r)], "team", 0.74 + 0.04 * i, true);
@@ -141,6 +188,8 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
     );
   }
   push([ellipse(0.06 + 0.3 * lean, 0, 0.16, 0.16, 10)], "skin", 0.8);
+  // A stride bobs the helmet at its passing frames.
+  rise = breath + bob;
   const cx = 0.1 + 0.35 * lean;
   [0.3, 0.36, 0.38, 0.38, 0.34, 0.26].forEach((r, i) => {
     push([ellipse(cx, 0, r * 1.05, r)], "metal", 0.7 + 0.07 * i);
@@ -177,7 +226,7 @@ export const STACK_SLICES = stackLifts(stackSlices("stand"));
 /** How far a figure's top rises over its feet, in body radii. */
 export const STACK_HEIGHT = STACK_SLICES * STACK_STEP;
 
-/** The bucket `facing` (radians) turns a figure into: the nearest of eight. */
+/** The bucket `facing` (radians) turns a figure into: the nearest of `STACK_HEADINGS`. */
 export function headingBucket(facing: number): number {
   const turn = Math.round(facing / ((Math.PI * 2) / STACK_HEADINGS));
   return ((turn % STACK_HEADINGS) + STACK_HEADINGS) % STACK_HEADINGS;
@@ -284,11 +333,12 @@ export function stackLayers(
       cape += 1;
     }
     const colour = stackShade(tones[tone], slice.light);
+    const rise = slice.rise * STACK_STEP * r;
     for (const part of slice.parts) {
       layers.push({
         points: part.map((p) => ({
           x: (p.x * cos - p.y * sin) * r,
-          y: (p.x * sin + p.y * cos) * r * STACK_SQUASH - lift,
+          y: (p.x * sin + p.y * cos) * r * STACK_SQUASH - lift - rise,
         })),
         colour,
       });
@@ -297,30 +347,145 @@ export function stackLayers(
   return layers;
 }
 
-/** How long each walk frame shows, seconds: two make one stride. */
-export const STACK_STRIDE_SECONDS = 0.18;
+/**
+ * World units walked over one whole walk cycle, its four frames (#4060):
+ * the 0.36 s cycle #4031 strode in, at the 180 units a second of a run.
+ * The cycle follows the distance, so a snare slows it and a boost speeds it.
+ */
+export const STACK_STRIDE_UNITS = 64;
+
+/** The walk frames, in the order a stride goes through them. */
+const WALK: readonly StackPose[] = ["contact-a", "pass-a", "contact-b", "pass-b"];
+
+/** Seconds a cape takes to settle once its body stops (#4060). */
+export const STACK_CAPE_SETTLE_SECONDS = 0.4;
+
+/** One breath in and out of a standing body, seconds (#4060). */
+export const STACK_BREATH_SECONDS = 3;
+
+/** What picks a body's pose (`stackPose`). */
+export interface StackPoseState {
+  readonly casting: boolean;
+  /** World units it has walked, all told: where it is in its stride. */
+  readonly walked: number;
+  /** Seconds since it stopped walking; 0 or less while it walks. */
+  readonly stoppedFor: number;
+  readonly now: number;
+  /** Its own offset into a breath, 0 to 1, so a crowd does not breathe in step. */
+  readonly phase: number;
+  readonly reducedMotion: boolean;
+}
+
+/** The walk frame `walked` units into a stride. */
+function walkFrame(walked: number): number {
+  const frame = Math.floor((walked / STACK_STRIDE_UNITS) * WALK.length);
+  return ((frame % WALK.length) + WALK.length) % WALK.length;
+}
 
 /**
- * The pose a body stands in: leaning into a cast, striding while it
- * moves, else standing. Under reduced motion it never strides or leans:
- * only its heading turns it, which is state, not motion (ADR-0057).
+ * The pose a body stands in (#4060): leaning into a cast; while it walks,
+ * the walk frame its distance reaches; for the first half of its cape's
+ * settling, the passing frame next in its stride, the cape still out;
+ * else breathing, in, held and out, every `STACK_BREATH_SECONDS`. Under
+ * reduced motion it never strides, sways, breathes or leans: only its
+ * heading turns it, which is state, not motion (ADR-0057).
  */
-export function stackPose(
-  moving: boolean,
-  casting: boolean,
-  now: number,
-  reducedMotion: boolean,
-): StackPose {
-  if (reducedMotion) {
+export function stackPose(state: StackPoseState): StackPose {
+  if (state.reducedMotion) {
     return "stand";
   }
-  if (casting) {
+  if (state.casting) {
     return "cast";
   }
-  if (moving) {
-    return Math.floor(now / STACK_STRIDE_SECONDS) % 2 === 0 ? "stride-a" : "stride-b";
+  const frame = walkFrame(state.walked);
+  if (state.stoppedFor <= 0) {
+    return WALK[frame] ?? "stand";
   }
-  return "stand";
+  if (state.stoppedFor < STACK_CAPE_SETTLE_SECONDS / 2) {
+    return WALK[frame | 1] ?? "stand";
+  }
+  const breath = (1 - Math.cos(2 * Math.PI * (state.now / STACK_BREATH_SECONDS + state.phase))) / 2;
+  return breath < 1 / 3 ? "stand" : breath < 2 / 3 ? "breath-a" : "breath-b";
+}
+
+/** Seconds a figure takes to turn to a new heading (#4060). */
+export const STACK_TURN_SECONDS = 0.12;
+
+/** A figure's heading as it turns: the bucket drawn, and the turn it is in. */
+export interface StackTurn {
+  readonly drawn: number;
+  readonly from: number;
+  readonly to: number;
+  readonly startedAt: number;
+}
+
+const bucketOf = (turn: number): number =>
+  ((turn % STACK_HEADINGS) + STACK_HEADINGS) % STACK_HEADINGS;
+
+/** Buckets from `from` to `to` the short way round: negative turns back. */
+export function shortTurn(from: number, to: number): number {
+  const ahead = bucketOf(to - from);
+  return ahead > STACK_HEADINGS / 2 ? ahead - STACK_HEADINGS : ahead;
+}
+
+/**
+ * `turn` a frame on at `now`, towards bucket `target` (#4060): a new
+ * heading starts a turn from the bucket drawn, which eases there over
+ * `STACK_TURN_SECONDS` through the buckets between, the short way, never
+ * more than one bucket a frame. The first frame stands at `target`.
+ */
+export function stepTurn(turn: StackTurn | undefined, target: number, now: number): StackTurn {
+  if (turn === undefined) {
+    return { drawn: target, from: target, to: target, startedAt: now };
+  }
+  const restart = target !== turn.to;
+  const from = restart ? turn.drawn : turn.from;
+  const startedAt = restart ? now : turn.startedAt;
+  const t = Math.min(1, Math.max(0, (now - startedAt) / STACK_TURN_SECONDS));
+  const want = bucketOf(from + Math.round(shortTurn(from, target) * t * t * (3 - 2 * t)));
+  const step = Math.max(-1, Math.min(1, shortTurn(turn.drawn, want)));
+  return { drawn: bucketOf(turn.drawn + step), from, to: target, startedAt };
+}
+
+/**
+ * The buckets the atlas bakes (#4060): those facing left of the screen,
+ * a quarter turn either side of straight left, both ends included.
+ */
+export const STACK_BAKED_HEADINGS: readonly number[] = Array.from(
+  { length: STACK_HEADINGS / 2 + 1 },
+  (_, i) => STACK_HEADINGS / 4 + i,
+);
+
+/** A pose seen in a mirror: the other foot leads, the cape sways the other way. */
+function mirroredPose(pose: StackPose): StackPose {
+  switch (pose) {
+    case "contact-a":
+      return "contact-b";
+    case "contact-b":
+      return "contact-a";
+    case "pass-a":
+      return "pass-b";
+    case "pass-b":
+      return "pass-a";
+    default:
+      return pose;
+  }
+}
+
+/**
+ * Where a figure at `bucket` in `pose` is in the atlas (#4060). A figure
+ * is the same both sides of its spine, so one facing right of the screen
+ * is the one facing as far left, in the mirrored pose, flipped: the atlas
+ * bakes only `STACK_BAKED_HEADINGS`.
+ */
+export function bakedFrame(
+  bucket: number,
+  pose: StackPose,
+): { readonly bucket: number; readonly pose: StackPose; readonly flipped: boolean } {
+  if (STACK_BAKED_HEADINGS.includes(bucket)) {
+    return { bucket, pose, flipped: false };
+  }
+  return { bucket: bucketOf(STACK_HEADINGS / 2 - bucket), pose: mirroredPose(pose), flipped: true };
 }
 
 /** The profession badge on top of a figure (ADR-0057): a dark disc with a rim, the glyph pale on it. */

@@ -240,7 +240,10 @@ outlines, and the noise fill on a map without one.
   floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
   helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
   colour at its cap, its robe in friend or foe colour, its profession glyph
-  on a dark badge disc on top. Creatures and fallen bodies stay discs.
+  on a dark badge disc on top. It turns in 16 headings, the atlas baking
+  the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
+  shadow lies on the ground under it, not in its frame. Creatures and fallen
+  bodies stay discs.
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
@@ -283,28 +286,33 @@ same place. A map of one layer draws flat, so it has none.
 
 ## 5. Animation timing
 
-| Thing            | Timing                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| Zone fill breath | one cycle every **1.6 s** (`PULSE_SECONDS`), fill alpha ± pulse                     |
-| Fire flicker     | two sines, changing every **66 ms** (`FLICKER_INTERVAL_MS`)                         |
-| Water ripple     | **5 s** period, 3 units of drift (`RIPPLE_PERIOD_SECONDS`)                          |
-| Idle loops       | **1 to 6 s**; never faster than a heartbeat, never above 3 Hz                       |
-| Strike telegraph | the edge goes 2.5× wider and the fill 60 % within **0.3 s** of the warning starting |
-| Strike           | full fill, edge stays 2.5× wide                                                     |
-| Overhang fade    | to 0.35 alpha and back over **0.2 s** (`OVERHANG_FADE_SECONDS`); at once, reduced   |
+| Thing            | Timing                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| Zone fill breath | one cycle every **1.6 s** (`PULSE_SECONDS`), fill alpha ± pulse                        |
+| Fire flicker     | two sines, changing every **66 ms** (`FLICKER_INTERVAL_MS`)                            |
+| Water ripple     | **5 s** period, 3 units of drift (`RIPPLE_PERIOD_SECONDS`)                             |
+| Idle loops       | **1 to 6 s**; never faster than a heartbeat, never above 3 Hz                          |
+| Strike telegraph | the edge goes 2.5× wider and the fill 60 % within **0.3 s** of the warning starting    |
+| Strike           | full fill, edge stays 2.5× wide                                                        |
+| Overhang fade    | to 0.35 alpha and back over **0.2 s** (`OVERHANG_FADE_SECONDS`); at once, reduced      |
+| Body walk        | 4 frames per **64 units** walked (`STACK_STRIDE_UNITS`), so a snare slows the stride   |
+| Cape settle      | **0.4 s** after a body stops (`STACK_CAPE_SETTLE_SECONDS`), half of it on a pass frame |
+| Body breath      | one breath every **3 s** (`STACK_BREATH_SECONDS`), each body at its own phase          |
+| Body turn        | **0.12 s** to a new heading (`STACK_TURN_SECONDS`), the short way round                |
 
 - **Danger must read in under 0.3 s**: the telegraph's change is a jump, not
   a fade, and it is a change of **edge width and brightness**, which survive
   colour blindness.
 - **Reduced motion** (`still`): breath, ripples, flicker and drift hold still
-  at their mean. **Telegraph and strike are not decoration**: they stay, as
+  at their mean; a body stands, never striding, swaying, breathing or
+  leaning, and only its heading turns it. **Telegraph and strike are not decoration**: they stay, as
   states, because a player acts on them.
 - Idle motion is calm and low-contrast. The more a thing can hurt, the less
   it may distract from the fight: fog may breathe at 0.14, mire at 0.03.
 
 Now: `zone-look.ts` (`zoneFillAlpha`, `strikeEdgeScale`), `hazard-marks.ts`
 (`hazardVisual`), `water-shape.ts`,
-`lighting-model.ts` (`flickerAt`).
+`lighting-model.ts` (`flickerAt`), `sprite-stack.ts` (`stackPose`, `stepTurn`).
 
 ## 6. Gameplay readability
 

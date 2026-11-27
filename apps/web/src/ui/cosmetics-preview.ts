@@ -114,7 +114,7 @@ function swingSeconds(m: WeaponMotion): number {
  * seconds (0 for no weapon, so no swing): never the same kind twice in a
  * row, and a swing or a cast at least every fourth beat, so the worn
  * swing and aura show often. A walk, swing or cast turns to one of the
- * eight headings; a stand keeps the facing it had.
+ * sixteen headings; a stand keeps the facing it had.
  */
 export function nextBeat(previous: readonly Beat[], random: () => number, swing: number): Beat {
   const last = previous.at(-1);
@@ -256,6 +256,8 @@ export function createCosmeticsPreview(
   let last: number | undefined;
   /** Where it has walked to, arena units: the trail stays where it was dropped. */
   const position = { x: 0, y: 0 };
+  /** How far it has walked, all told, arena units: where it is in its stride (#4060). */
+  let walked = 0;
   /** The latest beats, the current one last, and how far into it, seconds. */
   let beats: readonly Beat[] = [];
   let beatAt = 0;
@@ -327,6 +329,7 @@ export function createCosmeticsPreview(
     const vy = speed * Math.sin(beat.facing);
     position.x += vx * dt;
     position.y += vy * dt;
+    walked += speed * dt;
     const bob =
       beat.kind === "idle" && !still ? -BOB_UNITS * Math.sin((2 * Math.PI * at) / BOB_SECONDS) : 0;
     const ground: GroundBody = {
@@ -398,7 +401,14 @@ export function createCosmeticsPreview(
       const made = tintedGlyph(glyph, pixels);
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
-    const pose = stackPose(beat.kind === "walk", beat.kind === "cast", clock, still);
+    const pose = stackPose({
+      casting: beat.kind === "cast",
+      walked,
+      stoppedFor: beat.kind === "walk" ? 0 : Number.POSITIVE_INFINITY,
+      now: clock,
+      phase: 0,
+      reducedMotion: still,
+    });
     const decor = matchDecor(body);
     paintFigure(painter, context, body, pose, decor, () => {
       if (tinted !== undefined) {

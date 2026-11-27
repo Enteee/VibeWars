@@ -154,13 +154,31 @@ describe("paintStandingBody (#1250)", () => {
 });
 
 describe("paintFigureGround (ADR-0057, #4031)", () => {
-  it("leaves only the self rim on the ground: the figure is an atlas image", () => {
+  it("leaves its shadow and the self rim on the ground: the figure is an atlas image", () => {
     const self = recorder();
     paintFigureGround(self.painter, BODY);
-    expect(self.calls).toEqual(["lineStyle(2, 14147304, 1)", "strokeCircle(100, 50, 12)"]);
+    expect(self.calls).toHaveLength(4);
+    expect(self.calls.slice(0, 2)).toEqual([
+      "fillStyle(0, 0.5)",
+      expect.stringMatching(/^fillPoints\(/) as string,
+    ]);
+    expect(self.calls.slice(2)).toEqual(["lineStyle(2, 14147304, 1)", "strokeCircle(100, 50, 12)"]);
     const enemy = recorder();
     paintFigureGround(enemy.painter, { ...BODY, team: "enemy" });
-    expect(enemy.calls).toEqual([]);
+    expect(enemy.calls).toEqual(self.calls.slice(0, 2));
+  });
+
+  it("lays the shadow off towards the lower right of the body (#4060)", () => {
+    const { painter, calls } = recorder();
+    paintFigureGround(painter, { ...BODY, team: "enemy" });
+    const points = (calls[1] ?? "")
+      .slice("fillPoints(".length, -1)
+      .split(", ")
+      .map((pair) => pair.split(" ").map(Number));
+    const mean = (axis: 0 | 1): number =>
+      points.reduce((sum, point) => sum + (point[axis] ?? 0), 0) / points.length;
+    expect(mean(0)).toBeGreaterThan(BODY.x);
+    expect(mean(1)).toBeGreaterThan(BODY.y);
   });
 });
 
