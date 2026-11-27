@@ -19,7 +19,6 @@ export const COSMETIC_SLOTS = [
   "aura",
   "trail",
   "swing",
-  "cape",
   "spawn",
   "dissolve",
   "emblemFrame",
@@ -106,11 +105,6 @@ export type CosmeticLook = LookBase &
         readonly colour: number;
       }
     | {
-        /** A pattern on the guild cape (#3579), in the cape's own colours. */
-        readonly kind: "cape";
-        readonly pattern: CapePattern;
-      }
-    | {
         /**
          * Motes gathering at a body as it spawns or is resurrected (#3580),
          * over `seconds`: the default return's, which `checkCosmetic` holds it to.
@@ -141,11 +135,6 @@ export type CosmeticLook = LookBase &
         readonly studs: boolean;
       }
   );
-
-/** The cape patterns (#3579). */
-export const CAPE_PATTERNS = ["stripes", "chevrons", "quarters", "stars"] as const;
-
-export type CapePattern = (typeof CAPE_PATTERNS)[number];
 
 export interface CosmeticEntry {
   /** Stable, at most `MAX_COSMETIC_ID_LENGTH`: it is signed and sent. */
@@ -205,8 +194,6 @@ const EMBLEM_FRAME = {
 
 /** A swing's ribbon (#3579): behind the weapon mark, its strength set by `cosmetic-trail.ts`. */
 const SWING = { layer: "weapon", motion: "flicker", ground: null, sound: null } as const;
-/** A cape pattern (#3579): it moves with the cloth, in the cape's own colours. */
-const CAPE = { layer: "cape", motion: "still", ground: null, sound: null } as const;
 
 /**
  * Four tiers, four hues: jade, rose, teal and orchid. Each is a hand's
@@ -405,34 +392,6 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TIER_5,
     look: { ...SWING, kind: "swing", colour: STARLIGHT },
     name: "cosmetics.item.swingStarlight",
-  },
-  {
-    id: "cape-stripes",
-    slot: "cape",
-    requires: TIER_1,
-    look: { ...CAPE, kind: "cape", pattern: "stripes" },
-    name: "cosmetics.item.capeStripes",
-  },
-  {
-    id: "cape-chevrons",
-    slot: "cape",
-    requires: TIER_2,
-    look: { ...CAPE, kind: "cape", pattern: "chevrons" },
-    name: "cosmetics.item.capeChevrons",
-  },
-  {
-    id: "cape-quarters",
-    slot: "cape",
-    requires: TIER_4,
-    look: { ...CAPE, kind: "cape", pattern: "quarters" },
-    name: "cosmetics.item.capeQuarters",
-  },
-  {
-    id: "cape-stars",
-    slot: "cape",
-    requires: TOP,
-    look: { ...CAPE, kind: "cape", pattern: "stars" },
-    name: "cosmetics.item.capeStars",
   },
   {
     id: "spawn-light",

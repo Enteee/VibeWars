@@ -253,13 +253,10 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
     expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([picked]);
   });
 
-  it("draws a swatch from its catalog entry, a cape's in the player's own colours", () => {
+  it("draws a swatch from its catalog entry, an emblem frame's in the player's own trim", () => {
     expect(swatchStyle(firstOf("frame"), null).colours["--swatch"]).toMatch(/^#[0-9a-f]{6}$/);
     const title = swatchStyle(firstOf("title"), null);
     expect(Object.keys(title.colours)).toEqual(["--swatch", "--swatch-glow"]);
-    const cape = swatchStyle(firstOf("cape"), CAPE);
-    expect(cape.colours).toEqual({ "--swatch": "#203040", "--swatch-trim": "#c0a060" });
-    expect(cape.variant).not.toBeNull();
     const trim = COSMETIC_CATALOG.find(
       (entry) => entry.look.kind === "emblemFrame" && entry.look.colour === "trim",
     );

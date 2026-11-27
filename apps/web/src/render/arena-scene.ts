@@ -1313,14 +1313,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
   private stackLook(actor: RenderableActor): StackLook {
-    const look = actor.cosmetics.cape?.look;
-    return {
-      body: teamColour(actor.team),
-      cape:
-        actor.cape === undefined
-          ? undefined
-          : { look: actor.cape, pattern: look?.kind === "cape" ? look.pattern : undefined },
-    };
+    return { body: teamColour(actor.team), cape: actor.cape };
   }
 
   /** A canvas texture for the figure atlas, `width` × `height`: a new key every time. */
@@ -1737,12 +1730,10 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.cape === undefined || motion === undefined) {
       return undefined;
     }
-    const look = actor.cosmetics.cape?.look;
     const frame = actor.cosmetics.emblemFrame?.look;
     return {
       look: actor.cape,
       motion,
-      pattern: look?.kind === "cape" ? look.pattern : undefined,
       emblemFrame: frame?.kind === "emblemFrame" && !actor.formed ? frame : undefined,
     };
   }

@@ -110,7 +110,7 @@ describe("paintStandingBody (#1250)", () => {
   it("draws a cape's cloth first, under the disc, its band over the rim (#1422, #1699)", () => {
     const calls = paint({
       ...BODY,
-      cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined, emblemFrame: undefined },
+      cape: { look: LOOK, motion: newCapeMotion(), emblemFrame: undefined },
     });
     expect(calls[0]).toBe(`fillStyle(${String(0xa078e0)}, 1)`);
     expect(calls[1]).toMatch(/^fillPoints\(/);
@@ -125,7 +125,7 @@ describe("paintStandingBody (#1250)", () => {
     expect(
       paint({
         ...BODY,
-        cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined, emblemFrame: undefined },
+        cape: { look: LOOK, motion: newCapeMotion(), emblemFrame: undefined },
       }),
     ).toMatchSnapshot();
   });
@@ -137,7 +137,7 @@ describe("paintStandingBody (#1250)", () => {
     }
     const calls = paint({
       ...BODY,
-      cape: { look: LOOK, motion, pattern: undefined, emblemFrame: undefined },
+      cape: { look: LOOK, motion, emblemFrame: undefined },
     });
     // Root, then the left hem point, about 32 units behind the centre.
     expect(calls[1]).toMatch(/^fillPoints\([\d.]+ [\d.]+, 6\d/);
@@ -230,7 +230,6 @@ describe("a body in a form (#3229)", () => {
         cape: {
           look: ashCape(LOOK),
           motion: newCapeMotion(),
-          pattern: undefined,
           emblemFrame: undefined,
         },
       }),
@@ -297,11 +296,11 @@ describe("an emblem frame on the cape (#3581)", () => {
     const motion = walked(2);
     const bare = paint({
       ...BODY,
-      cape: { look: LOOK, motion, pattern: undefined, emblemFrame: undefined },
+      cape: { look: LOOK, motion, emblemFrame: undefined },
     });
     const framed = paint({
       ...BODY,
-      cape: { look: LOOK, motion, pattern: undefined, emblemFrame: SILVER },
+      cape: { look: LOOK, motion, emblemFrame: SILVER },
     });
     const shape = capeMotionShape(motion, BODY, LOOK.emblem);
     if (shape.emblemGrid === undefined) {
@@ -314,28 +313,6 @@ describe("an emblem frame on the cape (#3581)", () => {
     // Cloth, then the frame, then everything else byte for byte: the emblem too.
     expect([...framed.slice(0, 2), ...framed.slice(3 + quads.length)]).toEqual(bare);
     expect(bare.length).toBeGreaterThan(2 + 4);
-  });
-
-  it("on a patterned cape, comes after the emblem's field, so the field never hides it", () => {
-    const motion = walked(2);
-    const plain = paint({
-      ...BODY,
-      cape: { look: LOOK, motion, pattern: "stripes", emblemFrame: undefined },
-    });
-    const framed = paint({
-      ...BODY,
-      cape: { look: LOOK, motion, pattern: "stripes", emblemFrame: SILVER },
-    });
-    const shape = capeMotionShape(motion, BODY, LOOK.emblem);
-    if (shape.emblemGrid === undefined) {
-      throw new Error("a full cape has room for its emblem");
-    }
-    const quads = emblemFrameShape(shape.emblemGrid, true);
-    const at = framed.indexOf(`fillStyle(${String(SILVER.colour)}, 1)`);
-    // The pattern in the trim's colour, then the field in the cape's, then the frame.
-    expect(framed.indexOf(`fillStyle(${String(LOOK.trim)}, 1)`)).toBeLessThan(at - 2);
-    expect(framed[at - 2]).toBe(`fillStyle(${String(LOOK.main)}, 1)`);
-    expect([...framed.slice(0, at), ...framed.slice(at + 1 + quads.length)]).toEqual(plain);
   });
 
   it("lies outside the emblem's grid and on the cloth, unfolding or full, studs and all", () => {
@@ -378,7 +355,6 @@ describe("an emblem frame on the cape (#3581)", () => {
       cape: {
         look: empty,
         motion,
-        pattern: undefined,
         emblemFrame: frameLook("emblem-frame-trim"),
       },
     });
@@ -389,10 +365,8 @@ describe("an emblem frame on the cape (#3581)", () => {
   it("draws none while the cape is folded and its emblem has no room", () => {
     const motion = newCapeMotion();
     expect(capeMotionShape(motion, BODY, LOOK.emblem).emblemGrid).toBeUndefined();
-    expect(
-      paint({ ...BODY, cape: { look: LOOK, motion, pattern: undefined, emblemFrame: SILVER } }),
-    ).toEqual(
-      paint({ ...BODY, cape: { look: LOOK, motion, pattern: undefined, emblemFrame: undefined } }),
+    expect(paint({ ...BODY, cape: { look: LOOK, motion, emblemFrame: SILVER } })).toEqual(
+      paint({ ...BODY, cape: { look: LOOK, motion, emblemFrame: undefined } }),
     );
   });
 });

@@ -1,5 +1,4 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
-import { EMBLEM_GRID } from "@vibewars/game-protocol";
 
 import {
   emblemRects,
@@ -153,28 +152,8 @@ export interface CapeBand {
   readonly to: number;
 }
 
-/**
- * The tab's frame (#3579), where a pattern lies on the cloth: `along`
- * runs from the body's centre (`x`, `y`) down the unit (`dx`, `dy`),
- * `aside` across it, as `capeMotionShape` places the cloth. The root is
- * `rootHalf` to each side at `root` along, the hem's corners `hemHalf`
- * at `hem`, and the notch in the middle at `notch`.
- */
-export interface CapeTab {
-  readonly x: number;
-  readonly y: number;
-  readonly dx: number;
-  readonly dy: number;
-  readonly root: number;
-  readonly rootHalf: number;
-  readonly hem: number;
-  readonly hemHalf: number;
-  readonly notch: number;
-}
-
 export interface CapeShape {
   readonly band: CapeBand;
-  readonly tab: CapeTab;
   /** The cloth: one closed polygon, root to hem and back. */
   readonly cloth: readonly Point[];
   /** The hem, point to notch to point: the trim. */
@@ -182,16 +161,7 @@ export interface CapeShape {
   readonly emblem: readonly EmblemPart[];
   /** Where the emblem's grid lies, set pixels or not; `undefined` while it has no room. */
   readonly emblemGrid: EmblemGrid | undefined;
-  /**
-   * The emblem's square and a cell round it, in the cape's colour over a
-   * pattern (#3579), so the emblem reads as on a plain cape; empty with
-   * no emblem shown.
-   */
-  readonly emblemField: readonly Point[];
 }
-
-/** How many cells of clear cloth the emblem's field keeps round it (#3579). */
-const EMBLEM_FIELD_CELLS = 1;
 
 /** How far out of the rim the band's centre line runs. */
 const BAND_OUT = 0.9;
@@ -257,10 +227,8 @@ export function capeMotionShape(
         }
       : undefined;
   const shown = emblemSize > 0 && emblemRects(emblem).length > 0;
-  const fieldHalf = (emblemSize / 2) * (1 + (2 * EMBLEM_FIELD_CELLS) / EMBLEM_GRID);
   return {
     band: { x, y, radius: r + BAND_OUT, from: angle - span, to: angle + span },
-    tab: { x, y, dx, dy, root: r - 3, rootHalf, hem: len, hemHalf: width, notch: notchAlong },
     cloth: [at(r - 3, -rootHalf), hemLeft, notch, hemRight, at(r - 3, rootHalf)],
     trim: [hemLeft, notch, hemRight],
     emblem:
@@ -268,13 +236,5 @@ export function capeMotionShape(
         ? emblemShape(emblem, emblemGrid.centre, emblemGrid.turn, emblemGrid.size)
         : [],
     emblemGrid,
-    emblemField: shown
-      ? [
-          at(emblemAlong - fieldHalf, -fieldHalf),
-          at(emblemAlong + fieldHalf, -fieldHalf),
-          at(emblemAlong + fieldHalf, fieldHalf),
-          at(emblemAlong - fieldHalf, fieldHalf),
-        ]
-      : [],
   };
 }

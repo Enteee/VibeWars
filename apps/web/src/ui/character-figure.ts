@@ -71,7 +71,6 @@ const HELMET_TOP =
       bucketFacing(headingBucket(FIGURE_FACING)),
       BODY_RADIUS,
       stackTones(0, undefined),
-      undefined,
     ).flatMap((layer) => layer.points.map((point) => point.y)),
   );
 /** How much of its box the figure fills (#4082): helmet to shadow, or mark to mark. */
@@ -151,7 +150,7 @@ export function figureBody(
     cape:
       cape === undefined
         ? undefined
-        : { look: cape, motion: newCapeMotion(), pattern: undefined, emblemFrame: undefined },
+        : { look: cape, motion: newCapeMotion(), emblemFrame: undefined },
   };
 }
 
@@ -207,7 +206,7 @@ export function paintFigure(
   const { cape } = body;
   const look = {
     body: teamColour(body.team),
-    cape: cape === undefined ? undefined : { look: cape.look, pattern: cape.pattern },
+    cape: cape?.look,
   };
   const size = body.r / (STACK_BAKE_RADIUS * STACK_BAKE_SCALE);
   context.save();

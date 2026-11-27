@@ -12,7 +12,6 @@ import {
   STACK_TURN_SECONDS,
   bakedFrame,
   bucketFacing,
-  capeSliceTrimmed,
   headingBucket,
   stackLayers,
   stackLifts,
@@ -72,7 +71,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
    */
   const placed = (pose: (typeof STACK_POSES)[number], facing = 0, flip = false): string[] => {
     const at = (v: number): number => (Math.round(v * 1000) + 0) / 1000;
-    return stackLayers(stackSlices(pose), facing, 12, stackTones(0x59c2ff, undefined), undefined)
+    return stackLayers(stackSlices(pose), facing, 12, stackTones(0x59c2ff, undefined))
       .map((layer) =>
         [
           layer.colour,
@@ -231,7 +230,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
 
   it("faces its visor the way it faces, and rises a full stack", () => {
     const tones = stackTones(0x59c2ff, undefined);
-    const layers = stackLayers(stackSlices("stand"), Math.PI / 2, 12, tones, undefined);
+    const layers = stackLayers(stackSlices("stand"), Math.PI / 2, 12, tones);
     const visor = layers.filter((layer) => layer.colour === stackShadeOfVisor);
     const mid = (points: readonly { readonly x: number; readonly y: number }[]) =>
       points.reduce((sum, p) => sum + p.x, 0) / points.length;
@@ -248,10 +247,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("wears its own cape's colours, or the body colour darker without one", () => {
     expect(stackTones(0x59c2ff, undefined).cape).toBe(0x357499);
     expect(stackTones(0x59c2ff, undefined).trim).toBe(0x357499);
-    const cape = {
-      look: { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] },
-      pattern: undefined,
-    };
+    const cape = { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] };
     expect(stackTones(0x59c2ff, cape)).toMatchObject({
       cape: 0x203040,
       trim: 0xc0a060,
@@ -259,13 +255,20 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
     });
   });
 
-  it("trims a cape's hem, and bands its back in the pattern", () => {
-    const trimmed = (pattern: Parameters<typeof capeSliceTrimmed>[0]): number[] =>
-      Array.from({ length: 11 }, (_, i) => i).filter((i) => capeSliceTrimmed(pattern, i, 11));
-    expect(trimmed(undefined)).toEqual([0]);
-    expect(trimmed("stripes")).toEqual([0, 2, 4, 6, 8, 10]);
-    expect(trimmed("chevrons")).toEqual([0, 3, 6, 9]);
-    expect(trimmed("quarters")).toEqual([0, 6, 7, 8, 9, 10]);
-    expect(trimmed("stars")).toEqual([0, 4, 8]);
+  it("trims a cape's hem and leaves the rest of its back plain", () => {
+    const tones = stackTones(0x59c2ff, { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] });
+    const slices = stackSlices("stand");
+    const layers = stackLayers(slices, 0, 12, tones);
+    let cape = 0;
+    let at = 0;
+    for (const slice of slices) {
+      if (slice.tone === "cape") {
+        const tone = cape === 0 ? tones.trim : tones.cape;
+        expect(layers[at]?.colour).toBe(stackShade(tone, slice.light));
+        cape += 1;
+      }
+      at += slice.parts.length;
+    }
+    expect(cape).toBeGreaterThan(2);
   });
 });

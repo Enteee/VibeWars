@@ -12,23 +12,19 @@ tu as obtenu.
 | ------------------------------------------------------------------------------------ | ------------------------------ |
 | Cadre jade et le titre Prétendant                                                    | 5 victoires classées           |
 | Aura de mousse, Traînée de mousse, Frappe de mousse                                  | 5 victoires classées           |
-| Cape rayée                                                                           | 5 victoires classées           |
 | Cadre d’emblème couleur liseré                                                       | 5 victoires classées           |
 | Cadre rose et le titre Vétéran                                                       | 25 victoires classées          |
 | Aura de braise, Traînée de braise, Frappe de braise                                  | 25 victoires classées          |
-| Cape à chevrons                                                                      | 25 victoires classées          |
 | Lumière ascendante, Dissolution en cendres                                           | 25 victoires classées          |
 | Aura de givre, Traînée de givre, Frappe de givre                                     | 75 victoires classées          |
 | Tourbillon de feuilles, Dissolution en brume                                         | 75 victoires classées          |
 | Cadre d’emblème en fer                                                               | 75 victoires classées          |
 | Cadre sarcelle et le titre Seigneur de guerre                                        | 200 victoires classées         |
-| Cape écartelée                                                                       | 200 victoires classées         |
 | Pluie de pétales, Dissolution en éclats                                              | 200 victoires classées         |
 | Cadre d’emblème en argent                                                            | 200 victoires classées         |
 | Aura de lumière stellaire, Traînée de lumière stellaire, Frappe de lumière stellaire | 500 victoires classées         |
 | Pluie d’étoiles, Dissolution en poussière d’étoiles                                  | 500 victoires classées         |
 | Cadre orchidée et le titre Champion                                                  | Une place dans le Top 100      |
-| Cape étoilée                                                                         | Une place dans le Top 100      |
 | Cadre d’emblème doré                                                                 | Une place dans le Top 100      |
 | Flamme de série                                                                      | 3 victoires classées d’affilée |
 
@@ -40,9 +36,9 @@ nouveau. Ce que tu as choisi reste choisi.
 
 Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse de petites particules là où tu marches, qui s’effacent en un instant. Les deux se dessinent sous chaque anneau, marque et avertissement, et n’utilisent jamais une couleur d’équipe. Si ton système demande des animations réduites, l’aura reste immobile et aucune traînée n’est dessinée.
 
-## Sur ton arme et ta cape
+## Sur ton arme
 
-Une traînée d’arme est un ruban derrière ton arme quand une attaque au corps à corps frappe, qui s’efface en moins d’un cinquième de seconde après le coup. Les arcs, les lances, les baguettes et les bâtons n’en ont pas, et aucun sort ni aucune incantation n’en montre jamais. Un motif de cape pose des bandes, des chevrons, des quartiers ou des étoiles sur ta cape de guilde dans sa propre couleur de bordure, et ton emblème reste toujours au-dessus, aussi net que sur une cape unie. Si ton système demande des animations réduites, aucune traînée d’arme n’est dessinée.
+Une traînée d’arme est un ruban derrière ton arme quand une attaque au corps à corps frappe, qui s’efface en moins d’un cinquième de seconde après le coup. Les arcs, les lances, les baguettes et les bâtons n’en ont pas, et aucun sort ni aucune incantation n’en montre jamais. Si ton système demande des animations réduites, aucune traînée d’arme n’est dessinée.
 
 ## Revenir et tomber
 
