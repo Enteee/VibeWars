@@ -1,0 +1,2 @@
+import{b as e}from"./dist-DJmdmTKu.js";var t=e;export{t as default};
+//# sourceMappingURL=describe-9z7NXNaZ.js.map
