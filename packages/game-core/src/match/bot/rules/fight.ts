@@ -6,6 +6,7 @@ import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import { isGhostId } from "../../ghost.js";
 import { clumpTarget } from "../clump.js";
+import { knockdownTarget } from "../knockdown.js";
 import { snareStatus, snareTarget } from "../snare.js";
 import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import {
@@ -58,7 +59,9 @@ const SPIKE_TOLERANCE = 1e-6;
  * clump (#4147, `clumpTarget`), unless the target is fixed. A snare at
  * a foe at its elbow, else at one diving its healer or casters (#4156,
  * `snareTarget`), unless the target is a ghost, and never held. Spiking
- * waits only for one cast at the team's target.
+ * waits only for one cast at the team's target. An unblockable knockdown
+ * at a foe whose block stance wastes an ally attacker's blows (#4228,
+ * `knockdownTarget`), unless the target is fixed: down, it blocks none.
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
@@ -166,12 +169,27 @@ const fight: BotRule = {
       targetFixed
         ? undefined
         : clumpTarget(held, self, foes, targetId, held.range, (id) => mayUse(held, id));
+    // A knockdown at a foe whose block stance wastes an ally's blows
+    // (#4228), unless the target is fixed; else as any skill.
+    const knockdown = (held: Skill): string | undefined =>
+      targetFixed
+        ? undefined
+        : knockdownTarget(
+            held,
+            self,
+            allies,
+            foes,
+            targetId,
+            held.range,
+            (id) => mayUse(held, id),
+            surroundings,
+          );
     // A snare at a foe at the bot's elbow, else at one diving its healer or
     // casters (#4156), unless the target is a ghost on the altar. Never at
     // a clump.
     const aside = (held: Skill): string | undefined =>
       snareStatus(held) === undefined
-        ? clump(held)
+        ? (knockdown(held) ?? clump(held))
         : isGhostId(targetId)
           ? undefined
           : snareTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));
