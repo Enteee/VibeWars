@@ -233,7 +233,7 @@ spell or a chant and disables it for 10 s, along with every skill on
 the victim's bar of the same attribute; a skill with no attribute takes
 only itself. **Distracting Shot** interrupts whatever its arrow finds,
 deals only 13, and disables an interrupted skill for 20 s; the Warrior's
-**Disrupting Chop** (6 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
+**Disrupting Chop** (5 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
 which skills were disabled, and for how long; a skill already
 recharging for longer is not mentioned.
 

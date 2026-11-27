@@ -203,8 +203,8 @@ describe("bonus damage (#522)", () => {
     );
   }
 
-  it("Executioner's Strike adds +34 at Axe Mastery 12, and Eviscerate +38", () => {
-    expect(bonusOf("warrior.executioners-strike", WEAPONS.axe, "warrior.axe-mastery")).toBe(34);
+  it("Executioner's Strike adds +39 at Axe Mastery 12, and Eviscerate +38", () => {
+    expect(bonusOf("warrior.executioners-strike", WEAPONS.axe, "warrior.axe-mastery")).toBe(39);
     expect(bonusOf("warrior.eviscerate", WEAPONS.axe, "warrior.axe-mastery")).toBe(38);
   });
 

@@ -42,7 +42,7 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
 /**
  * A swordsman at rank 12 who also knows a little fire, and Sever Artery.
  * Backbreaker, 9 strikes, only so a test can count strikes past Sever
- * Artery's four (#463): a sword cannot use it.
+ * Artery's three (#463): a sword cannot use it.
  */
 function swordsman(id: string, spawn: Vec2): ParticipantSpec {
   return {
@@ -161,7 +161,7 @@ describe("the swing", () => {
       }
     }
     // A strike per landed swing, each skill capped at its own cost (#463).
-    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(4);
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(3);
     expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(9);
   });
 

@@ -106,23 +106,23 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
   } satisfies ParticipantSpec;
 }
 
-/** `w`, a rank-12 Warrior holding `skillId`'s weapon, with `BAR`, at the origin. */
-function warrior(skillId: string): ParticipantSpec {
+/** `w`, a Warrior at `rank` holding `skillId`'s weapon, with `BAR`, at the origin. */
+function warrior(skillId: string, rank = 12): ParticipantSpec {
   return spec("w", 0, vec2(0, 0), {
     skillBar: BAR,
     attributeRanks: new Map([
-      ["warrior.strength", 12],
-      ["warrior.axe-mastery", 12],
-      ["warrior.hammer-mastery", 12],
-      ["warrior.swordsmanship", 12],
+      ["warrior.strength", rank],
+      ["warrior.axe-mastery", rank],
+      ["warrior.hammer-mastery", rank],
+      ["warrior.swordsmanship", rank],
     ]),
     equipment: weaponFor(skillId),
   });
 }
 
 /** `w` with `skillId` in hand and its adrenaline full; `f`, its foe, in reach east unless `more` places it. */
-function match(skillId: string, more: readonly ParticipantSpec[] = []) {
-  const participants = [warrior(skillId), ...more];
+function match(skillId: string, more: readonly ParticipantSpec[] = [], rank = 12) {
+  const participants = [warrior(skillId, rank), ...more];
   if (!more.some((participant) => participant.id === "f")) {
     participants.push(spec("f", 1, vec2(RANGE_MELEE / 2, 0)));
   }
@@ -164,9 +164,9 @@ function damageTo(events: readonly CombatEvent[], targetId: string): number[] {
 
 type FoeState = "still" | "deep-wound" | "weakness" | "cracked-armor" | "knocked-down" | "moving";
 
-/** What `skillId` does to `f`, in `state` when it lands. */
-function hit(skillId: string, state: FoeState) {
-  const sim = match(skillId);
+/** What `skillId`, used at `rank`, does to `f`, in `state` when it lands. */
+function hit(skillId: string, state: FoeState, rank = 12) {
+  const sim = match(skillId, [], rank);
   const foe = get(sim, "f").combatant;
   if (state === "deep-wound" || state === "weakness" || state === "cracked-armor") {
     foe.statuses.apply(state, 1000, "w", NO_RANKS);
@@ -382,9 +382,13 @@ describe("the Sword attacks (#1658)", () => {
     expect(hit(QUIVERING_BLADE, "still").foe.statuses.has("dazed")).toBe(false);
   });
 
-  it("Steelfang Slash: 4 strikes back on a knocked-down foe only", () => {
+  it("Steelfang Slash: 1...5 strikes back on a knocked-down foe only (#4209)", () => {
+    // 4.2 at Swordsmanship 12 is 4 whole strikes, 1 at 0.
     expect(hit(STEELFANG_SLASH, "knocked-down").strikes).toBe(
       hit(STEELFANG_SLASH, "still").strikes + 4,
+    );
+    expect(hit(STEELFANG_SLASH, "knocked-down", 0).strikes).toBe(
+      hit(STEELFANG_SLASH, "still", 0).strikes + 1,
     );
   });
 });

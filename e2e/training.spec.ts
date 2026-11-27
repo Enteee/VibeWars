@@ -1614,7 +1614,7 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await page.goto("./");
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
-  // A new character is a warrior; Sever Artery needs a sword, and 4 strikes.
+  // A new character is a warrior; Sever Artery needs a sword, and 3 strikes.
   await page.locator(".library-tab", { hasText: /^gear$/i }).click();
   await page.locator(".gear-box").filter({ hasText: "Sword" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Sword");

@@ -16,7 +16,7 @@ import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
-/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Sever Artery 4, "Watch Yourself!" 4. */
+/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Sever Artery 3, "Watch Yourself!" 4. */
 
 const BACKBREAKER = "warrior.backbreaker";
 const SEVER_ARTERY = "warrior.sever-artery";
@@ -75,9 +75,9 @@ describe("gainStrikes", () => {
 
 describe("gainUnits", () => {
   it("adds units, not strikes, each capped at its own cost (#827)", () => {
-    const w = warrior(0, 4 * ADRENALINE_PER_STRIKE - 5, 0);
+    const w = warrior(0, 3 * ADRENALINE_PER_STRIKE - 5, 0);
     gainUnits(w, 24, 0);
-    expect([...w.adrenaline.values()]).toEqual([24, 4 * ADRENALINE_PER_STRIKE, 24]);
+    expect([...w.adrenaline.values()]).toEqual([24, 3 * ADRENALINE_PER_STRIKE, 24]);
   });
 
   it("skips a recharging skill (#827)", () => {
