@@ -242,7 +242,12 @@ outlines, and the noise fill on a map without one.
   colour at its cap, its robe in friend or foe colour, its profession glyph
   on a dark badge disc on top. It turns in 16 headings, the atlas baking
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
-  shadow lies on the ground under it, not in its frame. Creatures and fallen
+  shadow lies on the ground under it, not in its frame. A creature with a
+  figure (#4171, `creatureSlices`, after `docs/art/creature-stack-study.md`)
+  is stacked the same way, on its team-coloured hexagon plate, which stays
+  on the ground and is never baked in; a Ghostly Hero is a pale blue-grey
+  body at 0.75 alpha with its axe and no cape, its glyph on a badge on
+  top. A creature with no figure yet, a knocked-down one and fallen
   bodies stay discs.
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
@@ -351,9 +356,13 @@ Every rule below can be checked from one screenshot.
     under bodies; an upward chevron in the same blue stands over each body
     of the caster's side it helped, above the health bar and any hex halo,
     for 1 s. Neither is team-coloured (#3301).
-13. **A spirit** is a pale-green `#76c96f` wisp, a teardrop point up round
-    a near-white core, bobbing ±2 px over 2 s (still under reduced motion),
-    with a 1.5 px team rim. Its range is a solid 1.5 px ring in the same
+13. **A spirit** is a stacked totem (#4171) on its team-coloured hexagon
+    plate: a short dark stone base `#4a4a50`, then a wisp column narrowing
+    upward over nine slices, pale green `#76c96f` rising to near-white
+    `#e8f7e4` and fading as it rises. One heading, one pose: it never
+    turns. The whole figure bobs ±2 px over 2 s (still under reduced
+    motion). Until its figure is baked it is the flat wisp, a teardrop
+    point up round a near-white core, with a 1.5 px team rim. Its range is a solid 1.5 px ring in the same
     green at its aura's real radius, on the ground under bodies, alpha
     0.18, 0.45 while targeted or hovered. Solid, since a spirit's area is
     not harmful ground, whatever it does (#3306).

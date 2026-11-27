@@ -47,6 +47,7 @@ import {
   spiritRingAlpha,
   nameplateLayout,
   isStackedFigure,
+  wearsFigureBadge,
   overheadRise,
   placeFloatingText,
   signetTextureKey,
@@ -3139,7 +3140,7 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (actor.creatureLook !== undefined) {
-      this.drawCreature(g, marks, actor, actor.creatureLook);
+      this.drawCreature(band, actor, actor.creatureLook);
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
@@ -3204,11 +3205,11 @@ export class ArenaScene extends Phaser.Scene {
    * lies, or else a facing tick.
    */
   private drawCreature(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
+    band: (typeof this.bands)[number],
     actor: RenderableActor,
     look: CreatureLook,
   ): void {
+    const { body: g, marks } = band;
     const { x, y } = actor.position;
     const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
@@ -3259,6 +3260,9 @@ export class ArenaScene extends Phaser.Scene {
       g.fillPath();
       g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
       g.strokePath();
+      if (wearsFigureBadge(actor)) {
+        this.drawFigureBadge(band.badge, actor);
+      }
       this.figures.push({
         actor,
         frame: figure,
@@ -4210,7 +4214,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** The dark disc the glyph rides on, on top of `actor`'s figure (ADR-0057). */
   private drawFigureBadge(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    if (actor.profession === undefined) {
+    if (actor.profession === undefined && actor.creatureLook === undefined) {
       return;
     }
     const { x, y } = actor.position;
