@@ -206,7 +206,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "warrior",
     attributeId: "warrior.swordsmanship",
-    cost: { kind: "adrenaline", amount: 4 },
+    cost: { kind: "adrenaline", amount: 3 },
     overcast: 0,
     activationSeconds: 0,
     rechargeSeconds: 0,
@@ -306,7 +306,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "warrior",
     attributeId: "warrior.axe-mastery",
-    cost: { kind: "adrenaline", amount: 8 },
+    cost: { kind: "adrenaline", amount: 7 },
     overcast: 0,
     activationSeconds: 0,
     rechargeSeconds: 0,
@@ -316,7 +316,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "axe",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 10, atTwelve: 34 } },
+      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 15, atTwelve: 39 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -654,10 +654,10 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "warrior",
     attributeId: "warrior.axe-mastery",
-    cost: { kind: "adrenaline", amount: 6 },
+    cost: { kind: "adrenaline", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
-    rechargeSeconds: 1,
+    rechargeSeconds: 0,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -3082,7 +3082,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     target: "single-enemy",
     area: undefined,
     // "If this attack hits, you deal +1...31 damage. If you hit a foe that
-    // is knocked down, you gain 1...5 adrenaline": 4 strikes at rank 12.
+    // is knocked down, you gain 1...5 adrenaline": scaled by Swordsmanship.
     attack: {
       weapon: "sword",
       weaponDamage: 1,
@@ -3108,7 +3108,14 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "adrenaline-gain", strikes: { flat: 4 } }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: {
+              scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
       },
     ],
   },

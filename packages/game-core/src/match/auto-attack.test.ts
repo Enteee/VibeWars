@@ -161,7 +161,7 @@ describe("the swing", () => {
       }
     }
     // A strike per landed swing, each skill capped at its own cost (#463).
-    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(4);
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(3);
     expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(9);
   });
 
