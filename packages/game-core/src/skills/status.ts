@@ -1486,7 +1486,8 @@ export interface StatusDefinition {
   /**
    * Where `adrenalineGainFaster` reaches (#2180): `all` of it, or only
    * what the bearer's own blows earn, `attacks`, as Battle Rage's "gain
-   * double adrenaline from attacks".
+   * double adrenaline from attacks". GW1's multipliers are `attacks`
+   * unless stated (#4163): only Focused Anger's reaches `all`.
    */
   readonly adrenalineGainFasterFrom: "all" | "attacks";
   /**
@@ -5671,18 +5672,19 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
+    const adrenalineBoosts =
+      def.adrenalineGainFasterFrom === "attacks"
+        ? adrenalineGainFasterFromAttacks
+        : adrenalineGainFaster;
     const adrenalineBoost = statAt(def.adrenalineGainFaster, ranks);
     if (adrenalineBoost !== 0) {
-      (def.adrenalineGainFasterFrom === "attacks"
-        ? adrenalineGainFasterFromAttacks
-        : adrenalineGainFaster
-      ).push(adrenalineBoost);
+      adrenalineBoosts.push(adrenalineBoost);
     }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster *= Math.min(1, def.whileUnder.attackDurationMultiplier);
       attackSlower *= Math.max(1, def.whileUnder.attackDurationMultiplier);
       if (def.whileUnder.adrenalineGainFaster !== 0) {
-        adrenalineGainFaster.push(def.whileUnder.adrenalineGainFaster);
+        adrenalineBoosts.push(def.whileUnder.adrenalineGainFaster);
       }
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);

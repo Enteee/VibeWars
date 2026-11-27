@@ -1124,7 +1124,8 @@
             { "name": "amount", "optional": false, "type": "number" },
             { "name": "critical", "optional": false, "type": "boolean" },
             { "name": "kind", "optional": false, "type": { "literal": "damage" } },
-            { "name": "targetId", "optional": false, "type": "string" }
+            { "name": "targetId", "optional": false, "type": "string" },
+            { "name": "unreduced", "optional": false, "type": "number" }
           ]
         },
         {

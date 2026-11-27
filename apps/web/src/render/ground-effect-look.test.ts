@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { getSkill } from "@vibewars/game-core";
 import {
   MAX_POOL_ALPHA,
+  artEdgeAlpha,
   cursedBy,
+  groundArt,
   groundLook,
   groundMotion,
   harmsViewer,
@@ -99,6 +102,33 @@ describe("dashedCircle", () => {
     const step = (2 * Math.PI) / arcs.length;
     expect((first?.to ?? 0) - (first?.from ?? 0)).toBeCloseTo((step * 9) / 15, 9);
     expect(second?.from).toBeCloseTo(step, 9);
+  });
+});
+
+describe("groundArt (#4054)", () => {
+  it("burns a fire storm and a meteor shower, and domes a ward", () => {
+    expect(groundArt(getSkill("elementalist.fire-storm"))).toBe("fire");
+    expect(groundArt(getSkill("elementalist.meteor-shower"))).toBe("fire");
+    expect(groundArt(getSkill("elementalist.ward-against-melee"))).toBe("ward");
+  });
+
+  it("keeps a chaos storm, a well, a trap and an unknown skill plain", () => {
+    expect(groundArt(getSkill("mesmer.chaos-storm"))).toBe("plain");
+    expect(groundArt(getSkill("necromancer.well-of-suffering"))).toBe("plain");
+    expect(groundArt(getSkill("ranger.barbed-trap"))).toBe("plain");
+    expect(groundArt(undefined)).toBe("plain");
+  });
+
+  it("fades a fire or ward edge as it ends by the same share as a plain one", () => {
+    const fresh = groundLook({ dashed: true, age: 5, remaining: 5 });
+    const ended = groundLook({ dashed: true, age: 9.9, remaining: 0 });
+    expect(artEdgeAlpha("fire", fresh)).toBeCloseTo(0.7, 9);
+    expect(artEdgeAlpha("ward", fresh)).toBeCloseTo(0.6, 9);
+    expect(artEdgeAlpha("plain", fresh)).toBe(fresh.edgeAlpha);
+    expect(artEdgeAlpha("fire", ended) / artEdgeAlpha("fire", fresh)).toBeCloseTo(
+      ended.edgeAlpha / fresh.edgeAlpha,
+      9,
+    );
   });
 });
 

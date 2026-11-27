@@ -47,6 +47,7 @@ describe("BOT_RULES (#2042)", () => {
       "run-relic",
       "boost",
       "fall-back",
+      "kite",
       "position",
       "shrines",
       "break-wall",

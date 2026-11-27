@@ -184,7 +184,7 @@ describe("attachMatchSounds", () => {
       weaponId: "",
       attributeId: "",
       doubleStrike: false,
-      events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
+      events: [{ kind: "damage", targetId: ME, amount: 1, unreduced: 1, critical: false }],
     });
     refused();
     expect(played).toEqual(["hit-taken", "refused"]);

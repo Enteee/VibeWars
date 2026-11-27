@@ -2148,6 +2148,12 @@ export class MatchSimulation {
     return this.#participants.get(id);
   }
 
+  /** `id`'s current movement-speed factor, 1 at base (#4166); an unknown id: 1. */
+  public moveSpeedFactorOf(id: string): number {
+    const record = this.#participants.get(id);
+    return record === undefined ? 1 : this.#speedOf(record);
+  }
+
   /**
    * Where `id` is held before the start (#3909): its spawn, one of the
    * points its team's bubble (#3930) is built round, on the layer it
@@ -5443,6 +5449,7 @@ export class MatchSimulation {
       walkable: (point) =>
         isStandable(this.#graphOn(record.layer), point) &&
         walkIsClear(this.#graphOn(record.layer), record.position, point),
+      speedOf: (participantId) => this.moveSpeedFactorOf(participantId),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,
@@ -8366,10 +8373,12 @@ export class MatchSimulation {
     }
     const next = damageBreakable(wall, amount);
     this.#breakables[at] = next;
+    const taken = wall.health - next.health;
     events.push({
       kind: "damage",
       targetId: breakableTargetId(wall.id),
-      amount: wall.health - next.health,
+      amount: taken,
+      unreduced: taken,
       critical: false,
     });
     if (!standing(next)) {
@@ -9723,8 +9732,11 @@ export class MatchSimulation {
   /**
    * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
    * warrior under pressure builds it. Each `damage` in `events` that
-   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * `source` dealt a living foe gives that foe `floor(100 × unreduced /
    * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * `unreduced` is what the hit took before the flat per-hit cuts, Shielding
+   * Hands's or Shield of Absorption's (#4163): GW1 counts adrenaline
+   * "before damage reduction", so they do not slow it.
    * Called where a skill, a swing, a shot or a spell lands, never for
    * degeneration; an ally's or your own damage, and a lethal hit, give
    * nothing. A `source` gone from the match is no one's foe. A hit for
@@ -9746,7 +9758,7 @@ export class MatchSimulation {
       }
       gainUnits(
         victim.combatant,
-        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+        Math.floor((100 * event.unreduced) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
         false,
       );

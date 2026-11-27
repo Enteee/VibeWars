@@ -84,9 +84,9 @@ describe("cast-loop", () => {
     const used = { kind: "skill-used", casterId: "dummy", skillId: FIREBALL, targetId: "near" };
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
       ["dummy", used],
-      ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
+      ["dummy", { kind: "damage", targetId: "near", amount: 91, unreduced: 91, critical: false }],
       ["dummy", used],
-      ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
+      ["dummy", { kind: "damage", targetId: "near", amount: 91, unreduced: 91, critical: false }],
     ]);
   });
 
@@ -369,6 +369,7 @@ describe("auto-attack", () => {
         sees: () => true,
         seesBetween: () => true,
         walkable: () => true,
+        speedOf: () => 1,
         foeCentroid: undefined,
         objectives: NO_OBJECTIVES,
         projectiles: [],
@@ -447,6 +448,7 @@ describe("follow-and-attack (#467)", () => {
       sees: () => true,
       seesBetween: () => true,
       walkable: () => true,
+      speedOf: () => 1,
       foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
       projectiles: [],

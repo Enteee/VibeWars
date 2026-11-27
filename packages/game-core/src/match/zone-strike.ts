@@ -1,7 +1,7 @@
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { applyDamage, applyStatus, type CombatEvent } from "../skills/effects.js";
-import { hitLocationOf, mitigate, skillDamage } from "../skills/damage.js";
+import { applyHit, applyStatus, type CombatEvent } from "../skills/effects.js";
+import { hitLocationOf, mitigateHit, skillDamage } from "../skills/damage.js";
 import { NO_RANKS } from "../skills/status.js";
 import type { Combatant, Surroundings } from "../skills/types.js";
 import type { ZoneRule } from "./zones.js";
@@ -30,8 +30,8 @@ export function zoneStrike(
 ): CombatEvent[] {
   const packet = skillDamage(rule.damage, rule.damageType, 0);
   const events: CombatEvent[] = [];
-  const dealt = mitigate(packet, target, rules, hitLocationOf(packet, rng), rng, surroundings);
-  applyDamage(target, dealt, packet.type, false, events, undefined);
+  const dealt = mitigateHit(packet, target, rules, hitLocationOf(packet, rng), rng, surroundings);
+  applyHit(target, dealt, packet.type, false, events, undefined);
   if (target.dead) {
     return events;
   }

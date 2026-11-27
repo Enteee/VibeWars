@@ -125,7 +125,9 @@ describe("Reversal of Fortune (#987)", () => {
 
     const next: CombatEvent[] = [];
     applyDamage(target, 30, "typeless", false, next, undefined);
-    expect(next).toEqual([{ kind: "damage", targetId: "ally", amount: 30, critical: false }]);
+    expect(next).toEqual([
+      { kind: "damage", targetId: "ally", amount: 30, unreduced: 30, critical: false },
+    ]);
   });
 
   it("heals a 30 hit for 30", () => {

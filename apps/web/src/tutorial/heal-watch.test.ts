@@ -20,7 +20,7 @@ const message = (over: Partial<CombatMessage>): CombatMessage => ({
 const strike = message({
   casterSessionId: "zone:rockfall:clearing-rockfall",
   cause: "zone",
-  events: [{ kind: "damage", targetId: TUTOR, amount: 40, critical: false }],
+  events: [{ kind: "damage", targetId: TUTOR, amount: 40, unreduced: 40, critical: false }],
 });
 const heal = message({
   casterSessionId: SELF,
@@ -59,7 +59,7 @@ describe("createHealWatch (#3303)", () => {
     watch.observe(
       message({
         cause: "zone",
-        events: [{ kind: "damage", targetId: SELF, amount: 40, critical: false }],
+        events: [{ kind: "damage", targetId: SELF, amount: 40, unreduced: 40, critical: false }],
       }),
     );
     expect(watch.tally().tutorHit).toBe(false);

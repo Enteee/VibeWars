@@ -45,7 +45,7 @@ Bot dengan skill yang melumpuhkan atau memperlambat memakainya pada lawan di sam
 
 Melawan tim dengan skill area, bot jarak jauh dan healer saling menjaga jarak, agar satu ledakan tidak mengenai dua dari mereka. Mereka tidak pernah melepas perlindungan untuk itu.
 
-Bot jarak jauh atau penyembuh yang didekati musuh terlalu dekat lebih dulu mundur ke rekan garis depan terdekatnya, jika ada yang cukup dekat, lalu bertarung di sana.
+Bot jarak jauh atau penyembuh yang didekati musuh terlalu dekat lebih dulu mundur ke rekan garis depan terdekatnya, jika ada yang cukup dekat, lalu bertarung di sana. Penyerang jarak dekat yang diperlambat, misalnya Crippled, tidak bisa mengejar, jadi terhadapnya bot justru mundur di sela tembakan.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.

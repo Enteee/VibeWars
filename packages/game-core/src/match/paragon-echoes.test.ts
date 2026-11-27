@@ -393,14 +393,17 @@ describe("Paragon echoes 2 (#1485)", () => {
     expect([
       alone.armorModifier,
       alone.attackDurationMultiplier,
-      alone.adrenalineGainFaster,
+      alone.adrenalineGainFasterFromAttacks,
     ]).toEqual([-20, 1, []]);
     put(sim, CHANT, 0.2, "p");
     const chanted = aggregateModifiers(statuses.active);
     expect(chanted.attackDurationMultiplier).toBe(0.67);
-    expect(chanted.adrenalineGainFaster).toEqual([0.33]);
+    expect(chanted.adrenalineGainFasterFromAttacks).toEqual([0.33]);
     stepFor(sim, 0.5);
     const after = aggregateModifiers(statuses.active);
-    expect([after.attackDurationMultiplier, after.adrenalineGainFaster]).toEqual([1, []]);
+    expect([after.attackDurationMultiplier, after.adrenalineGainFasterFromAttacks]).toEqual([
+      1,
+      [],
+    ]);
   });
 });

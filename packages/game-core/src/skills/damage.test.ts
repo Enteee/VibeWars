@@ -1103,6 +1103,7 @@ describe("spell damage through the effect system", () => {
       kind: "damage",
       targetId: "defender",
       amount: 91,
+      unreduced: 91,
       critical: false,
     });
   });
@@ -1117,6 +1118,7 @@ describe("spell damage through the effect system", () => {
       kind: "damage",
       targetId: "defender",
       amount: 64,
+      unreduced: 64,
       critical: false,
     });
   });
@@ -1131,6 +1133,7 @@ describe("spell damage through the effect system", () => {
         kind: "damage",
         targetId: "defender",
         amount: 91,
+        unreduced: 91,
         critical: false,
       });
     }

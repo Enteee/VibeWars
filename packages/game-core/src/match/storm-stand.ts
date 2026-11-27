@@ -1,8 +1,8 @@
 import { AREA_EARSHOT } from "../distances.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { applyDamage, type CombatEvent } from "../skills/effects.js";
-import { hitLocationOf, mitigate, skillDamage, type DamagePacket } from "../skills/damage.js";
+import { applyHit, type CombatEvent } from "../skills/effects.js";
+import { hitLocationOf, mitigateHit, skillDamage, type DamagePacket } from "../skills/damage.js";
 import type { Combatant, Surroundings } from "../skills/types.js";
 
 /**
@@ -84,7 +84,7 @@ export function beaconLightning(
     spell: true,
   };
   const events: CombatEvent[] = [];
-  const dealt = mitigate(packet, target, rules, hitLocationOf(packet, rng), rng, surroundings);
-  applyDamage(target, dealt, packet.type, false, events, undefined);
+  const dealt = mitigateHit(packet, target, rules, hitLocationOf(packet, rng), rng, surroundings);
+  applyHit(target, dealt, packet.type, false, events, undefined);
   return events;
 }

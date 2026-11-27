@@ -1,16 +1,60 @@
-import { getSkill, type GroundReach, type Vec2 } from "@vibewars/game-core";
+import { getSkill, type GroundReach, type Skill, type Vec2 } from "@vibewars/game-core";
 import { HEX_COLOUR } from "./body-rings.js";
 import { ZONE_EDGE_WIDTH } from "./zone-look.js";
 
 /**
  * How skill-made ground looks (#3283, docs/art/3191-skill-visuals.md):
  * coloured by type, not by team. A violet pool under a violet edge,
- * dashed where it can hurt the viewer's side, solid where it cannot.
+ * dashed where it can hurt the viewer's side, solid where it cannot; a
+ * fire area burns orange and a ward stands as a pale dome (#4054).
  * Phaser-free, so it is tested without a scene.
  */
 
-/** The edge and pool of every skill area: the hex halo's violet. */
+/** The edge and pool of every plain skill area: the hex halo's violet. */
 export const GROUND_COLOUR = HEX_COLOUR;
+
+/** A flame tongue runs from this at its base to `FLAME_TIP_COLOUR` at its tip (#4054). */
+export const FLAME_BASE_COLOUR = 0xd8401a;
+export const FLAME_TIP_COLOUR = 0xffe890;
+/** A ward's dome (#4054): pale blue, translucent. */
+export const WARD_DOME_COLOUR = 0x8cd2ff;
+/** The white highlight on its upper left. */
+export const WARD_HIGHLIGHT_ALPHA = 0.35;
+
+/**
+ * How an area is drawn (#4054): a fire area burns, a ward stands as a
+ * dome, and every other area is the plain violet pool.
+ */
+export type GroundArt = "fire" | "ward" | "plain";
+
+/** The colours of one kind of area: its pool, its edge, and the edge's alpha at rest. */
+export interface GroundArtLook {
+  readonly pool: number;
+  readonly edge: number;
+  readonly edgeAlpha: number;
+}
+
+/**
+ * The art `skill`'s area takes: `"fire"` for a pulse whose damage is all
+ * fire (Fire Storm, Meteor Shower), `"ward"` for a ward skill, and
+ * `"plain"` for the rest, an unknown skill among them.
+ */
+export function groundArt(skill: Skill | undefined): GroundArt {
+  if (skill === undefined) {
+    return "plain";
+  }
+  if (skill.type === "ward") {
+    return "ward";
+  }
+  const effect = skill.effects.find((candidate) => candidate.kind === "create-ground-effect");
+  if (effect?.act.kind !== "pulse") {
+    return "plain";
+  }
+  const damage = effect.act.pulse.effects.filter((candidate) => candidate.kind === "damage");
+  return damage.length > 0 && damage.every((candidate) => candidate.type === "fire")
+    ? "fire"
+    : "plain";
+}
 
 /** A side as the viewer reads it: the snapshot's `teamSide`. */
 export type GroundSide = "ally" | "enemy" | "third";
@@ -33,6 +77,23 @@ const HELP_POOL_ALPHA = 0.15;
 export const MAX_POOL_ALPHA = 0.25;
 const EDGE_ALPHA = 0.9;
 const ENDED_EDGE_ALPHA = 0.55;
+
+/**
+ * Each kind of area's colours (#4054). A fire area burns orange under an
+ * `rgba(255,150,60,0.7)` edge; a ward is pale blue under an
+ * `rgba(170,225,255,0.6)` one. `edgeAlpha` is the edge's at rest: it
+ * fades as it ends by the same share as the plain edge.
+ */
+export const GROUND_ART_LOOK: Record<GroundArt, GroundArtLook> = {
+  plain: { pool: GROUND_COLOUR, edge: GROUND_COLOUR, edgeAlpha: EDGE_ALPHA },
+  fire: { pool: 0xff9640, edge: 0xff963c, edgeAlpha: 0.7 },
+  ward: { pool: 0x78c8ff, edge: 0xaae1ff, edgeAlpha: 0.6 },
+};
+
+/** `look`'s edge alpha for an area of `art`: the plain edge's, scaled to that art's rest. */
+export function artEdgeAlpha(art: GroundArt, look: GroundLook): number {
+  return (look.edgeAlpha * GROUND_ART_LOOK[art].edgeAlpha) / EDGE_ALPHA;
+}
 
 /** Whether ground of `reach`, owned by `owner`, reaches a body of side `body`. */
 export function groundReaches(reach: GroundReach, owner: GroundSide, body: GroundSide): boolean {
