@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-base-to-string, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars -- an untyped SVG generator: points and slices are plain arrays and numbers go into strings. */
-// Figure body study (#4176, epic #3974): height, build and hair, three options each,
+// Figure body study (#4176, epic #3974): height and build, three options each,
 // freely combined, on top of any outfit. Height scales the stack's lift 0.92 / 1 / 1.08;
-// build changes shoulder, chest, waist and limb widths and the lean (posture);
-// hair is a neutral dark cue behind or below the headgear. No gender anywhere.
+// build changes shoulder, chest, waist and limb widths and the lean (posture).
+// (Hair was cut by the operator, Q208.) No gender anywhere.
 // Shown on the warrior, monk and ranger outfits, ally and foe, at the four camera zooms
 // (view height 640 / 860 / 1100 / 1400 on a 1080 px canvas) and on the menu figure,
 // plus a strip of mixed combinations.
@@ -148,7 +148,6 @@ const BUILD_SHAPES = {
   average: { shoulder: 1, chest: 1, waist: 1, limb: 1, lean: 0.04 },
   heavy: { shoulder: 1.24, chest: 1.22, waist: 1.24, limb: 1.2, lean: 0.12 },
 };
-const HAIR_TONE = "#3a2e26";
 function applyBody(slices, body) {
   const b = BUILD_SHAPES[body.build];
   const k = {
@@ -174,20 +173,6 @@ function applyBody(slices, body) {
       part.map(([x, y]) => [+(x + fwd[sl.reg]).toFixed(3), +(y * k[sl.reg]).toFixed(3)]),
     ),
   }));
-  const headAt = out.findIndex((sl) => sl.reg === "head");
-  const base = out.slice(0, headAt).filter((sl) => !sl.same).length;
-  const f = fwd.head;
-  const hair = (parts, abs) =>
-    out.push({ parts, tone: HAIR_TONE, light: 0.9, same: false, alpha: 1, abs });
-  if (body.hair === "cropped") hair([el(-0.24 + f, 0, 0.12, 0.2, 8)], base + 3);
-  if (body.hair === "long")
-    for (let i = 0; i < 6; i++)
-      hair([el(-0.3 + f - 0.05 * i, 0, 0.2, 0.3 - 0.015 * i, 8)], base + 5 - i);
-  if (body.hair === "tied") {
-    hair([el(-0.3 + f, 0, 0.1, 0.1, 6)], base + 4); // the tie
-    for (let i = 0; i < 5; i++)
-      hair([el(-0.42 + f - 0.13 * i, 0, 0.13, 0.1, 6)], base + 4 - 0.8 * i);
-  }
   return out;
 }
 
@@ -416,7 +401,7 @@ const defs = [];
 const used = new Map();
 // One def per outfit, body, team, heading and pose, in unit space (R = 1).
 function defId(id, body, team, heading, pose) {
-  const key = `${id}-${body.height}-${body.build}-${body.hair}-${team}-${heading}-${pose}`;
+  const key = `${id}-${body.height}-${body.build}-${team}-${heading}-${pose}`;
   if (used.has(key)) return key;
   const slices = figure(pose, OUTFITS[id], undefined, body);
   const hs = HEIGHT_SCALE[body.height];
@@ -480,33 +465,24 @@ const ZOOMS = [
   [1400, 9.4],
 ];
 const OUT = ["warrior", "monk", "ranger"];
-const AVG = { height: "average", build: "average", hair: "cropped" };
+const AVG = { height: "average", build: "average" };
 const AXES = [
-  [
-    "height",
-    "Height: stack scaled 0.92 / 1 / 1.08 (build average, hair cropped)",
-    ["short", "average", "tall"],
-  ],
+  ["height", "Height: stack scaled 0.92 / 1 / 1.08 (build average)", ["short", "average", "tall"]],
   [
     "build",
-    "Build: lean / average / heavy; posture follows (height average, hair cropped)",
+    "Build: lean / average / heavy; posture follows (height average)",
     ["lean", "average", "heavy"],
-  ],
-  [
-    "hair",
-    "Hair: cropped / long / tied, neutral dark, behind the headgear (height and build average)",
-    ["cropped", "long", "tied"],
   ],
 ];
 const COL = 330,
   X0 = 50,
   PANEL = 900;
 const W = X0 + COL * 3 + 20;
-const H = 70 + PANEL * 3 + 420;
+const H = 70 + PANEL * 2 + 420;
 let body = txt(
   20,
   28,
-  "Figure body study (#4176): height, build and hair, three options each, freely combined, on the warrior, monk and ranger outfits.",
+  "Figure body study (#4176): height and build, three options each, freely combined, on the warrior, monk and ranger outfits.",
   14,
 );
 body += txt(
@@ -538,17 +514,17 @@ AXES.forEach(([axis, title, values], p) => {
 });
 // a strip of mixed combinations
 const MIX = [
-  ["warrior", { height: "tall", build: "heavy", hair: "cropped" }],
-  ["monk", { height: "short", build: "lean", hair: "long" }],
-  ["ranger", { height: "average", build: "lean", hair: "tied" }],
-  ["warrior", { height: "short", build: "heavy", hair: "tied" }],
-  ["monk", { height: "tall", build: "average", hair: "long" }],
+  ["warrior", { height: "tall", build: "heavy" }],
+  ["monk", { height: "short", build: "lean" }],
+  ["ranger", { height: "average", build: "lean" }],
+  ["warrior", { height: "short", build: "heavy" }],
+  ["monk", { height: "tall", build: "average" }],
 ];
-const sy = 70 + PANEL * 3;
+const sy = 70 + PANEL * 2;
 body += txt(
   20,
   sy + 20,
-  "Mixed strip: freely combined, ally and foe (height / build / hair)",
+  "Mixed strip: freely combined, ally and foe (height / build)",
   14,
   "#e8eef6",
 );
@@ -557,7 +533,7 @@ MIX.forEach(([id, bd], i) => {
   body += plate(cx, sy + 235, 58, i % 2 ? TEAMS.foe : TEAMS.ally);
   body += place(id, bd, i % 2 ? "foe" : "ally", cx, sy + 235, 58, i % 2 ? 4 : 0);
   body += plate(cx, sy + 335, 20.6, TEAMS.ally) + place(id, bd, "ally", cx, sy + 335, 20.6, 1);
-  body += txt(cx, sy + 385, `${id}: ${bd.height} ${bd.build} ${bd.hair}`, 11, "#9aa4b2", "middle");
+  body += txt(cx, sy + 385, `${id}: ${bd.height} ${bd.build}`, 11, "#9aa4b2", "middle");
 });
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="sans-serif"><rect width="${W}" height="${H}" fill="#1b1d22"/><defs>${defs.join("")}</defs>${body}</svg>`;
 writeFileSync("docs/art/figure-body-study.svg", svg);
