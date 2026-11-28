@@ -500,6 +500,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         activationSeconds: FLOAT,
         rechargeSeconds: FLOAT,
         copyEndsAt: FLOAT,
+        copySeconds: FLOAT,
       })),
       // Two digits each, as runes and headgear can make them.
       ranks: Object.fromEntries(NECRO_ELE_ATTRIBUTES.map((attributeId) => [attributeId, 20])),

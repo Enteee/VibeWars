@@ -1,4 +1,3 @@
-import { STATUS_DEFINITIONS } from "@vibewars/game-core";
 import type { SkillSlot } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
@@ -9,18 +8,6 @@ import { t } from "../i18n/index.js";
  * from full to empty, and a line in the slot's tooltip. Shared by the match
  * HUD and the Training Ground, whose slots carry the same strip.
  */
-
-/**
- * A copy's whole life, seconds: the echo effect's own `seconds`, read from
- * the statuses that make copies rather than written here twice.
- */
-export const ECHO_SECONDS = Math.max(
-  ...Object.values(STATUS_DEFINITIONS).flatMap((definition) =>
-    definition.triggers.flatMap((trigger) =>
-      trigger.effects.flatMap((effect) => (effect.kind === "echo" ? [effect.seconds] : [])),
-    ),
-  ),
-);
 
 /** The strip, for a slot that holds a copy; nothing for a build slot. */
 export function echoStripHtml(slot: SkillSlot): string {
@@ -33,12 +20,18 @@ export function echoSecondsLeft(copyEndsAt: number, now: number): number {
 }
 
 /**
- * The strip's length, 1 full to 0 empty: smooth, or under reduced motion
- * stepping once a second.
+ * The strip's length, 1 full to 0 empty over the copy's own life,
+ * `copySeconds` (#4236): smooth, or under reduced motion stepping once a
+ * second.
  */
-export function echoStripFraction(copyEndsAt: number, now: number, reducedMotion: boolean): number {
+export function echoStripFraction(
+  copyEndsAt: number,
+  copySeconds: number,
+  now: number,
+  reducedMotion: boolean,
+): number {
   const left = reducedMotion ? echoSecondsLeft(copyEndsAt, now) : copyEndsAt - now;
-  return Math.max(0, Math.min(1, left / ECHO_SECONDS));
+  return Math.max(0, Math.min(1, left / copySeconds));
 }
 
 /** The tooltip's line, "Echoed: 12 s left"; none for a build slot. */
@@ -56,10 +49,10 @@ export function paintEchoStrip(
   reducedMotion: boolean,
 ): void {
   const strip = button.querySelector<HTMLElement>(":scope > .echo-strip");
-  if (strip === null || slot.copyEndsAt === null) {
+  if (strip === null || slot.copyEndsAt === null || slot.copySeconds === null) {
     return;
   }
-  const fraction = String(echoStripFraction(slot.copyEndsAt, now, reducedMotion));
+  const fraction = String(echoStripFraction(slot.copyEndsAt, slot.copySeconds, now, reducedMotion));
   if (strip.style.getPropertyValue("--echo") !== fraction) {
     strip.style.setProperty("--echo", fraction);
   }

@@ -296,6 +296,7 @@ describe("skillBarSlots", () => {
         activationSeconds: 1.5,
         rechargeSeconds: 7,
         copyEndsAt: null,
+        copySeconds: null,
       },
       null,
     ]);
@@ -308,6 +309,7 @@ describe("skillBarSlots", () => {
       skillId: "warrior.healing-signet",
       key: "warrior.healing-signet@0",
       remainingSeconds: 19.96,
+      totalSeconds: 30,
       restores: { skillId: "mesmer.echo", rechargeSeconds: 30 },
     });
     const [copy, build] = skillBarSlots(
@@ -316,8 +318,16 @@ describe("skillBarSlots", () => {
       bearer,
       12.5,
     );
-    expect(copy).toMatchObject({ id: "warrior.healing-signet", copyEndsAt: 32.5 });
-    expect(build).toMatchObject({ id: "elementalist.fireball", copyEndsAt: null });
+    expect(copy).toMatchObject({
+      id: "warrior.healing-signet",
+      copyEndsAt: 32.5,
+      copySeconds: 30,
+    });
+    expect(build).toMatchObject({
+      id: "elementalist.fireball",
+      copyEndsAt: null,
+      copySeconds: null,
+    });
   });
 
   it("costs a spell what the glyph leaves of it (#637)", () => {
