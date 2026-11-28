@@ -193,12 +193,12 @@ describe("Pious Restoration (#845)", () => {
     return caster;
   }
 
-  it("with a Dervish enchantment: heals 136, loses it, and up to 3 hexes", () => {
+  it("with a Dervish enchantment: heals 136, loses it, and one hex (PvP, #4264)", () => {
     const caster = hexed();
     cast(caster, "dervish.fleeting-stability");
     cast(caster, "dervish.pious-restoration");
     expect(caster.health).toBe(236);
-    expect(statusesOf(caster)).toEqual([]);
+    expect(statusesOf(caster)).toEqual(["faintheartedness"]);
   });
 
   it("without: heals, and the hexes stay", () => {
@@ -218,11 +218,52 @@ describe("Pious Restoration (#845)", () => {
   });
 });
 
+describe("PvP recharges (#4264)", () => {
+  const DT = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+
+  it.each([
+    ["dervish.mystic-regeneration", 15],
+    ["dervish.fleeting-stability", 10],
+    ["dervish.pious-restoration", 15],
+  ])("%s can be used again after %d s and not before", (id, seconds) => {
+    const match = new MatchSimulation({
+      seed: "recharge",
+      participants: [
+        {
+          id: "d",
+          team: 0,
+          skillBar: [id],
+          attributeRanks: new Map([["dervish.earth-prayers", 12]]),
+          equipment: unarmedResolvedEquipment(RULES.armorReferenceLevel),
+          spawn: vec2(0, 0),
+          facing: 0,
+        },
+      ],
+    });
+    const self = match.get("d")?.combatant;
+    expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
+    while (self?.cast.rechargeTotal.get(id) === undefined) {
+      match.step(DT);
+    }
+    expect(self.cast.rechargeTotal.get(id)).toBe(seconds);
+    for (let i = 0; i < Math.round(seconds / DT) - 2; i += 1) {
+      match.step(DT);
+    }
+    expect(match.requestSkill("d", 0)?.check).toEqual({ ok: false, reason: "still-recharging" });
+    match.step(DT);
+    match.step(DT);
+    match.step(DT);
+    // Only the recharge is under test, not the energy to pay for it twice.
+    self.energy = self.maxEnergy;
+    expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
+  });
+});
+
 describe("Fleeting Stability (#845)", () => {
   it("you move 25% faster; the first knockdown does nothing and ends it, the next lands", () => {
     const caster = dervish();
     cast(caster, "dervish.fleeting-stability");
-    expect(caster.statuses.get("fleeting-stability")?.remainingSeconds).toBe(9);
+    expect(caster.statuses.get("fleeting-stability")?.remainingSeconds).toBe(7);
     expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.25);
 
     const warrior = holding("w", 1, WEAPONS.hammer, "warrior.hammer-mastery");

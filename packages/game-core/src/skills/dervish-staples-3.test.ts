@@ -383,7 +383,7 @@ describe("in a match (#1667)", () => {
   });
 
   describe("Rending Touch", () => {
-    it("spending a Dervish enchantment: 55 cold, strips one, 1 strike of adrenaline", () => {
+    it("spending a Dervish enchantment: 55 cold, strips one, 2 strikes of adrenaline", () => {
       const sim = match();
       enchant(sim);
       enchant(sim, "f");
@@ -391,7 +391,7 @@ describe("in a match (#1667)", () => {
       expect(dealt(log, "dervish.rending-touch", "f")).toBe(55);
       expect(hasStatus(sim, "c", "mystic-regeneration")).toBe(false);
       expect(hasStatus(sim, "f", "mystic-regeneration")).toBe(false);
-      expect(get(sim, "c").adrenaline.get("dervish.aura-slicer")).toBe(ADRENALINE_PER_STRIKE);
+      expect(get(sim, "c").adrenaline.get("dervish.aura-slicer")).toBe(2 * ADRENALINE_PER_STRIKE);
     });
 
     it("without one: 55 cold and nothing more", () => {
