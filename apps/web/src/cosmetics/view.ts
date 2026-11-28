@@ -7,7 +7,14 @@
 import type { SeatWorn } from "@vibewars/game-session";
 
 import { leaderboard } from "../net/leaderboard.js";
-import { DEFAULT_LOOK, ownCosmetics, visibleCosmetics, type WornCosmetics } from "./selection.js";
+import { bodyOf, type FigureBody } from "./body.js";
+import {
+  DEFAULT_LOOK,
+  ownCosmetics,
+  visibleBody,
+  visibleCosmetics,
+  type WornCosmetics,
+} from "./selection.js";
 import { cosmeticsStore } from "./store.js";
 
 /** This page's player key, once main has loaded it. */
@@ -32,4 +39,16 @@ export function seenCosmetics(seat: SeatWorn | undefined): WornCosmetics {
 /** What you see yourself wear: in a match, training too, whatever your seat was sent. */
 export function ownLook(): WornCosmetics {
   return ownCosmetics(cosmeticsStore.choice(), cosmeticsStore.lastFacts());
+}
+
+/**
+ * The body to draw for a seat (#4250): your own as picked, anyone else's
+ * as `visibleBody` checks it; a seat with no key, a bot, its
+ * `participantId`'s.
+ */
+export function seenBody(seat: SeatWorn | undefined, participantId: string): FigureBody {
+  if (seat !== undefined && seat.playerPubkey === ownPubkey) {
+    return bodyOf(cosmeticsStore.body(), ownPubkey);
+  }
+  return visibleBody(seat, participantId);
 }

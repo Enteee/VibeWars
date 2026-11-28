@@ -1,13 +1,15 @@
 /**
  * This browser's cosmetics (ADR-0056), kept beside its player key and so
- * shared by all its characters: what is picked per slot, and the key's
- * last known leaderboard facts, so a failed fetch still draws your own.
+ * shared by all its characters: what is picked per slot and of the body,
+ * and the key's last known leaderboard facts, so a failed fetch still
+ * draws your own.
  * A stored record of any other shape is deleted, not read (ADR-0016):
  * the picks start empty.
  */
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 
+import { BUILDS, HEIGHTS, NO_BODY_CHOICE, type BodyChoice } from "./body.js";
 import { COSMETIC_SLOTS, cosmeticById, type CosmeticSlot } from "./catalog.js";
 import type { CosmeticChoice } from "./selection.js";
 import type { UnlockFacts } from "./unlocks.js";
@@ -16,10 +18,11 @@ const COSMETICS_KEY = `${STORAGE_NAMESPACE}.cosmetics`;
 
 interface Stored {
   readonly choice: CosmeticChoice;
+  readonly body: BodyChoice;
   readonly facts: UnlockFacts | null;
 }
 
-const EMPTY: Stored = { choice: {}, facts: null };
+const EMPTY: Stored = { choice: {}, body: NO_BODY_CHOICE, facts: null };
 
 const isCount = (value: unknown): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
@@ -32,13 +35,29 @@ function isFacts(value: unknown): value is UnlockFacts {
   return isCount(wins) && isCount(streak) && (rank === null || (isCount(rank) && rank > 0));
 }
 
+function isBodyChoice(value: unknown): value is BodyChoice {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const { height, build } = value as Record<string, unknown>;
+  return (
+    (height === null || HEIGHTS.some((each) => each === height)) &&
+    (build === null || BUILDS.some((each) => each === build))
+  );
+}
+
 /** `raw` as the stored record, or `undefined` for any other shape. */
 export function parseStored(raw: unknown): Stored | undefined {
   if (typeof raw !== "object" || raw === null) {
     return undefined;
   }
-  const { choice, facts } = raw as Record<string, unknown>;
-  if (typeof choice !== "object" || choice === null || (facts !== null && !isFacts(facts))) {
+  const { choice, body, facts } = raw as Record<string, unknown>;
+  if (
+    typeof choice !== "object" ||
+    choice === null ||
+    !isBodyChoice(body) ||
+    (facts !== null && !isFacts(facts))
+  ) {
     return undefined;
   }
   const picked: Partial<Record<CosmeticSlot, string>> = {};
@@ -49,7 +68,7 @@ export function parseStored(raw: unknown): Stored | undefined {
     }
     picked[slot] = id;
   }
-  return { choice: picked, facts };
+  return { choice: picked, body: { height: body.height, build: body.build }, facts };
 }
 
 export interface CosmeticsStore {
@@ -57,6 +76,10 @@ export interface CosmeticsStore {
   readonly choice: () => CosmeticChoice;
   /** Pick `id` for `slot`, or nothing for `undefined`. Applies at once. */
   readonly pick: (slot: CosmeticSlot, id: string | undefined) => void;
+  /** What is picked of the body, per axis. */
+  readonly body: () => BodyChoice;
+  /** Pick the body's axes in `body`, or none for `null`; the other axis stays. */
+  readonly pickBody: (body: Partial<BodyChoice>) => void;
   /** The key's leaderboard facts as last seen; `undefined` before any. */
   readonly lastFacts: () => UnlockFacts | undefined;
   /** Remember `facts` from a fetched leaderboard. */
@@ -125,6 +148,10 @@ export function createCosmeticsStore(
         }
       }
       save({ ...stored, choice });
+    },
+    body: () => stored.body,
+    pickBody: (body) => {
+      save({ ...stored, body: { ...stored.body, ...body } });
     },
     lastFacts: () => stored.facts ?? undefined,
     rememberFacts: (facts) => {

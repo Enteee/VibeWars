@@ -90,6 +90,7 @@ describe("a lobby's own match", () => {
     const lobby = await openLobby();
     const worn = {
       ids: ["frame-bronze", "title-veteran"],
+      body: { height: "short", build: "lean" } as const,
       at: 1_700_000_000_000,
       sig: "5c".repeat(64),
     };
