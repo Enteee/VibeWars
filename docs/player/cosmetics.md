@@ -47,6 +47,10 @@ A spawn-in style gathers small motes at your feet as you spawn or are resurrecte
 
 An emblem frame is a thin border round the emblem on your guild cape. It never covers, moves or changes the emblem, and is drawn in your cape's own trim colour or a plain metal, never a team colour. You need a guild cape to wear one: the slot shows in Options once you wear a guild cape.
 
+## Your height and build
+
+Two rows set your figure's body: **Height** (Short, Average or Tall) and **Build** (Lean, Average or Heavy). Pick each on its own, in any of the nine combinations, on every profession. Unlike the other cosmetics they are free: there is nothing to earn, and every player sees yours. Until you pick, each starts at a value chosen from your player key. They are only looks: where you can be clicked and what you bump into never change.
+
 ## Wearing them
 
 Open Options and pick **Cosmetics**. Each slot is one row of swatches, each a

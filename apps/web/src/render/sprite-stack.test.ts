@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { CREATURE_LOOKS } from "@vibewars/game-core";
 import { BUILDS, HEIGHTS, type FigureBody } from "@vibewars/game-protocol";
 
 import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
+import { STACK_BAKE_RADIUS } from "./stack-atlas.js";
 
 import {
   STACK_BAKED_HEADINGS,
@@ -506,9 +508,11 @@ describe("creature figures (#4171)", () => {
     expect(creatureSlices("vampiric-horror", "stand")?.some((s) => s.tone === 0x7a1f2b)).toBe(true);
   });
 
-  it("leaves a look it has no figure for as its disc", () => {
-    expect(creatureStack("beast")).toBeUndefined();
-    expect(creatureSlices("beast", "stand")).toBeUndefined();
+  it("draws every creature look as a figure (#4173)", () => {
+    for (const look of CREATURE_LOOKS) {
+      expect(creatureStack(look), look).toBeDefined();
+      expect(creatureSlices(look, "stand")?.length, look).toBeGreaterThan(0);
+    }
   });
 
   it("picks a creature's heading and pose from a body's", () => {
@@ -664,5 +668,98 @@ describe("profession outfits (#4175)", () => {
     expect(tones("warrior")).not.toContain("cloth");
     expect(tones("dervish").at(-1)).toBe("gold");
     expect(tones("dervish")).not.toContain("hair");
+  });
+});
+
+describe("pet and NPC figures (#4173)", () => {
+  const WALKERS = ["beast", "rat", "guard", "priest", "guild-lord"] as const;
+
+  it("turns every pet and NPC in 8 headings and walks it in 3 poses, each stride its own figure", () => {
+    for (const look of WALKERS) {
+      const stack = creatureStack(look);
+      expect(stack?.headings).toBe(8);
+      expect(stack?.poses).toEqual(["stand", "stride-a", "stride-b"]);
+      for (const pose of stack?.poses ?? []) {
+        expect((creatureSlices(look, pose) ?? []).length).toBeGreaterThan(0);
+      }
+      expect(creatureSlices(look, "stride-a")).not.toEqual(creatureSlices(look, "stride-b"));
+    }
+  });
+
+  it("swaps a beast's diagonal legs in a stride and keeps the rest of it still", () => {
+    const [a, b, still] = (["stride-a", "stride-b", "stand"] as const).map(
+      (pose) => creatureSlices("beast", pose) ?? [],
+    );
+    const legs = (slices: readonly StackSlice<number>[]): readonly StackSlice<number>[] =>
+      slices.slice(0, 3);
+    expect(legs(a ?? [])).not.toEqual(legs(b ?? []));
+    expect(legs(a ?? [])).not.toEqual(legs(still ?? []));
+    // The body, head and ears do not stride; only the tail sways.
+    const body = (slices: readonly StackSlice<number>[]): readonly StackSlice<number>[] =>
+      slices.slice(3, 8);
+    expect(body(a ?? [])).toEqual(body(b ?? []));
+  });
+
+  it("gives a rat a longer tail than a beast, and no ears", () => {
+    const tail = (look: "beast" | "rat"): number =>
+      (creatureSlices(look, "stand") ?? []).filter((slice) =>
+        slice.parts.every((part) => part.every((p) => p.x < -0.6)),
+      ).length;
+    expect(tail("rat")).toBeGreaterThan(tail("beast"));
+    const triangles = (look: "beast" | "rat"): number =>
+      (creatureSlices(look, "stand") ?? []).filter((slice) =>
+        slice.parts.some((part) => part.length === 3),
+      ).length;
+    expect(triangles("beast")).toBe(1);
+    expect(triangles("rat")).toBe(0);
+  });
+
+  it("raises a guard's spear from the hand to over its helmet, beside a shield", () => {
+    const slices = creatureSlices("guard", "stand") ?? [];
+    const haft = slices.filter((slice) => slice.tone === 0x6a4a2c);
+    expect(haft[0]?.lift).toBe(8);
+    // Its helmet, crestless, tops out a lift under a body's; the spear clears it.
+    const helmet = Math.max(
+      ...slices.filter((slice) => slice.tone === 0x9aa0a8).map((slice) => slice.lift),
+    );
+    const tip = slices.filter((slice) => slice.tone === 0xc9ced6);
+    expect(tip.length).toBe(3);
+    expect(Math.min(...tip.map((slice) => slice.lift))).toBeGreaterThan(helmet);
+    expect(slices.some((slice) => slice.tone === 0xc9a227)).toBe(true);
+  });
+
+  it("stands a guild lord 1.25 of a warrior's height, helm to feet (#4173)", () => {
+    const height = (layers: readonly { points: readonly { y: number }[] }[]): number => {
+      const ys = layers.flatMap((layer) => layer.points.map((p) => p.y));
+      return Math.max(...ys) - Math.min(...ys);
+    };
+    const warrior = PROFESSION_OUTFITS.warrior;
+    const body = stackLayers(
+      stackSlices("stand", warrior, undefined, AVERAGE_BODY),
+      0,
+      STACK_BAKE_RADIUS,
+      stackTones(0x59c2ff, undefined, warrior, undefined),
+      "average",
+    );
+    const lord = creatureLayers(
+      creatureSlices("guild-lord", "stand") ?? [],
+      0,
+      CREATURE_DRAWN_RADIUS["guild-lord"],
+    );
+    expect(height(lord) / height(body)).toBeCloseTo(1.25, 2);
+  });
+
+  it("wears no cape, crest or team on a guard or a priest; a guild lord its red cape", () => {
+    const tones = (look: "guard" | "priest" | "guild-lord"): Set<number> =>
+      new Set((creatureSlices(look, "stand") ?? []).map((slice) => slice.tone));
+    for (const look of ["guard", "priest"] as const) {
+      expect(tones(look).has(0x8a2a2a)).toBe(false);
+    }
+    expect(tones("guild-lord").has(0x8a2a2a)).toBe(true);
+    // A guard is steel, never a body's friend or foe colour.
+    expect(tones("guard").has(0x6c727c)).toBe(true);
+    expect(stackLifts(creatureSlices("guard", "stand") ?? [])).toBe(
+      stackLifts(creatureSlices("guard", "stride-a") ?? []),
+    );
   });
 });

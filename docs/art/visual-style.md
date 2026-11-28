@@ -241,7 +241,8 @@ outlines, and the noise fill on a map without one.
   helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
   colour at its cap, its robe in friend or foe colour, its profession glyph
   on a dark badge disc on top. Its outfit follows its primary profession
-  and carries one accent of its secondary (#4175, #4179, #4180, `profession-outfits.ts`):
+  and carries one accent of its secondary, the team colour staying torso
+  and skirt (#4175, #4179, #4180, `profession-outfits.ts`, [study](profession-outfit-study.svg)):
   `profession-outfits-match.png`, ally over foe. It turns in 16 headings, the atlas baking
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
   shadow lies on the ground under it, not in its frame. A creature with a
@@ -249,11 +250,17 @@ outlines, and the noise fill on a map without one.
   is stacked the same way, on its team-coloured hexagon plate, which stays
   on the ground and is never baked in; a Ghostly Hero is a pale blue-grey
   body at 0.75 alpha with its axe and no cape, its glyph on a badge on
-  top. A creature with no figure yet, a knocked-down one and fallen
-  bodies stay discs. At match zoom: `creature-stack-match.png`, discs left,
-  figures right.
-  Its outfit follows its primary profession, one accent its secondary, the
-  team colour staying torso and skirt ([study](profession-outfit-study.svg)).
+  top. Pets and NPCs (#4173, `stack-beasts.ts`) turn in 8 headings and
+  walk: a pet is a low four-legged animal in warm brown-grey fur, a rat a
+  tiny one with a long tail; a guard is steel plate with a spear and a kite
+  shield and no cape or glyph, so it never reads as a player; a priest a
+  pale hooded robe with a staff; the guild lord the largest figure, 1.25 of
+  a body, dark plate trimmed gold `#c9a227`, a dark red cape and a sword.
+  Their weapons are baked, so no arms or facing tick are drawn over them.
+  Only a knocked-down creature and fallen bodies stay discs. At match zoom:
+  `creature-stack-match.png`, discs left, figures right, and
+  `npc-stack-match.png` (scene `npc-figures`), a guild hall's guards, lord and
+  priest with a pet and rats: discs and figures at Default zoom, then Close.
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.

@@ -231,23 +231,25 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     return surfaces.at(-1);
   };
 
-  it("holds sixteen looks and every creature in under 18 MB, a row no wider than 4096 px (#4060)", () => {
+  it("holds sixteen looks and every creature in under 20 MB, a row no wider than 4096 px (#4060)", () => {
     const surface = sixteen(AVERAGE_BODY);
     expect(surface?.width).toBe(FRAMES * STACK_FRAME_WIDTH);
     expect(surface?.width).toBeLessThanOrEqual(4096);
     // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen,
-    // and the creature rows' 2 MB allowance (#4171) on top.
-    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(18e6);
+    // and the creature rows' 3.5 MB allowance on top: the architect raised
+    // it from #4171's 2 MB once every look was a figure (#4172, #4173).
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(20e6);
   });
 
-  it("holds sixteen tall heavy looks and every creature in under 24 MB, within 4096 px a side (#4176)", () => {
+  it("holds sixteen tall heavy looks and every creature in under 26 MB, within 4096 px a side (#4176)", () => {
     const surface = sixteen({ height: "tall", build: "heavy" });
     const frame = stackFrameSize({ height: "tall", build: "heavy" });
     expect(surface?.width).toBe(FRAMES * frame.width);
     expect(surface?.width).toBeLessThanOrEqual(4096);
     expect(surface?.height).toBeLessThanOrEqual(4096);
-    // 72 frames of 54 × 82 a look: 20.4 MB for sixteen, creatures on top.
-    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(24e6);
+    // 72 frames of 54 × 82 a look: 20.4 MB for sixteen, and the creature
+    // band, 5.3 MB at this width, on top.
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(26e6);
   });
 
   it("sizes a body's frame by its physique: the average frame for an average, short or lean body (#4176)", () => {
@@ -372,21 +374,14 @@ describe("StackAtlas creatures (#4171)", () => {
     }
   });
 
-  it("keeps every creature look within the 2 MB creature allowance", () => {
+  // All 14 looks at once, the worst case: a match bakes only those on the
+  // field. Raised from 2 MB by the architect for #4172 and #4173.
+  it("keeps every creature look within the 3.5 MB creature allowance", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake(CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look })));
     const bytes = [...(surfaces.at(-1)?.areas.values() ?? [])].reduce((sum, a) => sum + a * 4, 0);
     expect(bytes).toBeGreaterThan(0);
-    expect(bytes).toBeLessThan(2e6);
-  });
-
-  it("gives a look with no figure no frame, and schedules no bake for it", () => {
-    const { atlas: made, queued } = atlas();
-    const beast: CreatureStackLook = { kind: "creature", look: "beast" };
-    made.bake([beast]);
-    expect(made.bakedFigures).toBe(0);
-    expect(made.frame(beast, 0, "stand")).toBeUndefined();
-    expect(queued).toHaveLength(0);
+    expect(bytes).toBeLessThan(3.5e6);
   });
 
   it("keeps a creature row on the shelves over the bodies' in the same canvas (#4172)", () => {
@@ -447,7 +442,7 @@ describe("StackAtlas creatures (#4171)", () => {
     expect(surfaces[1]?.rects).toEqual([[0, top, right, height]]);
   });
 
-  it("bakes each look a match may bring on later, one task each, once, and none with no figure (#4172)", () => {
+  it("bakes each look a match may bring on later, one task each, once (#4172, #4173)", () => {
     const { atlas: made, queued } = atlas();
     made.bake([FRIEND, SPIRIT]);
     const GOLEM: CreatureStackLook = { kind: "creature", look: "flesh-golem" };
@@ -455,14 +450,16 @@ describe("StackAtlas creatures (#4171)", () => {
     made.bakeLater([SPIRIT, GHOST, GOLEM, GHOST, PRIEST]);
     made.bakeLater([GOLEM]);
     expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
-    expect(queued).toHaveLength(2);
+    expect(queued).toHaveLength(3);
     const before = made.bakedFigures;
     queued[0]?.();
     expect(made.bakedFigures).toBe(before + 24);
     expect(made.frame(GHOST, 0, "stand")).toBeDefined();
     expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
     queued[1]?.();
+    queued[2]?.();
     expect(made.frame(GOLEM, 0, "stand")).toBeDefined();
-    expect(queued).toHaveLength(2);
+    expect(made.frame(PRIEST, 0, "stand")).toBeDefined();
+    expect(queued).toHaveLength(3);
   });
 });

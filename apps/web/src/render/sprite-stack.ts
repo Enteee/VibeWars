@@ -29,6 +29,7 @@ import {
   type ShoulderKind,
   type TorsoKind,
 } from "./profession-outfits.js";
+import { beastSlices } from "./stack-beasts.js";
 import { minionSlices } from "./stack-minions.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -877,20 +878,29 @@ export interface CreatureStack {
   readonly poses: readonly CreaturePose[];
 }
 
+/** A creature that turns in 8 headings and walks. */
+const WALKER: CreatureStack = { headings: 8, poses: ["stand", "stride-a", "stride-b"] };
+
 /**
  * The creature looks drawn as figures (#4171), the rest keep their disc.
- * A spirit does not turn: one heading, one pose.
+ * A spirit does not turn: one heading, one pose. Pets and NPCs (#4173)
+ * turn and walk.
  */
 const CREATURE_STACKS: Readonly<Partial<Record<CreatureLook, CreatureStack>>> = {
   spirit: { headings: 1, poses: ["stand"] },
-  "ghostly-hero": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "bone-minion": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "bone-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "bone-fiend": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "vampiric-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "shambling-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "jagged-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
-  "flesh-golem": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "ghostly-hero": WALKER,
+  beast: WALKER,
+  rat: WALKER,
+  guard: WALKER,
+  priest: WALKER,
+  "guild-lord": WALKER,
+  "bone-minion": WALKER,
+  "bone-horror": WALKER,
+  "bone-fiend": WALKER,
+  "vampiric-horror": WALKER,
+  "shambling-horror": WALKER,
+  "jagged-horror": WALKER,
+  "flesh-golem": WALKER,
 };
 
 /** How `look` turns and moves as a figure, or `undefined` when it stays a disc. */
@@ -1038,6 +1048,12 @@ export function creatureSlices(
       return spiritSlices();
     case "ghostly-hero":
       return ghostSlices(pose);
+    case "beast":
+    case "rat":
+    case "guard":
+    case "priest":
+    case "guild-lord":
+      return beastSlices(look, pose);
     case "bone-minion":
     case "bone-horror":
     case "bone-fiend":

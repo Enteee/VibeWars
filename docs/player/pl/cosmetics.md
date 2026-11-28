@@ -47,6 +47,10 @@ Styl pojawienia się zbiera drobne drobinki u twoich stóp, gdy się pojawiasz l
 
 Ramka herbu to cienka obwódka wokół herbu na twoim płaszczu gildii. Nigdy nie zasłania, nie przesuwa ani nie zmienia herbu i jest rysowana w kolorze lamówki twojego płaszcza albo w zwykłym metalu, nigdy w kolorze drużyny. Aby ją nosić, potrzebujesz płaszcza gildii: miejsce pojawia się w Opcjach, gdy tylko nosisz płaszcz gildii.
 
+## Twój wzrost i budowa ciała
+
+Dwa wiersze ustalają ciało twojej postaci: **Wzrost** (Niski, Średni lub Wysoki) i **Budowa ciała** (Szczupła, Średnia lub Masywna). Wybierasz każde osobno, w dowolnej z dziewięciu kombinacji, dla każdej profesji. W przeciwieństwie do innych kosmetyków są darmowe: nie ma czego zdobywać, a twój wybór widzi każdy gracz. Dopóki nie wybierzesz, każde zaczyna od wartości wybranej na podstawie twojego klucza gracza. To tylko wygląd: miejsce, w które można cię kliknąć, i to, o co się zderzasz, nigdy się nie zmieniają.
+
 ## Jak je nosić
 
 Otwórz Opcje i wybierz **Kosmetyki**. Każde miejsce to jeden rząd próbek, każda to mały obrazek

@@ -46,6 +46,10 @@ Un stil de apariție adună particule mici la picioarele tale când apari sau e�
 
 O ramă de emblemă este o margine subțire în jurul emblemei de pe pelerina breslei tale. Nu acoperă, nu mută și nu schimbă niciodată emblema și se desenează în culoarea tivului pelerinei tale sau într-un metal simplu, niciodată într-o culoare de echipă. Ai nevoie de o pelerină de breaslă ca s-o porți: locul apare în Opțiuni de îndată ce porți o pelerină de breaslă.
 
+## Înălțimea și constituția ta
+
+Două rânduri stabilesc corpul figurii tale: **Înălțime** (Scundă, Medie sau Înaltă) și **Constituție** (Zveltă, Medie sau Robustă). Alege fiecare separat, în oricare dintre cele nouă combinații, la orice profesie. Spre deosebire de celelalte cosmetice, sunt gratuite: nu ai nimic de câștigat, iar fiecare jucător vede alegerea ta. Până alegi, fiecare pornește de la o valoare aleasă din cheia ta de jucător. Sunt doar aspect: unde se poate da clic pe tine și de ce te lovești nu se schimbă niciodată.
+
 ## Cum le porți
 
 Deschide Opțiuni și alege **Cosmetice**. Fiecare loc este un rând de mostre, fiecare o mică imagine

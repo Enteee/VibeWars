@@ -47,6 +47,10 @@ En ankomststil samler små gnister ved dine fødder, når du dukker op eller bli
 
 En emblemramme er en tynd kant rundt om emblemet på din laugskappe. Den dækker, flytter eller ændrer aldrig emblemet og tegnes i din kappes egen kantfarve eller et enkelt metal, aldrig i en holdfarve. Du skal have en laugskappe for at bære en: pladsen vises i Indstillinger, så snart du bærer en laugskappe.
 
+## Din højde og kropsbygning
+
+To rækker bestemmer din figurs krop: **Højde** (Lav, Middel eller Høj) og **Kropsbygning** (Slank, Middel eller Kraftig). Vælg hver for sig, i en hvilken som helst af de ni kombinationer, på alle professioner. I modsætning til de andre kosmetikker er de gratis: der er intet at optjene, og alle spillere ser dit valg. Indtil du vælger, starter hver på en værdi valgt ud fra din spillernøgle. De er kun udseende: hvor man kan klikke på dig, og hvad du støder ind i, ændres aldrig.
+
 ## Sådan bærer du det
 
 Åbn Valg, og vælg **Kosmetik**. Hver plads er én række prøver, hver et lille billede af sin

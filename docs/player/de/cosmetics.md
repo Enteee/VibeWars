@@ -47,6 +47,10 @@ Ein Erscheinungsstil sammelt kleine Funken zu deinen Füßen, wenn du erscheinst
 
 Ein Wappenrahmen ist ein dünner Rand um das Wappen auf deinem Gildenumhang. Er verdeckt, verschiebt oder verändert das Wappen nie und wird in der Saumfarbe deines Umhangs oder in schlichtem Metall gezeichnet, nie in einer Teamfarbe. Um einen zu tragen, brauchst du einen Gildenumhang: Der Platz erscheint in den Optionen, sobald du einen Gildenumhang trägst.
 
+## Deine Größe und Statur
+
+Zwei Zeilen legen den Körper deiner Figur fest: **Größe** (Klein, Mittel oder Groß) und **Statur** (Schlank, Mittel oder Kräftig). Wähle beide unabhängig, in jeder der neun Kombinationen, bei jedem Beruf. Anders als die übrige Kosmetik sind sie kostenlos: Es gibt nichts zu verdienen, und alle Spieler sehen deine Wahl. Bis du wählst, beginnt jede bei einem Wert, der aus deinem Spielerschlüssel gewählt wird. Sie ändern nur das Aussehen: Wo man dich anklicken kann und woran du stößt, bleibt gleich.
+
 ## Wie du sie trägst
 
 Öffne Optionen und wähle **Kosmetik**. Jeder Platz ist eine Reihe von Mustern, jedes ein kleines

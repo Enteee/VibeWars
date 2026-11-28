@@ -81,7 +81,8 @@ export const CREATURE_DRAWN_RADIUS: Readonly<Record<CreatureLook, number>> = {
   "bone-fiend": 11.5,
   spirit: 10,
   priest: 12,
-  "guild-lord": 15,
+  // The largest human figure: 1.25 of a body's 14 (#4173).
+  "guild-lord": 17.5,
   guard: 12,
   "ghostly-hero": 13.5,
   // A critter (#3315) is smaller than a body.

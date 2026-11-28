@@ -46,6 +46,10 @@ Styl příchodu shromáždí u tvých nohou drobné částečky, když se objev�
 
 Rámeček znaku je tenký okraj kolem znaku na tvém cechovním plášti. Znak nikdy nezakrývá, neposouvá ani nemění a kreslí se v barvě lemu tvého pláště nebo v prostém kovu, nikdy v barvě týmu. Abys ho mohl nosit, potřebuješ cechovní plášť: pozice se v Nastavení objeví, jakmile cechovní plášť nosíš.
 
+## Tvoje výška a postava
+
+Dva řádky určují tělo tvé postavy: **Výška** (Malá, Průměrná nebo Vysoká) a **Postava** (Štíhlá, Průměrná nebo Mohutná). Každou vybíráš zvlášť, v kterékoli z devíti kombinací, u každé profese. Na rozdíl od ostatní kosmetiky jsou zdarma: není co získávat a tvou volbu vidí každý hráč. Dokud nevybereš, začíná každá na hodnotě odvozené z tvého hráčského klíče. Jde jen o vzhled: kam na tebe lze kliknout a do čeho narážíš se nikdy nemění.
+
 ## Jak ji nosit
 
 Otevři Možnosti a vyber **Kosmetika**. Každý slot je jedna řada vzorků, každý je malý obrázek svého

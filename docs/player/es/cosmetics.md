@@ -48,6 +48,10 @@ Un estilo de aparición reúne pequeñas motas a tus pies cuando apareces o te r
 
 Un marco del emblema es un borde fino alrededor del emblema de tu capa de clan. Nunca tapa, mueve ni cambia el emblema, y se dibuja en el color del ribete de tu propia capa o en un metal sencillo, nunca en un color de equipo. Necesitas una capa de clan para llevarlo: la ranura aparece en Opciones en cuanto llevas una capa de clan.
 
+## Tu altura y complexión
+
+Dos filas fijan el cuerpo de tu figura: **Altura** (Baja, Media o Alta) y **Complexión** (Delgada, Media o Robusta). Elige cada una por separado, en cualquiera de las nueve combinaciones, con cualquier profesión. A diferencia de los demás cosméticos son gratis: no hay nada que ganar y todos los jugadores ven tu elección. Hasta que eliges, cada una empieza en un valor sacado de tu clave de jugador. Solo cambian el aspecto: dónde se te puede hacer clic y con qué chocas nunca cambian.
+
 ## Cómo llevarlos
 
 Abre Opciones y elige **Cosméticos**. Cada ranura es una fila de muestras, cada una un pequeño

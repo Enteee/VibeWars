@@ -46,6 +46,10 @@ Stil pojavljivanja skuplja sitne čestice oko tvojih stopala kad se pojaviš ili
 
 Okvir amblema tanak je rub oko amblema na tvom plaštu ceha. Nikad ne prekriva, ne pomiče i ne mijenja amblem, a crta se u boji ruba tvog plašta ili u običnom metalu, nikad u boji tima. Za nošenje ti treba plašt ceha: mjesto se pojavi u Postavkama čim nosiš plašt ceha.
 
+## Tvoja visina i građa
+
+Dva retka određuju tijelo tvog lika: **Visina** (Niska, Prosječna ili Visoka) i **Građa** (Vitka, Prosječna ili Krupna). Biraj svaku zasebno, u bilo kojoj od devet kombinacija, uz svaku profesiju. Za razliku od ostale kozmetike besplatne su: nema se što zaraditi, a tvoj izbor vidi svaki igrač. Dok ne odabereš, svaka počinje od vrijednosti izvedene iz tvog igračkog ključa. Samo su izgled: gdje se na tebe može kliknuti i u što udaraš nikad se ne mijenja.
+
 ## Kako je nositi
 
 Otvori Opcije i odaberi **Kozmetika**. Svako mjesto je jedan red uzoraka, svaki mala slika svog
