@@ -857,6 +857,7 @@
         }
       ]
     },
+    "Build": { "union": [{ "literal": "average" }, { "literal": "heavy" }, { "literal": "lean" }] },
     "CancelIntent": {
       "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
     },
@@ -5580,6 +5581,24 @@
         { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
+    "FigureBody": {
+      "properties": [
+        {
+          "name": "build",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "average" }, { "literal": "heavy" }, { "literal": "lean" }]
+          }
+        },
+        {
+          "name": "height",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "average" }, { "literal": "short" }, { "literal": "tall" }]
+          }
+        }
+      ]
+    },
     "GateDescriptor": {
       "properties": [
         {
@@ -5682,6 +5701,9 @@
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "switch" } }] }
       ]
+    },
+    "Height": {
+      "union": [{ "literal": "average" }, { "literal": "short" }, { "literal": "tall" }]
     },
     "JsonValue": {
       "union": [
@@ -6242,6 +6264,36 @@
           "type": {
             "properties": [
               { "name": "at", "optional": false, "type": "number" },
+              {
+                "name": "body",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    {
+                      "name": "build",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "average" },
+                          { "literal": "heavy" },
+                          { "literal": "lean" }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "height",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "average" },
+                          { "literal": "short" },
+                          { "literal": "tall" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
               { "name": "ids", "optional": false, "type": { "array": "string" } },
               { "name": "sig", "optional": false, "type": "string" }
             ]
@@ -7773,6 +7825,28 @@
     "WireCosmetics": {
       "properties": [
         { "name": "at", "optional": false, "type": "number" },
+        {
+          "name": "body",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "build",
+                "optional": false,
+                "type": {
+                  "union": [{ "literal": "average" }, { "literal": "heavy" }, { "literal": "lean" }]
+                }
+              },
+              {
+                "name": "height",
+                "optional": false,
+                "type": {
+                  "union": [{ "literal": "average" }, { "literal": "short" }, { "literal": "tall" }]
+                }
+              }
+            ]
+          }
+        },
         { "name": "ids", "optional": false, "type": { "array": "string" } },
         { "name": "sig", "optional": false, "type": "string" }
       ]
@@ -8079,6 +8153,36 @@
               "type": {
                 "properties": [
                   { "name": "at", "optional": false, "type": "number" },
+                  {
+                    "name": "body",
+                    "optional": false,
+                    "type": {
+                      "properties": [
+                        {
+                          "name": "build",
+                          "optional": false,
+                          "type": {
+                            "union": [
+                              { "literal": "average" },
+                              { "literal": "heavy" },
+                              { "literal": "lean" }
+                            ]
+                          }
+                        },
+                        {
+                          "name": "height",
+                          "optional": false,
+                          "type": {
+                            "union": [
+                              { "literal": "average" },
+                              { "literal": "short" },
+                              { "literal": "tall" }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
                   { "name": "ids", "optional": false, "type": { "array": "string" } },
                   { "name": "sig", "optional": false, "type": "string" }
                 ]
@@ -9321,6 +9425,36 @@
           "type": {
             "properties": [
               { "name": "at", "optional": false, "type": "number" },
+              {
+                "name": "body",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    {
+                      "name": "build",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "average" },
+                          { "literal": "heavy" },
+                          { "literal": "lean" }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "height",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "average" },
+                          { "literal": "short" },
+                          { "literal": "tall" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
               { "name": "ids", "optional": false, "type": { "array": "string" } },
               { "name": "sig", "optional": false, "type": "string" }
             ]

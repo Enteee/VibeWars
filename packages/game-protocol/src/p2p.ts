@@ -1196,15 +1196,27 @@ export interface WireCapes {
 export const MAX_COSMETIC_IDS = 12;
 export const MAX_COSMETIC_ID_LENGTH = 32;
 
+/** A figure's height and build (#4250): free to pick, never earned. */
+export const HEIGHTS = ["short", "average", "tall"] as const;
+export type Height = (typeof HEIGHTS)[number];
+export const BUILDS = ["lean", "average", "heavy"] as const;
+export type Build = (typeof BUILDS)[number];
+
+export interface FigureBody {
+  readonly height: Height;
+  readonly build: Build;
+}
+
 /**
- * What a player wears (ADR-0056): catalog ids its key signed at `at`, ms
- * since the epoch, `sig` the `vibewars/cosmetics` signature. No host and
- * no simulation reads it: hosts relay it untouched, and each viewer
- * checks it against its own leaderboard. An empty list is a selection
- * too, signed the same.
+ * What a player wears (ADR-0056): catalog ids and a body its key signed
+ * at `at`, ms since the epoch, `sig` the `vibewars/cosmetics` signature.
+ * No host and no simulation reads it: hosts relay it untouched, and each
+ * viewer checks it against its own leaderboard. An empty list is a
+ * selection too, signed the same.
  */
 export interface WireCosmetics {
   readonly ids: readonly string[];
+  readonly body: FigureBody;
   readonly at: number;
   readonly sig: string;
 }
@@ -2426,18 +2438,27 @@ export function parseWireCapes(value: unknown): WireCapes | undefined {
 const parseCosmeticId = (value: unknown): string | undefined =>
   isString(value, MAX_COSMETIC_ID_LENGTH) ? value : undefined;
 
+function parseFigureBody(value: unknown): FigureBody | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isOneOf(raw.height, HEIGHTS) && isOneOf(raw.build, BUILDS)
+    ? { height: raw.height, build: raw.build }
+    : undefined;
+}
+
 /** A selection's shape (ADR-0056); whether its signature holds is each viewer's to check. */
 export function parseWireCosmetics(value: unknown): WireCosmetics | undefined {
   const raw = fields(value);
   const ids =
     raw === undefined ? undefined : parseArray(raw.ids, MAX_COSMETIC_IDS, parseCosmeticId);
+  const body = raw === undefined ? undefined : parseFigureBody(raw.body);
   return raw !== undefined &&
     ids !== undefined &&
+    body !== undefined &&
     typeof raw.at === "number" &&
     Number.isSafeInteger(raw.at) &&
     raw.at >= 0 &&
     isTicketSig(raw.sig)
-    ? { ids, at: raw.at, sig: raw.sig }
+    ? { ids, body, at: raw.at, sig: raw.sig }
     : undefined;
 }
 

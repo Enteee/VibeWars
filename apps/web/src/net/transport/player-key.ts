@@ -9,7 +9,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { hashes, schnorr, utils } from "@noble/secp256k1";
-import { MAX_COSMETIC_IDS, MAX_COSMETIC_ID_LENGTH } from "@vibewars/game-protocol";
+import { BUILDS, HEIGHTS, MAX_COSMETIC_IDS, MAX_COSMETIC_ID_LENGTH } from "@vibewars/game-protocol";
 import type { CosmeticSelection, LobbyProofFields, PlayerKey } from "@vibewars/game-session";
 import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
@@ -58,15 +58,21 @@ function lobbyProofDigest(pubkey: string, fields: LobbyProofFields): Uint8Array 
 
 /**
  * A cosmetic selection's digest (ADR-0056): the key, `at` as eight bytes,
- * then each id after its one-byte length; `undefined` for a selection no
- * key can sign, too many or too long ids, or an `at` that is not a
- * whole, non-negative ms count.
+ * the body's height and build as one byte each, their index in `HEIGHTS`
+ * and `BUILDS` (#4250), then each id after its one-byte length;
+ * `undefined` for a selection no key can sign, too many or too long ids,
+ * a body with no such height or build, or an `at` that is not a whole,
+ * non-negative ms count.
  */
 function cosmeticsDigest(selection: CosmeticSelection): Uint8Array | undefined {
-  const { pubkey, ids, at } = selection;
+  const { pubkey, ids, body, at } = selection;
+  const height = HEIGHTS.indexOf(body.height);
+  const build = BUILDS.indexOf(body.build);
   if (
     !HEX_32.test(pubkey) ||
     ids.length > MAX_COSMETIC_IDS ||
+    height < 0 ||
+    build < 0 ||
     !Number.isSafeInteger(at) ||
     at < 0
   ) {
@@ -82,7 +88,10 @@ function cosmeticsDigest(selection: CosmeticSelection): Uint8Array | undefined {
   }
   const time = new Uint8Array(8);
   new DataView(time.buffer).setBigUint64(0, BigInt(at));
-  return taggedHash(COSMETICS_TAG, concatBytes(hexToBytes(pubkey), time, ...parts));
+  return taggedHash(
+    COSMETICS_TAG,
+    concatBytes(hexToBytes(pubkey), time, Uint8Array.of(height, build), ...parts),
+  );
 }
 
 function keyOf(secretKey: Uint8Array): PlayerKey {

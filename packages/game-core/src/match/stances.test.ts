@@ -126,6 +126,16 @@ describe("stances (#523)", () => {
     expect(stances(match, "a")).toEqual([]);
   });
 
+  it("Dash is up again 6 s after use, not before (#4241)", () => {
+    const match = new MatchSimulation({ seed: "stance", participants: [runner("a", vec2(0, 0))] });
+    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
+    match.step(DT);
+    stepFor(match, 6 - 3 * DT);
+    expect(match.requestSkill("a", 1)?.check.ok).toBe(false);
+    stepFor(match, 3 * DT);
+    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
+  });
+
   it("Wild Throw ends the target's stance and leaves its enchantments", () => {
     const match = new MatchSimulation({
       seed: "stance",

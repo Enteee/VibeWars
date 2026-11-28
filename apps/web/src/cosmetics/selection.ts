@@ -12,6 +12,7 @@ import type { CosmeticSelection, PlayerKey } from "@vibewars/game-session";
 import type { Leaderboard, LeaderboardEntry } from "../net/leaderboard.js";
 import { verifyCosmetics } from "../net/transport/player-key.js";
 
+import { bodyFromKey, bodyOf, type BodyChoice, type FigureBody } from "./body.js";
 import { COSMETIC_SLOTS, cosmeticById, type CosmeticEntry, type CosmeticSlot } from "./catalog.js";
 import { isUnlocked, type UnlockFacts } from "./unlocks.js";
 
@@ -24,10 +25,14 @@ export type WornCosmetics = Partial<Readonly<Record<CosmeticSlot, CosmeticEntry>
 /** Nothing worn: the default look. */
 export const DEFAULT_LOOK: WornCosmetics = {};
 
-/** `choice` as `pubkey`'s selection at `at`, ms since the epoch, its ids in slot order. */
+/**
+ * `choice` and `body` as `pubkey`'s selection at `at`, ms since the
+ * epoch, its ids in slot order and each body axis never picked the key's.
+ */
 export function buildSelection(
   pubkey: string,
   choice: CosmeticChoice,
+  body: BodyChoice,
   at: number,
 ): CosmeticSelection {
   return {
@@ -36,14 +41,25 @@ export function buildSelection(
       const id = choice[slot];
       return id === undefined ? [] : [id];
     }),
+    body: bodyOf(body, pubkey),
     at,
   };
 }
 
-/** `choice`, signed by `key` at `at`, as a join carries it. */
-export function signSelection(key: PlayerKey, choice: CosmeticChoice, at: number): WireCosmetics {
-  const selection = buildSelection(key.pubkey, choice, at);
-  return { ids: selection.ids, at: selection.at, sig: key.signCosmetics(selection) };
+/** `choice` and `body`, signed by `key` at `at`, as a join carries it. */
+export function signSelection(
+  key: PlayerKey,
+  choice: CosmeticChoice,
+  body: BodyChoice,
+  at: number,
+): WireCosmetics {
+  const selection = buildSelection(key.pubkey, choice, body, at);
+  return {
+    ids: selection.ids,
+    body: selection.body,
+    at: selection.at,
+    sig: key.signCosmetics(selection),
+  };
 }
 
 /** Checks already made, by selection object, as a viewer asks every frame. */
@@ -55,7 +71,10 @@ export function verifySelection(pubkey: string, cosmetics: WireCosmetics): boole
   if (memo?.pubkey === pubkey) {
     return memo.holds;
   }
-  const holds = verifyCosmetics({ pubkey, ids: cosmetics.ids, at: cosmetics.at }, cosmetics.sig);
+  const holds = verifyCosmetics(
+    { pubkey, ids: cosmetics.ids, body: cosmetics.body, at: cosmetics.at },
+    cosmetics.sig,
+  );
   verified.set(cosmetics, { pubkey, holds });
   return holds;
 }
@@ -143,4 +162,19 @@ export function ownCosmetics(
     }),
     facts,
   );
+}
+
+/**
+ * The body a viewer draws for a seat (#4250): its signed body when the
+ * signature holds for its key, whatever the viewer's leaderboard says,
+ * since a body is never earned. Anything else, and a seat with no key,
+ * is the body its key hashes to, or for no key its `participantId`.
+ */
+export function visibleBody(
+  seat: { readonly playerPubkey: string; readonly cosmetics: WireCosmetics } | undefined,
+  participantId: string,
+): FigureBody {
+  return seat !== undefined && verifySelection(seat.playerPubkey, seat.cosmetics)
+    ? seat.cosmetics.body
+    : bodyFromKey(seat?.playerPubkey ?? participantId);
 }

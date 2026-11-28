@@ -2711,7 +2711,12 @@ describe("a member's profile changed in Options (#3548)", () => {
 
   it("shows a guest's new cosmetics to every member at once (ADR-0056)", async () => {
     const { lobby, guest } = await hostAndGuest();
-    const picked = { ids: ["frame-rose"], at: 1, sig: "11".repeat(64) };
+    const picked = {
+      ids: ["frame-rose"],
+      body: { height: "average", build: "average" } as const,
+      at: 1,
+      sig: "11".repeat(64),
+    };
     guest.connection.setProfile({ ...PROFILE, cosmetics: picked });
     await settle();
     for (const who of [lobby.host, guest]) {

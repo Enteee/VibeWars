@@ -112,6 +112,7 @@ const GUILD_TAG = sanitizeGuildTag("WWWW");
 /** The most a selection carries (ADR-0056): every id the longest, signed. */
 const FULL_COSMETICS: WireCosmetics = {
   ids: Array.from({ length: MAX_COSMETIC_IDS }, () => "w".repeat(MAX_COSMETIC_ID_LENGTH)),
+  body: { height: "average", build: "average" },
   at: Number.MAX_SAFE_INTEGER,
   sig: "ab".repeat(64),
 };

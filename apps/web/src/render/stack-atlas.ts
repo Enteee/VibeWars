@@ -299,38 +299,6 @@ function stackRow(key: string, look: StackLook): StackRow | undefined {
   return look.kind === "body" ? bodyRow(key, look) : creatureRow(key, look.look);
 }
 
-/**
- * Where each of `rows` starts on a surface `width` wide, in order, and
- * how tall they stand: a row goes on the right of the shelf before it
- * while it fits, or starts a new shelf under it. A body's row is as wide
- * as the surface, so it has a shelf of its own; the narrow creature rows
- * (#4173) share theirs. A row's place never moves when rows are added.
- */
-function shelveRows(
-  rows: readonly StackRow[],
-  width: number,
-): {
-  readonly places: readonly { readonly left: number; readonly top: number }[];
-  readonly height: number;
-} {
-  let top = 0;
-  let left = 0;
-  let shelf = 0;
-  const places = rows.map((row) => {
-    const span = row.width * row.frames.length;
-    if (left > 0 && left + span <= width) {
-      left += span;
-      shelf = Math.max(shelf, row.height);
-      return { left: left - span, top };
-    }
-    top += shelf;
-    left = span;
-    shelf = row.height;
-    return { left: 0, top };
-  });
-  return { places, height: top + shelf };
-}
-
 /** The atlas of one match's figures. */
 export class StackAtlas {
   private readonly create: SurfaceFactory;
@@ -449,15 +417,14 @@ export class StackAtlas {
   /**
    * Bake the rows not on the surface yet, or all of them on a new one when
    * they no longer fit, or `fresh`: one canvas, one upload. Rows stack
-   * down the canvas, each as tall as its frames, creature rows side by
-   * side while they fit its width (`shelveRows`). The canvas keeps room
+   * down the canvas, each as tall as its frames. The canvas keeps room
    * for every creature row not on it yet (#4171), which a body row never
    * takes, so a summon's late row bakes alone, never every body's again
    * mid-fight.
    */
   private build(fresh = false): void {
     const width = Math.max(ATLAS_WIDTH, ...this.rows.map((row) => row.width * row.frames.length));
-    const { places, height } = shelveRows(this.rows, width);
+    const height = this.rows.reduce((sum, row) => sum + row.height, 0);
     const headroom = CREATURE_LOOKS.filter(
       (look) => !this.baked.has(stackLookKey({ kind: "creature", look })),
     ).reduce((sum, look) => sum + creatureRowHeight(look), 0);
@@ -475,16 +442,17 @@ export class StackAtlas {
       from = 0;
     }
     const surface = this.surface;
-    this.rows.slice(from).forEach((row, i) => {
-      const place = places[from + i] ?? { left: 0, top: 0 };
-      surface.context.clearRect(place.left, place.top, row.width * row.frames.length, row.height);
-      row.frames.forEach((frame, j) => {
-        const left = place.left + j * row.width;
-        frame.bake(surface.context, left + row.feetX, place.top + row.feetY);
-        surface.addFrame(frame.name, left, place.top, row.width, row.height);
+    let top = this.rows.slice(0, from).reduce((sum, row) => sum + row.height, 0);
+    for (const row of this.rows.slice(from)) {
+      surface.context.clearRect(0, top, this.width, row.height);
+      row.frames.forEach((frame, i) => {
+        const left = i * row.width;
+        frame.bake(surface.context, left + row.feetX, top + row.feetY);
+        surface.addFrame(frame.name, left, top, row.width, row.height);
         this.bakes += 1;
       });
-    });
+      top += row.height;
+    }
     this.filled = this.rows.length;
     surface.refresh();
   }
