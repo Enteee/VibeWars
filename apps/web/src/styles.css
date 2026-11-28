@@ -4708,6 +4708,47 @@ body:has(> .splash) #menu-background::after {
   font-size: 0.85rem;
 }
 
+/* Narrow (#4238): a row stacks, its action over its two keys side by
+   side, each half the pane, so no row is wider than a phone. */
+@media (width <= 52rem) {
+  .keys-table,
+  .keys-table tbody {
+    display: block;
+  }
+
+  .keys-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.4rem;
+  }
+
+  .keys-table th,
+  .keys-table td {
+    padding-inline: 0;
+  }
+
+  .keys-action,
+  .keys-table th.keys-group-title,
+  .keys-warning {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  /* An empty warning or a fixed row's spare cells would stand a row of their own. */
+  .keys-table td:empty {
+    display: none;
+  }
+
+  .screen button.key-cell,
+  .key-cell.is-fixed {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+  }
+}
+
 .keys-line {
   margin: 0;
   min-height: 1.3em;
@@ -6777,12 +6818,15 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* The 2px an elite's frame reaches past its box (#459) is padded in, so
+   the list neither clips the frame nor scrolls sideways (#4238). */
 .skill-groups {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 0.8rem;
   min-height: 0;
+  padding-inline: 2px;
   overflow-y: auto;
 }
 
@@ -10041,6 +10085,12 @@ body:has(> .splash) #app {
   .screen .mode-rail-entry,
   .mode-rail-size {
     width: 84px;
+  }
+
+  /* The chosen mode's bar inside the rail (#4238): at -6px it stood past
+     the rail's edge, which then scrolled sideways. */
+  .screen .mode-rail-entry[aria-pressed="true"]::after {
+    inset-inline-end: -3px;
   }
 
   .mode-rail-label {
