@@ -230,13 +230,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     endsWhenBearerUsesSkill: true,
   }),
   // "For 30 seconds, Echo is replaced with the next skill you use. Echo
-  // acts as this skill for 20 seconds" (#469).
+  // acts as this skill for 30 seconds" (#469).
   echo: define("echo", "Echo", "enchantment", {
     profession: "mesmer",
     triggers: [
       {
         on: "bearer-uses-skill",
-        effects: [{ kind: "echo", spellsOnly: false, seconds: 20 }],
+        effects: [{ kind: "echo", spellsOnly: false, seconds: 30 }],
         target: "bearer",
         skillId: "mesmer.echo",
       },

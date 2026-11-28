@@ -498,6 +498,7 @@ const skillBar: WireSkillBar = {
       activationSeconds: 1,
       rechargeSeconds: 5,
       copyEndsAt: null,
+      copySeconds: null,
     },
     null,
     {
@@ -508,6 +509,7 @@ const skillBar: WireSkillBar = {
       activationSeconds: 1,
       rechargeSeconds: 5,
       copyEndsAt: 32.4,
+      copySeconds: 30,
     },
   ],
   ranks: { "monk.healing-prayers": 12, "monk.divine-favor": 0 },
@@ -2547,6 +2549,26 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "skill bar slot without copyEndsAt (#1154)",
     parseWireSkillBar,
     { slots: [{ ...skillBar.slots[0], copyEndsAt: undefined }], ranks: skillBar.ranks },
+  ],
+  [
+    "skill bar slot with a copy's end and no life (#4236)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[2], copySeconds: null }], ranks: skillBar.ranks },
+  ],
+  [
+    "skill bar slot with a copy's life and no end (#4236)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[0], copySeconds: 30 }], ranks: skillBar.ranks },
+  ],
+  [
+    "skill bar slot with a copy that lives no time (#4236)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[2], copySeconds: 0 }], ranks: skillBar.ranks },
+  ],
+  [
+    "skill bar slot without copySeconds (#4236)",
+    parseWireSkillBar,
+    { slots: [{ ...skillBar.slots[0], copySeconds: undefined }], ranks: skillBar.ranks },
   ],
   ["skill bar without ranks", parseWireSkillBar, { slots: skillBar.slots }],
   [
