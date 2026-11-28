@@ -458,6 +458,7 @@ export default {
   "effects.untilEnds": "tills den upphör",
   "effects.you": "dig",
 
+  "flyout.back": "Tillbaka till listan",
   "fullscreen.enter": "Helskärm",
   "fullscreen.leave": "Lämna helskärm",
 

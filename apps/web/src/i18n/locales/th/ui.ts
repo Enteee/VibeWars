@@ -426,6 +426,7 @@ export default {
   "effects.untilEnds": "จนกว่าจะหมด",
   "effects.you": "คุณ",
 
+  "flyout.back": "กลับไปที่รายการ",
   "fullscreen.enter": "เต็มจอ",
   "fullscreen.leave": "ออกจากเต็มจอ",
 

@@ -462,6 +462,7 @@ export default {
   "effects.untilEnds": "до края",
   "effects.you": "ти",
 
+  "flyout.back": "Обратно към списъка",
   "fullscreen.enter": "Цял екран",
   "fullscreen.leave": "Изход от цял екран",
 

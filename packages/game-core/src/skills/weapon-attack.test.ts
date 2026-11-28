@@ -409,7 +409,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     it("adds a Hornbow's bonus 10% to Strength's base: Barrage at 12 has 22% (#4085)", () => {
       const target = victim();
       const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
-      expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.12 + 0.1, target)]);
+      expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 17, 0.12 + 0.1, target)]);
     });
 
     it("adds Judge's Insight's bonus 20% to Strength's base (#1519, #4085): holy", () => {

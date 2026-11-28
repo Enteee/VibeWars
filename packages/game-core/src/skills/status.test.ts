@@ -246,7 +246,7 @@ describe("status definitions", () => {
       fouled: -1,
       refreshed: 3,
       mending: 3,
-      regeneration: 4,
+      regeneration: 9,
       "weapon-of-warding": 4,
       "never-surrender": 4,
       "healing-breeze": 8,

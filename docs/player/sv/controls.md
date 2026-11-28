@@ -98,7 +98,7 @@ utom Lobby, i **☰** uppe till höger på skärmen, tillsammans med **Lämna**;
 **M** stänger fortfarande av ljudet och **F10** lämnar fortfarande utan den. I ett smalt fönster viks de här ikonerna och
 skärmens andra knappar in i **☰**; bara dess huvudknapp står kvar utanför.
 ⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det.
-[?] öppnar Hjälp på samma sätt, som ett fönster under den med en sidväljare överst; en match fortsätter bakom.
+[?] öppnar Hjälp på samma sätt, som ett fönster under den med sina sidor listade längs vänsterkanten; en match fortsätter bakom.
 Hjälp stängs med fönstrets ×, Esc, ett klick utanför, eller ett nytt tryck på [?].
 
 **Dela en beat med din lobby.** I beat-redigeraren (♪, sedan **Ändra**)

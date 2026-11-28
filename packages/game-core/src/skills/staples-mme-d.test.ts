@@ -301,7 +301,8 @@ describe("Mantra of Inscriptions (#2414)", () => {
     stepFor(sim, 0.5);
     sim.setTarget("f", "c");
     expect(sim.requestSkill("f", 0)?.check).toEqual({ ok: true });
-    stepFor(sim, 0.5);
+    // Leech Signet's 0.25 s cast, and one tick of the recharge it starts.
+    stepFor(sim, 0.3);
     const c = get(sim, "c");
     expect(c.cast.activeCast).toBeUndefined();
     lasts(c.cast.rechargeRemaining.get(SIGNET), 5);

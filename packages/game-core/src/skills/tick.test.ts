@@ -46,11 +46,11 @@ describe("advanceStatuses health change", () => {
     expect(c.health).toBeCloseTo(494, 6);
   });
 
-  it("counts a pip as 2 HP/s: +4 regeneration heals 8 a second", () => {
+  it("counts a pip as 2 HP/s: +9 regeneration heals 18 a second", () => {
     const c = makeCombatant({ id: "c", health: 100 });
     c.statuses.apply("regeneration", 10, "a", NO_RANKS);
     advanceStatuses(c, 1, 0);
-    expect(c.health).toBeCloseTo(100 + 4 * HEALTH_PER_PIP, 10);
+    expect(c.health).toBeCloseTo(100 + 9 * HEALTH_PER_PIP, 10);
   });
 
   it("clamps stacked degeneration to 10 pips: burning, bleeding and poison (-14) drain 20 HP/s", () => {
@@ -62,9 +62,9 @@ describe("advanceStatuses health change", () => {
     expect(c.health).toBeCloseTo(480, 10);
   });
 
-  it("does nothing when regeneration cancels degeneration: +4 against poison's -4", () => {
+  it("does nothing when regeneration cancels degeneration: Weapon of Warding's +4 against poison's -4", () => {
     const c = makeCombatant({ id: "c", health: 300 });
-    c.statuses.apply("regeneration", 10, "a", NO_RANKS);
+    c.statuses.apply("weapon-of-warding", 10, "a", NO_RANKS);
     c.statuses.apply("poison", 10, "a", NO_RANKS);
     const events = advanceStatuses(c, 1, 0);
     expect(c.health).toBe(300);

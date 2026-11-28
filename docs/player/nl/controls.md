@@ -95,7 +95,7 @@ behalve Lobby, in **☰** rechtsboven in het scherm, samen met **Verlaten**;
 **M** dempt nog steeds en **F10** verlaat de match nog steeds zonder. In een smal venster klappen deze pictogrammen en
 de andere knoppen van het scherm in tot **☰**; alleen de hoofdknop blijft staan.
 ⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het.
-[?] opent Help op dezelfde manier, als venster eronder met een paginakiezer bovenaan; een match loopt erachter door.
+[?] opent Help op dezelfde manier, als venster eronder met zijn pagina's links onder elkaar; een match loopt erachter door.
 Help sluit met zijn ×, Esc, een klik erbuiten, of nog een druk op [?].
 
 **Deel een beat met je lobby.** In de beat-editor (♪, dan **Bewerken**)

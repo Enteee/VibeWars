@@ -15,13 +15,22 @@ import {
   type Member,
   type TestLobby,
 } from "./lobby-harness.test-support.js";
+import { KEY_PROOF_TIMEOUT_MS } from "./key-gate.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { RecordedReplay, Sha256 } from "./replay.js";
 import { connectObserver } from "./match-observer.js";
 import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import { scopeTransport } from "./scoped-transport.js";
-import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
+import {
+  cryptoTurns,
+  hello,
+  playerIn,
+  self,
+  settle,
+  toJson,
+  until,
+} from "./match-harness.test-support.js";
 
 /**
  * A lobby's own match (#379), ported from the server's
@@ -481,6 +490,55 @@ describe("a lobby, when the host's peer drops during its match", () => {
     await until(() => closed.length > 0);
 
     expect(closed).toEqual(["connection-lost"]);
+  });
+});
+
+describe("a spectator whose page froze past the key's timeout (#4222)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("proves the key again and is sent the match, the delay after", async () => {
+    const { lobby, members } = await lobbyOf([0, null]);
+    const spectator = at(members, 1);
+    await start(lobby);
+    await play(lobby.host);
+    const watch = spectator.connection.watchMatch();
+    if (watch === undefined) {
+      throw new Error("nothing to watch");
+    }
+    const watching = connectObserver({
+      transport: watch.transport,
+      hostId: spectator.connection.getSnapshot().hostId,
+      matchId: watch.matchId,
+      timeoutMs: 1000,
+    });
+    await settle();
+    const viewer = await watching;
+    await lobby.step(OBSERVER_DELAY_SECONDS + 1);
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+    expect(before).toBeGreaterThan(0);
+
+    // Gone to the host, and back, with its answer to the challenge still
+    // being worked when the timeout runs out.
+    lobby.network.stall("host", spectator.transport.selfId);
+    await settle();
+    lobby.network.wake("host", spectator.transport.selfId);
+    await settle();
+    vi.advanceTimersByTime(KEY_PROOF_TIMEOUT_MS);
+
+    // Taken back once it proves the key, the delay fills again: the stream
+    // runs on inside twice the delay. Stuck, it never would.
+    let seconds = 0;
+    while ((viewer.getSnapshot()?.elapsedSeconds ?? 0) <= before) {
+      expect(seconds).toBeLessThan(2 * OBSERVER_DELAY_SECONDS);
+      await cryptoTurns();
+      await lobby.step(1);
+      seconds += 1;
+    }
   });
 });
 

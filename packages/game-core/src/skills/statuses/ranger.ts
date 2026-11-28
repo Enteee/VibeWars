@@ -102,10 +102,11 @@ export type RangerStatusId =
   | "storms-embrace";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
-  // Troll Unguent's (a ranger skill), though it is an enchantment here.
+  // Troll Unguent's (a ranger skill), though it is an enchantment here:
+  // "+3...10 Health regeneration", 8.6 at rank 12, rounded to 9.
   regeneration: define("regeneration", "Regeneration", "enchantment", {
     profession: "ranger",
-    healthPips: 4,
+    healthPips: 9,
   }),
   // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
   // block incoming attacks. Natural Stride ends if you become Hexed or

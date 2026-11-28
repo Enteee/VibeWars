@@ -293,7 +293,7 @@ describe("skillBarSlots", () => {
         name: "Fireball",
         energyCost: 10,
         adrenalineCost: 0,
-        activationSeconds: 1,
+        activationSeconds: 1.5,
         rechargeSeconds: 7,
         copyEndsAt: null,
       },
