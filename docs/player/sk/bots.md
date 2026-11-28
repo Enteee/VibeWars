@@ -30,7 +30,8 @@ nepriatelia sústredia na jedného spojenca, liečiteľ naňho dá ochranu skôr
 zásah dopadne. Liečiteľ si necháva dosť energie na svoje najlacnejšie liečenie
 alebo ochranu a pod túto hranicu míňa len na spojenca v skutočnom
 nebezpečenstve. Bot s dvoma kliatbami zošle lacnú kliatbu cez tú dôležitú, takže
-nepriateľovo odstránenie kliatby zloží najprv tú lacnú.
+nepriateľovo odstránenie kliatby zloží najprv tú lacnú. Bot s odoberaním energie
+páli energiu nepriateľského liečiteľa, nie Bojovníka.
 Každý iný bot je **na diaľku**: drží sa tam, kam dosiahne každý
 jeho útok, a zastaví sa a bojuje s nepriateľom, ktorý príde príliš blízko. Boti
 na diaľku a liečitelia ustupujú tam, kam dosiahne menej nepriateľov, a stĺpy

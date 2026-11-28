@@ -33,7 +33,8 @@ az ellenségektől. Amikor két vagy több ellenség egy szövetségesre
 elég Energiát tart vissza a legolcsóbb gyógyítására vagy védelmére, és
 ez alá csak valódi veszélyben lévő szövetségesért megy. A két átokkal rendelkező
 bot az olcsó átkát a fontos fölé teszi, így az ellenség átokeltávolítása először
-az olcsót viszi le. Minden más
+az olcsót viszi le. Az Energia-megvonással rendelkező bot az ellenséges gyógyító
+Energiáját égeti el, nem a Warriorét. Minden más
 bot **távolsági**: ott marad, ahonnan minden támadása elér, és megáll
 harcolni azzal az ellenséggel, amely túl közel jön. A távolsági botok és
 a gyógyítók oda lépnek, ahol kevesebb ellenség érheti el őket, és az

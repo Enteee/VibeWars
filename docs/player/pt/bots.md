@@ -30,7 +30,9 @@ focam um aliado, o curandeiro coloca a proteção nele antes do golpe
 acertar. O curandeiro guarda energia suficiente para sua cura ou
 proteção mais barata, e só gasta abaixo disso com um aliado em perigo real. Um
 bot com duas maldições põe a maldição barata por cima da importante, para que a
-remoção de maldições de um inimigo leve primeiro a barata. Todos os outros bots
+remoção de maldições de um inimigo leve primeiro a barata. Um bot com negação de
+energia queima a energia do curandeiro inimigo, não a do Guerreiro. Todos os
+outros bots
 são **à distância**: ficam onde todos os
 seus ataques alcançam e param para lutar com um inimigo que chega perto
 demais. Bots à distância e curandeiros vão para onde menos inimigos os

@@ -31,7 +31,8 @@ yüklendiğinde şifacı, darbe inmeden önce korumasını o müttefike koyar.
 Şifacı en ucuz iyileştirmesi veya koruması için yeterli Enerjiyi elinde
 tutar ve bunun altına yalnızca gerçekten tehlikedeki bir müttefik için iner. İki
 laneti olan bir bot ucuz lanetini önemli lanetinin üstüne koyar, böylece bir
-düşmanın lanet kaldırması önce ucuz olanı alır.
+düşmanın lanet kaldırması önce ucuz olanı alır. Enerji engellemesi olan bir bot,
+Warrior'ın değil, düşman şifacının Enerjisini yakar.
 Diğer her bot **menzilli**dir: tüm saldırılarının erişebildiği yerde
 durur, çok yaklaşan bir düşmanla da yerinde durup dövüşür. Menzilli
 botlar ve şifacılar daha az düşmanın erişebileceği yere geçer ve
