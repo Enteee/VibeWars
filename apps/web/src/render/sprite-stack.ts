@@ -2,6 +2,7 @@ import type { CreatureLook } from "@vibewars/game-core";
 
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
+import { beastSlices } from "./stack-beasts.js";
 import {
   PROFESSION_OUTFITS,
   WARRIOR_OUTFIT,
@@ -120,7 +121,7 @@ const HAIR = 0x2a2018;
 const GOLD = 0xc9a24a;
 
 /** An ellipse of `n` sides round `cx`, `cy`, turned `turn` radians. */
-function ellipse(
+export function ellipse(
   cx: number,
   cy: number,
   rx: number,
@@ -791,13 +792,22 @@ export interface CreatureStack {
   readonly poses: readonly CreaturePose[];
 }
 
+/** A creature that turns in 8 headings and walks. */
+const WALKER: CreatureStack = { headings: 8, poses: ["stand", "stride-a", "stride-b"] };
+
 /**
  * The creature looks drawn as figures (#4171), the rest keep their disc.
- * A spirit does not turn: one heading, one pose.
+ * A spirit does not turn: one heading, one pose. Pets and NPCs (#4173)
+ * turn and walk.
  */
 const CREATURE_STACKS: Readonly<Partial<Record<CreatureLook, CreatureStack>>> = {
   spirit: { headings: 1, poses: ["stand"] },
-  "ghostly-hero": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "ghostly-hero": WALKER,
+  beast: WALKER,
+  rat: WALKER,
+  guard: WALKER,
+  priest: WALKER,
+  "guild-lord": WALKER,
 };
 
 /** How `look` turns and moves as a figure, or `undefined` when it stays a disc. */
@@ -944,6 +954,12 @@ export function creatureSlices(
       return spiritSlices();
     case "ghostly-hero":
       return ghostSlices(pose);
+    case "beast":
+    case "rat":
+    case "guard":
+    case "priest":
+    case "guild-lord":
+      return beastSlices(look, pose);
     default:
       return undefined;
   }

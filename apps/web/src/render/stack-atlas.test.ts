@@ -16,6 +16,7 @@ import {
   type BakeContext,
   type BodyStackLook,
   type CreatureStackLook,
+  type StackFrame,
 } from "./stack-atlas.js";
 import {
   STACK_BAKED_HEADINGS,
@@ -48,6 +49,7 @@ const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 class FakeSurface implements AtlasSurface {
   public readonly frames = new Map<string, number>();
   public readonly areas = new Map<string, number>();
+  public readonly rects = new Map<string, { x: number; y: number; w: number; h: number }>();
   public refreshes = 0;
   public destroyed = false;
   public fills = 0;
@@ -77,9 +79,10 @@ class FakeSurface implements AtlasSurface {
     };
   }
 
-  public addFrame(name: string, _x: number, y: number, width: number, height: number): void {
+  public addFrame(name: string, x: number, y: number, width: number, height: number): void {
     this.frames.set(name, y);
     this.areas.set(name, width * height);
+    this.rects.set(name, { x, y, w: width, h: height });
   }
 
   public refresh(): void {
@@ -293,6 +296,40 @@ describe("StackAtlas creatures (#4171)", () => {
         }
       }
     }
+  });
+
+  it("shelves creature rows side by side, no frame over another or off the canvas (#4173)", () => {
+    const { atlas: made, surfaces } = atlas();
+    made.bake([FRIEND, ...CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look }))]);
+    // A late body after the creatures, and a late creature: each goes where it fits.
+    made.bake([FOE]);
+    const surface = surfaces.at(-1);
+    const rects = [...(surface?.rects.values() ?? [])];
+    const stacked = CREATURE_LOOKS.filter((look) => creatureStack(look) !== undefined);
+    const tops = new Set(
+      stacked.map((look) => surface?.frames.get(stackFrameName(`creature:${look}`, 0, "stand"))),
+    );
+    expect(tops.size).toBeLessThan(stacked.length);
+    for (const [i, a] of rects.entries()) {
+      expect(a.x + a.w).toBeLessThanOrEqual(surface?.width ?? 0);
+      expect(a.y + a.h).toBeLessThanOrEqual(surface?.height ?? 0);
+      for (const b of rects.slice(i + 1)) {
+        const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+        expect(apart).toBe(true);
+      }
+    }
+  });
+
+  it("bakes a guild lord at 1.25 a human's radius, and every pet and NPC as a figure (#4173)", () => {
+    const { atlas: made } = atlas();
+    const looks = ["beast", "rat", "guard", "priest", "guild-lord"] as const;
+    made.bake(looks.map((look) => ({ kind: "creature" as const, look })));
+    const at = (look: (typeof looks)[number]): StackFrame | undefined =>
+      made.frame({ kind: "creature", look }, 0, "stand");
+    for (const look of looks) {
+      expect(at(look)?.radius).toBe(CREATURE_DRAWN_RADIUS[look]);
+    }
+    expect((at("guild-lord")?.radius ?? 0) / (at("guard")?.radius ?? 1)).toBe(1.25);
   });
 
   it("keeps every creature look within the 2 MB creature allowance", () => {
