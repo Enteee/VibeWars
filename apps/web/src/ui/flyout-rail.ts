@@ -56,7 +56,6 @@ export function mountFlyoutRail({
   const bar = h("div", "flyout-rail-back");
   const back = document.createElement("button");
   back.className = "flyout-rail-back-button";
-  back.textContent = "‹";
   back.type = "button";
   back.setAttribute("aria-label", t("flyout.back"));
   const title = h("h2", "flyout-rail-title");
