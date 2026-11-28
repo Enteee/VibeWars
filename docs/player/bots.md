@@ -64,6 +64,8 @@ seconds for its teammates, and doesn't wait at all to finish a foe below
 30% health. When the target is under a protective enchantment such as
 Protective Spirit or Aegis, a bot with an enchantment strip, like Strip
 Enchantment, takes it off first, and the others hold their hits for it.
+With no strip on the team, the bots leave a protected foe and turn to
+another until the enchantment ends.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.

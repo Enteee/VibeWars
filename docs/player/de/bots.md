@@ -65,7 +65,9 @@ Verhexungen und Zustände. Ein Bot wartet höchstens vier Sekunden auf seine
 Mitspieler und gar nicht, um einen Gegner unter 30 % Leben zu erledigen. Liegt auf
 dem Ziel eine schützende Verzauberung wie Protective Spirit oder Aegis, entfernt
 sie zuerst ein Bot mit einem passenden Skill wie Strip Enchantment, und die
-anderen halten ihre Treffer so lange zurück.
+anderen halten ihre Treffer so lange zurück. Hat das Team keinen solchen Skill,
+lassen die Bots einen geschützten Gegner stehen und wenden sich einem anderen
+zu, bis die Verzauberung endet.
 
 Ein schwer verletzter Bot, der seinen Kampf verliert, zieht sich hinter seinen
 Heiler oder in seine Basis zurück und erholt sich außer Reichweite, bis er das

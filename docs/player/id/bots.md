@@ -64,6 +64,8 @@ detik, dan sama sekali tidak menunggu untuk menghabisi musuh yang Darah-nya di b
 30%. Saat target berada di bawah berkah pelindung seperti
 Protective Spirit atau Aegis, bot yang punya skill pelucut berkah, seperti Strip
 Enchantment, melepasnya dulu, dan yang lain menahan pukulan mereka untuk itu.
+Jika tim tidak punya pelucut berkah, bot meninggalkan musuh yang terlindungi
+dan beralih ke musuh lain sampai berkahnya habis.
 
 Bot yang terluka parah dan sedang kalah bertarung mundur ke belakang penyembuhnya, atau
 ke markasnya, dan beristirahat di luar jangkauan sampai sebagian besar Darah-nya pulih.

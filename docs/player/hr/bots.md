@@ -63,6 +63,8 @@ sekunde, a uopće ne čeka da dokrajči neprijatelja ispod
 30% zdravlja. Kad je meta pod zaštitnim začaranjem poput
 Protective Spirit ili Aegis, bot s uklanjanjem začaranja, poput Strip
 Enchantment, najprije ga skine, a ostali zadržavaju udarce dok to ne učini.
+Ako tim nema uklanjanje začaranja, botovi ostave zaštićenog neprijatelja i
+okrenu se drugome dok začaranje ne istekne.
 
 Teško ranjen bot koji gubi borbu povlači se iza svog iscjelitelja ili
 u svoju bazu te se odmara izvan dosega dok ne povrati većinu zdravlja.

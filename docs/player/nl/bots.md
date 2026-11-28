@@ -65,7 +65,9 @@ wacht maximaal vier seconden op zijn teamgenoten, en wacht helemaal niet om
 een vijand onder 30% gezondheid af te maken. Staat het doelwit onder een
 beschermende betovering zoals Protective Spirit of Aegis, dan haalt een bot
 met een betoveringsstrip, zoals Strip Enchantment, die er eerst af, en houden
-de anderen hun klappen daarvoor in.
+de anderen hun klappen daarvoor in. Heeft het team geen betoveringsstrip, dan
+laten de bots een beschermde vijand met rust en richten ze zich op een
+andere tot de betovering afloopt.
 
 Een zwaargewonde bot die zijn gevecht verliest, valt terug achter zijn healer,
 of naar zijn basis, en rust buiten bereik tot hij het grootste deel van zijn

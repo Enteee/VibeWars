@@ -66,7 +66,9 @@ på sine holdkammerater og venter slet ikke med at gøre det af med en
 fjende under 30 % liv. Når målet er under en beskyttende fortryllelse
 såsom Protective Spirit eller Aegis, fjerner en bot med en
 fortryllelsesfjerner, som Strip Enchantment, den først, og de andre
-holder deres slag tilbage imens.
+holder deres slag tilbage imens. Har holdet ingen fortryllelsesfjerner,
+lader botterne en beskyttet fjende være og går efter en anden, indtil
+fortryllelsen slutter.
 
 En hårdt såret bot, der er ved at tabe sin kamp, trækker sig tilbage bag
 sin healer eller til sin base og hviler uden for rækkevidde, indtil den

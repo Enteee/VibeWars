@@ -67,7 +67,8 @@ como mucho, y no espera nada para rematar a un enemigo por debajo del 30%
 de salud. Si el objetivo tiene un encantamiento protector como Protective
 Spirit o Aegis, un bot con una habilidad que quite encantamientos, como
 Strip Enchantment, se lo quita primero, y los demás guardan sus golpes
-hasta entonces.
+hasta entonces. Si nadie en el equipo puede quitar encantamientos, los bots
+dejan al enemigo protegido y pasan a otro hasta que el encantamiento acabe.
 
 Un bot muy herido que va perdiendo su lucha se retira detrás de su sanador,
 o a su base, y descansa fuera de alcance hasta recuperar casi toda su salud.
