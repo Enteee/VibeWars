@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n/index.js";
 import { mountFlyoutRail } from "./flyout-rail.js";
 
 type Listener = (event: FakeEvent) => void;
@@ -195,6 +196,13 @@ describe("mountFlyoutRail (#4216)", () => {
     const title = element.find("flyout-rail-title");
     expect(title?.textContent).toBe("Two");
     expect(active()).toBe(title);
+  });
+
+  it("draws back as a CSS chevron, so it turns with the reading direction, and names it (#4237)", () => {
+    const { element } = rail();
+    const back = element.find("flyout-rail-back-button");
+    expect(back?.textContent).toBe("");
+    expect(back?.getAttribute("aria-label")).toBe(t("flyout.back"));
   });
 
   it("narrow, back returns to the list on the entry that was open", () => {

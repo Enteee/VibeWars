@@ -117,6 +117,8 @@ export interface SlotOverride {
   /** Wait key for recharge, disable, spent and adrenaline: `copyKey`. */
   readonly key: string;
   remainingSeconds: number;
+  /** Its whole life, seconds: the echo's own `seconds` (#4236). */
+  readonly totalSeconds: number;
   /** The build skill's id and recharge, started when the copy ends. */
   readonly restores: { readonly skillId: string; readonly rechargeSeconds: number };
 }

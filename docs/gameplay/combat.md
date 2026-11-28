@@ -251,9 +251,9 @@ and **Echo** (elite, 5 energy, 1 s, 10 s recharge) are
 self-enchantments that change your bar. While Arcane Echo is up (20 s),
 the next spell you finish takes its slot for 20 s; any other skill ends
 it with no copy. While Echo is up (30 s), the next skill you finish,
-of any kind, does the same. The copy is a skill of its own: it recharges
+of any kind, takes its slot for 30 s. The copy is a skill of its own: it recharges
 apart from the original, so both can be used, and a disable or Diversion
-on one leaves the other alone. When its 20 s are over, the echo is back
+on one leaves the other alone. When its time is over, the echo is back
 in its slot and starts its own recharge. An interrupted skill was never
 finished, so it is not copied and the echo stays. An echo is never
 copied, and does not use up the other. Death or a reset ends every copy

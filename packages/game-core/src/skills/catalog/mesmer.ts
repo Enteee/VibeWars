@@ -514,7 +514,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 30 seconds, Echo is replaced with the next skill you use. Echo
-    // acts as this skill for 20 seconds." The copy is the status's (#469).
+    // acts as this skill for 30 seconds." The copy is the status's (#469).
     effects: [{ kind: "apply-status", statusId: "echo", durationSeconds: { flat: 30 } }],
   },
   {

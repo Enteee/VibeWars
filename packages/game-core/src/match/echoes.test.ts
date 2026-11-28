@@ -18,7 +18,8 @@ import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
  * Arcane Echo and Echo (#469, #1126): the next skill used stands in the
- * echo's slot for 20 s, under a key of its own, then the echo is back.
+ * echo's slot, 20 s for Arcane Echo and 30 s for Echo (#4236), under a
+ * key of its own, then the echo is back.
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -215,6 +216,17 @@ describe("Arcane Echo (#1126)", () => {
 });
 
 describe("Echo (#1126)", () => {
+  it("the copy stands in its slot for 30 s, not Arcane Echo's 20 (#4236)", () => {
+    const match = sim();
+    echoUp(match, 1);
+    expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    stepUntil(match, () => held(match, 1)?.skillId === FIREBALL);
+    stepFor(match, 30 - 2 * DT);
+    expect(held(match, 1)?.skillId).toBe(FIREBALL);
+    const lasted = 30 - 2 * DT + stepUntil(match, () => held(match, 1)?.skillId === ECHO);
+    expect(lasted).toBeCloseTo(30, 1);
+  });
+
   it("copies an attack skill too", () => {
     const match = sim();
     echoUp(match, 1);
@@ -237,7 +249,7 @@ describe("Echo (#1126)", () => {
       ok: false,
       reason: "insufficient-adrenaline",
     });
-    stepFor(match, 21);
+    stepFor(match, 31);
     expect(a.adrenaline.has(copy)).toBe(false);
     expect(a.adrenaline.has(EXECUTIONERS_STRIKE)).toBe(true);
   });

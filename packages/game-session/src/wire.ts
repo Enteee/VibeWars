@@ -265,6 +265,7 @@ export function skillBarSlots(
       activationSeconds: skill?.activationSeconds ?? 0,
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
       copyEndsAt: copy === undefined ? null : tenths(elapsedSeconds + copy.remainingSeconds),
+      copySeconds: copy === undefined ? null : copy.totalSeconds,
     };
   });
 }
@@ -327,7 +328,8 @@ export function sameSkillBar(
         slot.adrenalineCost === other.adrenalineCost &&
         slot.activationSeconds === other.activationSeconds &&
         slot.rechargeSeconds === other.rechargeSeconds &&
-        slot.copyEndsAt === other.copyEndsAt
+        slot.copyEndsAt === other.copyEndsAt &&
+        slot.copySeconds === other.copySeconds
       );
     })
   );

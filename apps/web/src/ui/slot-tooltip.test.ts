@@ -39,6 +39,7 @@ function slot(id: string, energyCost: number, adrenalineCost = 0) {
     activationSeconds: 1,
     rechargeSeconds: 7,
     copyEndsAt: null,
+    copySeconds: null,
   };
 }
 
@@ -64,7 +65,7 @@ describe("slotDescription (#719)", () => {
 
   it("ends an echo's copy with how long it has left, in whole seconds rounded up (#1154)", () => {
     const fireball = skill("elementalist.fireball");
-    const copy = { ...slot(fireball.id, 10), copyEndsAt: 32.5 };
+    const copy = { ...slot(fireball.id, 10), copyEndsAt: 32.5, copySeconds: 30 };
     expect(slotDescription(fireball, copy, new Map(), 20.6).effects.at(-1)?.text).toBe(
       t("echo.secondsLeft", { count: 12 }),
     );
