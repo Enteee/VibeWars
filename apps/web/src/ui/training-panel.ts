@@ -32,10 +32,10 @@ import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   SKILL_ACTIONS,
   WEAPON_SET_ACTIONS,
-  actionForCode,
+  actionForEvent,
   actionLabel,
   codeLabel,
-  isShortcut,
+  isShiftedPlain,
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
@@ -53,7 +53,7 @@ import {
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
-import { mapShrines } from "../net/maps.js";
+import { fileMap, mapShrines } from "../net/maps.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
@@ -534,7 +534,8 @@ export function createTrainingPanel(): TrainingPanel {
         h(
           "span",
           "training-skill-key",
-          action === undefined ? "" : actionLabel(keymap, action, keyLabel),
+          // A badge on the icon's corner, as the HUD's (#4183).
+          action === undefined ? "" : actionLabel(keymap, action, keyLabel, true),
         ),
       );
       if (slot === null) {
@@ -684,6 +685,7 @@ export function createTrainingPanel(): TrainingPanel {
     session?.music.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
+    viewport?.scene.setMatchMap(fileMap(scenario.mapId));
     creatureOwners.clear();
     ticks = new StatusTickBatcher();
     const connection = createLocalConnection({
@@ -792,8 +794,12 @@ export function createTrainingPanel(): TrainingPanel {
   const detachMovement = attachKeyboardMoveInput(stage, keymap, onMove);
 
   const onStageKeyDown = (event: KeyboardEvent): void => {
-    // Ctrl, Alt and Meta are the browser's, armed or not (#302).
-    if (isShortcut(event)) {
+    // Ctrl, Alt and Meta are the browser's, armed or not (#302), unless
+    // a binding holds them (#4183).
+    if (
+      (event.ctrlKey || event.altKey || event.metaKey) &&
+      actionForEvent(keymap, event) === undefined
+    ) {
       return;
     }
     if (event.key === "Escape") {
@@ -818,7 +824,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     if (action === undefined || action === "show-names") {
       return;
     }
@@ -829,7 +835,7 @@ export function createTrainingPanel(): TrainingPanel {
       // the name field, and the next key would type into it. Esc releases
       // the stage, and then Tab is the browser's again.
       if (!event.repeat) {
-        cycleTarget(event.shiftKey ? -1 : 1);
+        cycleTarget(isShiftedPlain(keymap, event) ? -1 : 1);
       }
       return;
     }
@@ -886,7 +892,9 @@ export function createTrainingPanel(): TrainingPanel {
     if (
       event.key !== "Escape" ||
       event.repeat ||
-      isShortcut(event) ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey ||
       (event.target instanceof Node && stage.contains(event.target))
     ) {
       return;
@@ -1045,6 +1053,7 @@ export function createTrainingPanel(): TrainingPanel {
       return;
     }
     viewport = created;
+    created.scene.setMatchMap(session === undefined ? undefined : fileMap(session.scenario.mapId));
     // At a match's scale (#709): the small stage shows less of the world
     // instead of all of it shrunk. A match's canvas is the whole window
     // (#viewport; the top bar hides in a match, #454), so that is the box

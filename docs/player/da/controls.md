@@ -6,6 +6,12 @@ klik på en tastecelle og tryk på den tast, du vil have; en tast, der
 allerede er i brug, flyttes til den nye handling, og skærmen fortæller,
 hvilken handling der mistede den. Ændringer gemmes med det samme.
 
+En tast kan også være en kombination: hold Shift, Ctrl eller Alt nede og
+tryk på tasten, fx **Shift + X**. Bevæg dig og Vis navne tager kun én tast,
+og browseren beholder nogle få kombinationer selv, fx Ctrl + W. Når du
+holder Shift for at vise navne, virker dine almindelige taster stadig,
+medmindre den Shift-kombination selv er bundet til noget.
+
 ## Taster
 
 Standardforvalget er **Klassisk**, til GW1-hænder. **VibeWars** kaster med venstre hånd og bevæger sig med piletasterne.
@@ -90,7 +96,7 @@ undtagen Lobby, i **☰** øverst til højre på skærmen, sammen med **Forlad**
 **M** slår stadig lyden fra, og **F10** forlader stadig kampen uden den. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **☰**; kun dens hovedknap bliver ude.
 ⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det.
-[?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
+[?] åbner Hjælp på samme måde, som et vindue under den med sine sider listet ned langs venstre side; en kamp kører videre bagved.
 Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].
 
 **Del et beat med din lobby.** I beat-editoren (♪, derefter **Ret**)

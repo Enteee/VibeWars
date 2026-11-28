@@ -233,6 +233,17 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   #3444, the highest was 8.60 (sandstone-steps), so 8.60 x 1.15 rounds up
   to 10 again. A breach is a perf card, not a raise.
 
+The crowd case (`--crowd` runs only it, #4171) is not part of CI's
+run and no gate judges it. It draws the bench scene `creature-crowd`
+(`apps/web/src/dev/diagram-scenes.ts`, which the bench's build serves):
+16 bodies, 8 spirits and 16 bone minions on `ember-pits`, the minions
+discs until they get figures (#4172). It draws for `BENCH_SECONDS` with the
+creatures as baked figures, then again with `?discs`, the flat discs they
+replaced, and prints each one's p50 and p95 and the figures' p50 over the
+discs'. Stacked creatures must not draw slower than discs: a ratio
+clearly over 1 is a perf card. In a loaded agent sandbox on software GL
+(`BENCH_SECONDS=15`), the figures drew at 0.97 times the discs' p50 (302 ms against 310 ms) on #4171, and 1.05 in a 5 s run: the same, within the noise.
+
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
 it and `window.__frameTiming` holds those times.
@@ -418,9 +429,8 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
 near the gate for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. Elonian-plateau, cinder-sanctum, hollow-deep,
-brazen-causeway and long-hall are listed (3.1-3.45) until #4130 makes the
-whole-screen passes cheaper. A listed map that measures at or under the gate ÷ 1.25
+issue that will cut it. It is empty since #4130 made the whole-screen
+passes cheaper. A listed map that measures at or under the gate ÷ 1.25
 (2.12 at 2.65) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.

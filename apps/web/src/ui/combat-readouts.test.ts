@@ -119,7 +119,13 @@ describe("logToneOf", () => {
 
 describe("describeCombatEvent", () => {
   it("names the Storm Beacon as the source of its strike (#2694)", () => {
-    const event = { kind: "damage", targetId: "bob", amount: 27, critical: false } as const;
+    const event = {
+      kind: "damage",
+      targetId: "bob",
+      amount: 27,
+      unreduced: 27,
+      critical: false,
+    } as const;
     const strike = { ...entry([event]), cause: "beacon", sourceId: undefined } as const;
     expect(describeCombatEvent(strike, event, nameOf, isCreature)).toBe(
       t("combat.hit", { by: t("combat.sourceBeacon"), target: nameOf("bob"), amount: "27" }),
@@ -127,7 +133,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names the skill, the caster, the target and the amount", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
+    const event: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 63.6,
+      unreduced: 63.6,
+      critical: false,
+    };
     expect(describeCombatEvent(entry([event]), event, nameOf, isCreature)).toBe(
       t("combat.hit", { by: by("Fireball", "Pyro"), target: "Caster dummy", amount: "64" }),
     );
@@ -147,7 +159,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("says degeneration for a status tick that hurts, regeneration for one that heals", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 3,
+      unreduced: 3,
+      critical: false,
+    };
     const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 4 };
     const tick = (event: CombatEvent) =>
       entry([event], { cause: "degeneration", sourceId: undefined, skillId: undefined });
@@ -194,7 +212,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a status tick's source when exactly one is known", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 3,
+      unreduced: 3,
+      critical: false,
+    };
     const tick = entry([hurt], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(tick, hurt, nameOf, isCreature)).toBe(
       t("combat.hit", {
@@ -206,7 +230,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a lava tick by its zone's kind, never by its id (ADR-0053, #3046)", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 14, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 14,
+      unreduced: 14,
+      critical: false,
+    };
     const tick = entry([hurt], {
       cause: "degeneration",
       sourceId: "zone:molten:lane-embers",
@@ -222,7 +252,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a hazard's blow for its kind alone, 'Gas spout hits' (#3029)", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 50, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 50,
+      unreduced: 50,
+      critical: false,
+    };
     const blow = entry([hurt], {
       cause: "zone",
       sourceId: "zone:gas-spout:north-gas-spout",
@@ -250,7 +286,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a malformed zone source plainly as the ground (#3046)", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 2,
+      unreduced: 2,
+      critical: false,
+    };
     const tick = entry([hurt], {
       cause: "degeneration",
       sourceId: "zone:nope:x",
@@ -266,7 +308,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a weapon swing for its weapon and attacker, and an unknown weapon plainly", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18, critical: false };
+    const event: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 18,
+      unreduced: 18,
+      critical: false,
+    };
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "sword" });
     expect(describeCombatEvent(swing, event, nameOf, isCreature)).toBe(
       t("combat.hit", { by: by("Sword", "Pyro"), target: "Caster dummy", amount: "18" }),
@@ -285,7 +333,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a creature's swing for the creature alone (#1144)", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 21, critical: false };
+    const event: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 21,
+      unreduced: 21,
+      critical: false,
+    };
     const bite = entry([event], {
       cause: "weapon",
       sourceId: "wolf",
@@ -736,9 +790,9 @@ describe("describeCombatEvent", () => {
         nameOf,
         isCreature,
       );
-    expect(shot({ kind: "damage", targetId: "dummy", amount: 14, critical: false })).toBe(
-      t("combat.hit", { by: by("Longbow", "Pyro"), target: "Caster dummy", amount: "14" }),
-    );
+    expect(
+      shot({ kind: "damage", targetId: "dummy", amount: 14, unreduced: 14, critical: false }),
+    ).toBe(t("combat.hit", { by: by("Longbow", "Pyro"), target: "Caster dummy", amount: "14" }));
     expect(shot({ kind: "attack-missed", targetId: "dummy" })).toBe(
       t("combat.miss", { by: by("Longbow", "Pyro"), target: "Caster dummy" }),
     );
@@ -887,22 +941,22 @@ describe("accumulate", () => {
     const totals = accumulate(
       EMPTY_TOTALS,
       [
-        entry([{ kind: "damage", targetId: "dummy", amount: 64, critical: false }]),
-        entry([{ kind: "damage", targetId: "you", amount: 10, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 64, unreduced: 64, critical: false }]),
+        entry([{ kind: "damage", targetId: "you", amount: 10, unreduced: 10, critical: false }], {
           sourceId: "dummy",
         }),
         entry([{ kind: "heal", targetId: "you", amount: 30 }]),
         // Someone else's healing is not yours.
         entry([{ kind: "heal", targetId: "dummy", amount: 99 }], { sourceId: "dummy" }),
         // Hurting yourself is damage taken, not damage dealt.
-        entry([{ kind: "damage", targetId: "you", amount: 5, critical: false }]),
+        entry([{ kind: "damage", targetId: "you", amount: 5, unreduced: 5, critical: false }]),
         // Health a status took as it landed is taken, never dealt (#800).
         entry([{ kind: "health-lost", targetId: "you", amount: 20, statusId: "deep-wound" }], {
           sourceId: "dummy",
         }),
         entry([{ kind: "health-lost", targetId: "dummy", amount: 20, statusId: "deep-wound" }]),
         // A swing counts as damage, and as the weapon's share of it.
-        entry([{ kind: "damage", targetId: "dummy", amount: 12, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 12, unreduced: 12, critical: false }], {
           cause: "weapon",
           skillId: undefined,
           weaponId: "sword",
@@ -935,35 +989,35 @@ describe("accumulate", () => {
       EMPTY_TOTALS,
       [
         entry([{ kind: "heal", targetId: "you", amount: 94 }], { sourceId: "you/c1" }),
-        entry([{ kind: "damage", targetId: "dummy", amount: 20, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 20, unreduced: 20, critical: false }], {
           sourceId: "you/c1",
         }),
         // A minion's own blow is its skills' share, not your weapon's.
-        entry([{ kind: "damage", targetId: "dummy", amount: 15, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 15, unreduced: 15, critical: false }], {
           sourceId: "you/c2",
           cause: "weapon",
           skillId: undefined,
           weaponId: "sword",
         }),
         // Your creature hurting you is taken, never dealt.
-        entry([{ kind: "damage", targetId: "you", amount: 7, critical: false }], {
+        entry([{ kind: "damage", targetId: "you", amount: 7, unreduced: 7, critical: false }], {
           sourceId: "you/c1",
         }),
         // Someone else's creatures, and masterless ones, are not yours.
         entry([{ kind: "heal", targetId: "you", amount: 50 }], { sourceId: "other/c1" }),
-        entry([{ kind: "damage", targetId: "dummy", amount: 50, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 50, unreduced: 50, critical: false }], {
           sourceId: "masterless/c1",
         }),
         // Who owns it now counts, not who raised it: one a foe took from you
         // (#1965) is theirs, one you took is yours, one gone masterless
         // (#2092) nobody's.
-        entry([{ kind: "damage", targetId: "dummy", amount: 40, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 40, unreduced: 40, critical: false }], {
           sourceId: "you/c3",
         }),
-        entry([{ kind: "damage", targetId: "dummy", amount: 11, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 11, unreduced: 11, critical: false }], {
           sourceId: "foe/c1",
         }),
-        entry([{ kind: "damage", targetId: "dummy", amount: 30, critical: false }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 30, unreduced: 30, critical: false }], {
           sourceId: "you/c4",
         }),
       ],
@@ -1122,7 +1176,7 @@ describe("StatusTickBatcher (#151)", () => {
   it("keeps the two directions on one target apart", () => {
     const batcher = new StatusTickBatcher();
     const both: CombatEvent[] = [
-      { kind: "damage", targetId: "dummy", amount: 0.5, critical: false },
+      { kind: "damage", targetId: "dummy", amount: 0.5, unreduced: 0.5, critical: false },
       { kind: "heal", targetId: "dummy", amount: 0.3 },
     ];
     ticks(0, 20, both).forEach((t) => batcher.push(t, nameOf, isCreature));
@@ -1135,8 +1189,8 @@ describe("StatusTickBatcher (#151)", () => {
   it("gives each target its own row a second", () => {
     const batcher = new StatusTickBatcher();
     const two: CombatEvent[] = [
-      { kind: "damage", targetId: "dummy", amount: 0.5, critical: false },
-      { kind: "damage", targetId: "you", amount: 0.5, critical: false },
+      { kind: "damage", targetId: "dummy", amount: 0.5, unreduced: 0.5, critical: false },
+      { kind: "damage", targetId: "you", amount: 0.5, unreduced: 0.5, critical: false },
     ];
     const rows = ticks(0, 40, two).flatMap((t) => batcher.push(t, nameOf, isCreature));
     expect(texts([...rows, ...batcher.flush(2, nameOf, isCreature)])).toEqual([
@@ -1149,7 +1203,13 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("writes the damage before the death it caused", () => {
     const batcher = new StatusTickBatcher();
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2, critical: false };
+    const hurt: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 2,
+      unreduced: 2,
+      critical: false,
+    };
     batcher.push(tick(0, [hurt]), nameOf, isCreature);
     const rows = batcher.push(
       tick(0.05, [hurt, { kind: "death", targetId: "dummy" }]),
@@ -1165,7 +1225,7 @@ describe("StatusTickBatcher (#151)", () => {
   it("also writes the ticks before a death by a skill", () => {
     const batcher = new StatusTickBatcher();
     batcher.push(
-      tick(0, [{ kind: "damage", targetId: "dummy", amount: 2, critical: false }]),
+      tick(0, [{ kind: "damage", targetId: "dummy", amount: 2, unreduced: 2, critical: false }]),
       nameOf,
       isCreature,
     );
@@ -1182,6 +1242,7 @@ describe("StatusTickBatcher (#151)", () => {
       kind: "damage",
       targetId: "dummy",
       amount: 0.002,
+      unreduced: 0.002,
       critical: false,
     };
     ticks(0, 20, [crumb]).forEach((t) => batcher.push(t, nameOf, isCreature));
@@ -1191,7 +1252,7 @@ describe("StatusTickBatcher (#151)", () => {
   it("flushes before a divider, so the line comes after the ticks", () => {
     const batcher = new StatusTickBatcher();
     batcher.push(
-      tick(0, [{ kind: "damage", targetId: "dummy", amount: 3, critical: false }]),
+      tick(0, [{ kind: "damage", targetId: "dummy", amount: 3, unreduced: 3, critical: false }]),
       nameOf,
       isCreature,
     );
@@ -1206,7 +1267,13 @@ describe("StatusTickBatcher (#151)", () => {
     // Regeneration all the while, a skill hit mid-second, a death, a divider.
     const batcher = new StatusTickBatcher();
     const heal: CombatEvent = { kind: "heal", targetId: "you", amount: 0.2 };
-    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 30, critical: false };
+    const hit: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 30,
+      unreduced: 30,
+      critical: false,
+    };
     const rows: LogRow[] = [];
     for (let i = 0; i < 50; i += 1) {
       const at = i * 0.05;
@@ -1228,7 +1295,13 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("passes skill entries straight through", () => {
     const batcher = new StatusTickBatcher();
-    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
+    const hit: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 63.6,
+      unreduced: 63.6,
+      critical: false,
+    };
     expect(texts(batcher.push(entry([hit]), nameOf, isCreature))).toEqual([
       t("combat.hit", { by: by("Fireball", "Pyro"), target: "Caster dummy", amount: "64" }),
     ]);
@@ -1280,7 +1353,7 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
   it("a blow's adrenaline ends its hit's row", () => {
     const swing = entry(
       [
-        { kind: "damage", targetId: "dummy", amount: 20, critical: false },
+        { kind: "damage", targetId: "dummy", amount: 20, unreduced: 20, critical: false },
         { kind: "adrenaline-gained", targetId: "you", strikes: 1, skillId: undefined },
       ],
       { cause: "weapon", skillId: undefined, weaponId: "sword" },

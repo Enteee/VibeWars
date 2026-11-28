@@ -259,6 +259,14 @@ describe("Signet of Return (#474)", () => {
     expect(resurrected?.energyFraction).toBeCloseTo(0.03, 10);
   });
 
+  it("stands the ally up 4 s after the cast starts, and not before (#4257)", () => {
+    const sim = match();
+    kill(sim, "w");
+    use(sim, "m", 2, "w");
+    expect(resurrections(stepFor(sim, 4 - 2 * DT))).toEqual([]);
+    expect(resurrections(stepFor(sim, 3 * DT)).map((event) => event.targetId)).toEqual(["w"]);
+  });
+
   it("counts each living ally in earshot, and no creature, corpse or ally beyond it", () => {
     const sim = match(
       spec("a", 0, vec2(0, 100)),
@@ -319,6 +327,21 @@ describe("Flesh of My Flesh (#474)", () => {
     expect(events).toContainEqual({ kind: "sacrifice", targetId: "r", amount: 200 });
     expect(get(sim, "w").combatant.health).toBeCloseTo(200, 0);
     expect(resurrections(events)[0]?.energyFraction).toBeCloseTo(0.17, 10);
+  });
+
+  it("is usable again 6 s after it resolves, and not before (#4244)", () => {
+    const sim = match(spec("r", 0, vec2(0, 40)));
+    kill(sim, "w");
+    kill(sim, "v");
+    use(sim, "r", 3, "w");
+    stepFor(sim, cast(4));
+    expect(get(sim, "w").combatant.dead).toBe(false);
+
+    stepFor(sim, 5.9);
+    sim.setTarget("r", "v");
+    expect(sim.requestSkill("r", 3)?.check).not.toEqual({ ok: true });
+    stepFor(sim, 0.2);
+    use(sim, "r", 3, "v");
   });
 
   it("gives at most the ally's own maximum", () => {

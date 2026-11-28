@@ -13,7 +13,7 @@ import {
 import { creatureDamageMultiplier } from "./damage.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
-import { STATUS_DEFINITIONS } from "./status.js";
+import { STATUS_DEFINITIONS, getStatusDefinition } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
@@ -125,7 +125,7 @@ describe("describeSkill", () => {
     const described = describeSkill(skill("elementalist.fireball"), undefined, EN_WORDS, EN_NAMES);
 
     expect(described.cost).toBe("10 energy");
-    expect(described.castTime).toBe("1s");
+    expect(described.castTime).toBe("1.5s");
     expect(described.targetText).toBe("One foe, and foes nearby it");
     expect(described.rangeText).toBe(`${String(RANGE_SPELL)} range, ${String(AREA_NEARBY)} radius`);
   });
@@ -204,7 +204,7 @@ describe("describeSkill", () => {
     );
     expect(comfort.targetText).toBe("Your pet");
     expect(comfort.effects.map((e) => e.text)).toEqual([
-      "Heals for 87",
+      "Heals for 104",
       "Returns the target to life with 48% health and 0% energy",
     ]);
     expect(
@@ -496,7 +496,7 @@ describe("describeSkill", () => {
       "If that action was a spell: gain 13 energy",
     ]);
     expect(lines("monk.dwaynas-kiss")).toEqual([
-      "Heals for 51, +30 Health for each enchantment or hex on them",
+      "Heals for 56, +35 Health for each enchantment or hex on them",
     ]);
   });
 
@@ -645,7 +645,7 @@ describe("describeSkill", () => {
       "−3 Health degeneration",
     );
     expect(describeStatus("regeneration", undefined, EN_WORDS, EN_NAMES)).toContain(
-      "+4 Health regeneration",
+      "+9 Health regeneration",
     );
     expect(describeStatus("malaise", undefined, EN_WORDS, EN_NAMES)).toContain(
       "−1 Energy degeneration",
@@ -669,10 +669,10 @@ describe("describeSkill", () => {
 
   it("leads with the number that matters at these ranks (#567)", () => {
     const healing = skill("monk.orison-of-healing");
-    expect(describeSkill(healing, undefined, EN_WORDS, EN_NAMES).headline).toBe("heals 20");
+    expect(describeSkill(healing, undefined, EN_WORDS, EN_NAMES).headline).toBe("heals 30");
     expect(
       describeSkill(healing, new Map([["monk.healing-prayers", 12]]), EN_WORDS, EN_NAMES).headline,
-    ).toBe("heals 60");
+    ).toBe("heals 70");
     expect(
       describeSkill(skill("elementalist.fireball"), undefined, EN_WORDS, EN_NAMES).headline,
     ).toMatch(/^\d+ fire damage$/);
@@ -692,8 +692,15 @@ describe("describeSkill", () => {
     // faster flight one, and one per on-crit or failed-to-hit rider
     // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
     // are a line each, and its death burst one more (#1550); a blow that
-    // deals damage one more (#1631), and a minion's blows one (#1900).
+    // deals damage one more (#1631), and a minion's blows one (#1900). A
+    // hex with a caster half one more for it (#4167).
     const linesOf = (effect: SkillEffect): number => {
+      if (
+        effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).casterStatus !== undefined
+      ) {
+        return 2;
+      }
       if (effect.kind === "if") {
         return effect.effects.length;
       }
@@ -955,7 +962,7 @@ describe("attack skills (#417)", () => {
       EN_WORDS,
       EN_NAMES,
     ).effects.map(({ text }) => text);
-    expect(texts.at(-1)).toBe("Deals 85 earth damage; if target is knocked down: +56");
+    expect(texts.at(-1)).toBe("Deals 71 earth damage; if target is knocked down: +71");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
@@ -1087,6 +1094,15 @@ describe("attack skills (#417)", () => {
       "+18 lightning damage",
       "25% armor penetration",
     ]);
+    // +10...18...20 at rank 0 (#4257).
+    expect(
+      describeSkill(
+        skill("paragon.spear-of-lightning"),
+        new Map([["paragon.spear-mastery", 0]]),
+        EN_WORDS,
+        EN_NAMES,
+      ).effects[0]?.text,
+    ).toBe("+10 lightning damage");
     expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
       "Heals for 66, +18 Health for each ally in earshot (max 140)",
     ]);
@@ -1574,7 +1590,7 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     ).toBe("10 energy");
     expect(
       describeSkill(fireball, new Map([["mesmer.fast-casting", 12]]), EN_WORDS, EN_NAMES).castTime,
-    ).toBe("1s");
+    ).toBe("1.5s");
   });
 });
 

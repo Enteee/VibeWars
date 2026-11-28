@@ -321,6 +321,7 @@ describe("CastState slot overrides (#469)", () => {
     skillId: FIREBALL,
     key: copyKey(FIREBALL, 0),
     remainingSeconds: 20,
+    totalSeconds: 20,
     restores: { skillId: ECHO, rechargeSeconds: 20 },
   });
 
@@ -354,5 +355,39 @@ describe("CastState slot overrides (#469)", () => {
     state.startRecharge(copyKey(FIREBALL, 0), 7);
     expect(state.rechargeRemaining.size).toBe(0);
     expect(state.rechargeRemaining.has(ECHO)).toBe(false);
+  });
+});
+
+describe("countdowns end on their exact tick (#4231)", () => {
+  // Sixty 0.05 s steps leave a float crumb of 3 s above zero.
+  const TICK = 0.05;
+
+  function step(state: CastState, ticks: number): ReturnType<CastState["advance"]>[] {
+    return Array.from({ length: ticks }, () => state.advance(TICK));
+  }
+
+  it("lands a 3 s cast on tick 60, not 61", () => {
+    const state = new CastState("caster", new StatusSet("fleshy"));
+    state.beginCast("skill.a", undefined, 3, undefined);
+    expect(step(state, 59).every((done) => done === undefined)).toBe(true);
+    expect(state.advance(TICK)?.skillId).toBe("skill.a");
+  });
+
+  it("clears a 3 s recharge on tick 60", () => {
+    const state = new CastState("caster", new StatusSet("fleshy"));
+    state.startRecharge("skill.a", 3);
+    step(state, 59);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(true);
+    state.advance(TICK);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(false);
+  });
+
+  it("clears a 3 s disable on tick 60", () => {
+    const state = new CastState("caster", new StatusSet("fleshy"));
+    state.disable("skill.a", 3);
+    step(state, 59);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(true);
+    state.advance(TICK);
+    expect(state.rechargeRemaining.has("skill.a")).toBe(false);
   });
 });

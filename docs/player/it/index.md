@@ -1,6 +1,6 @@
 # Aiuto
 
-Le pagine della finestra Aiuto del gioco, nell'ordine in cui le elenca il selettore di pagina. Ogni
+Le pagine della finestra Aiuto del gioco, nell'ordine in cui le mostra il suo elenco di pagine. Ogni
 pagina di questa cartella è elencata qui una sola volta.
 
 - [Primi passi](getting-started.md)

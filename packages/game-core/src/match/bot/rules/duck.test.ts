@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { hasLineOfSight, segment } from "../../../geometry.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
-import type { BehaviourContext } from "../../behaviour.js";
+import { NO_OBJECTIVES, type BehaviourContext, type HostileGround } from "../../behaviour.js";
 import { coverSpots, type MatchSimulation } from "../../simulation.js";
 import { botUses } from "../skill-intent.js";
 import duck, { DUCK_COOLDOWN, DUCK_SECONDS } from "./duck.js";
@@ -85,6 +85,16 @@ describe("duck (#3369)", () => {
     const far = segment(vec2(300, 0), vec2(300, 100));
     const away = { ...WALLED, cover: coverSpots([[far]], [], () => true) };
     expect(duck.decide(ruleOf(fight(), {}, away))).toBeUndefined();
+  });
+
+  it("skips a spot inside a foe's well (#4193)", () => {
+    const well: HostileGround = { team: 1, hits: "foes", position: BEHIND, layer: 0, radius: 60 };
+    const objectives = { ...NO_OBJECTIVES, hostileGround: [well] };
+    expect(duck.decide(ruleOf(fight(), {}, { ...WALLED, objectives }))).toBeUndefined();
+    const own = { ...NO_OBJECTIVES, hostileGround: [{ ...well, team: 0 }] };
+    expect(duck.decide(ruleOf(fight(), {}, { ...WALLED, objectives: own }))?.moveTo).toEqual(
+      BEHIND,
+    );
   });
 
   it("does not take cover past its foes' centre", () => {

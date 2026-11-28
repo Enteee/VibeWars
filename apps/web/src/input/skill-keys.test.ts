@@ -6,11 +6,25 @@ import { skillSlotForKeyDown } from "./skill-keys.js";
 
 const press = (
   code: string,
-  extra: Partial<{ repeat: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean }> = {},
-): { code: string; repeat: boolean; ctrlKey: boolean; altKey: boolean; metaKey: boolean } => ({
+  extra: Partial<{
+    repeat: boolean;
+    ctrlKey: boolean;
+    altKey: boolean;
+    shiftKey: boolean;
+    metaKey: boolean;
+  }> = {},
+): {
+  code: string;
+  repeat: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  shiftKey: boolean;
+  metaKey: boolean;
+} => ({
   code,
   repeat: false,
   ctrlKey: false,
+  shiftKey: false,
   altKey: false,
   metaKey: false,
   ...extra,
@@ -24,6 +38,7 @@ const slot = (id: string): SkillSlot => ({
   activationSeconds: 1,
   rechargeSeconds: 5,
   copyEndsAt: null,
+  copySeconds: null,
 });
 
 /** Eight filled slots. */
@@ -53,6 +68,21 @@ describe("skillSlotForKeyDown (#302)", () => {
         skillSlotForKeyDown(press("KeyQ", { [modifier]: true }), VIBEWARS, FULL),
       ).toBeUndefined();
     }
+  });
+
+  it("casts a Shift combination's slot, and its bare key casts nothing (#4183)", () => {
+    const combo = { ...VIBEWARS, "skill-1": [{ code: "KeyX", mods: ["shift" as const] }] };
+    expect(skillSlotForKeyDown(press("KeyX", { shiftKey: true }), combo, FULL)).toBe(0);
+    expect(skillSlotForKeyDown(press("KeyX"), combo, FULL)).toBeUndefined();
+    expect(skillSlotForKeyDown(press("KeyQ"), combo, FULL)).toBeUndefined();
+  });
+
+  it("casts a bare key's slot with Shift held, unless Shift with it is bound (#4183)", () => {
+    const shiftX = press("KeyX", { shiftKey: true });
+    const bare = { ...VIBEWARS, "skill-1": [{ code: "KeyX", mods: [] }] };
+    expect(skillSlotForKeyDown(shiftX, bare, FULL)).toBe(0);
+    const both = { ...bare, "skill-2": [{ code: "KeyX", mods: ["shift" as const] }] };
+    expect(skillSlotForKeyDown(shiftX, both, FULL)).toBe(1);
   });
 
   it("casts nothing past the end of the bar, or for any other key", () => {

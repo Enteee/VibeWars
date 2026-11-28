@@ -1,13 +1,25 @@
 import { describe, expect, it } from "vitest";
 
 import { pointInPolygon } from "../../../geometry.js";
-import { vec2 } from "../../../vec2.js";
-import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
+import { distance, vec2 } from "../../../vec2.js";
+import { NO_OBJECTIVES, type BotObjectives, type HostileGround } from "../../behaviour.js";
 import type { CapturePoint } from "../../capture-points.js";
 import { MatchSimulation } from "../../simulation.js";
 import type { MatchZone } from "../../zones.js";
 import leaveZone, { EXIT_MARGIN } from "./leave-zone.js";
-import { BOT, BOUNDS, DT, RULESET, askBot, body, match, ruleFor } from "./test-support.js";
+import {
+  BOT,
+  BOUNDS,
+  DT,
+  ELEMENTALIST,
+  RULESET,
+  askBot,
+  body,
+  fighter,
+  match,
+  ruleFor,
+  slotOf,
+} from "./test-support.js";
 
 /** Scorched ground across the field, x 250..350. */
 const STRIP: MatchZone = {
@@ -99,5 +111,43 @@ describe("leave-zone: a bot steps out of harmful ground (#3026)", () => {
     };
     const intent = askBot(sim, "bot", { ...burning, capturePoints: [shrine] });
     expect(intent.moveTo).toBeUndefined();
+  });
+});
+
+describe("leave-zone: a bot steps out of a foe's harmful ground effect (#4193)", () => {
+  /** Team 1's well at (300, 400), radius 100. */
+  const WELL: HostileGround = {
+    team: 1,
+    hits: "foes",
+    position: vec2(300, 400),
+    layer: 0,
+    radius: 100,
+  };
+  const welled: BotObjectives = { ...NO_OBJECTIVES, hostileGround: [WELL] };
+
+  it("steps a bot in a foe's well about EXIT_MARGIN past its edge", () => {
+    const sim = match([body("bot", 0, vec2(380, 400), { behaviour: BOT })]);
+    const exit = leaveZone.decide(ruleFor(sim, "bot", {}, { objectives: welled }))?.moveTo;
+    if (exit === undefined) throw new Error("no exit");
+    const away = distance(exit, WELL.position);
+    expect(away).toBeGreaterThanOrEqual(WELL.radius + EXIT_MARGIN);
+    expect(away).toBeLessThan(WELL.radius + EXIT_MARGIN + 3);
+    expect(exit.x).toBeGreaterThan(380);
+  });
+
+  it("stays in its own team's well", () => {
+    const sim = match([body("bot", 1, vec2(380, 400), { behaviour: BOT })]);
+    expect(leaveZone.decide(ruleFor(sim, "bot", {}, { objectives: welled }))).toBeUndefined();
+  });
+
+  it("finishes its cast first", () => {
+    const sim = match([
+      fighter("bot", 0, ELEMENTALIST, vec2(380, 400), { behaviour: undefined }),
+      fighter("foe", 1, ELEMENTALIST, vec2(560, 400), { behaviour: undefined }),
+    ]);
+    sim.setTarget("bot", "foe");
+    sim.requestSkill("bot", slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
+    expect(sim.get("bot")?.combatant.cast.isCasting).toBe(true);
+    expect(leaveZone.decide(ruleFor(sim, "bot", {}, { objectives: welled }))).toBeUndefined();
   });
 });

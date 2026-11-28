@@ -1,7 +1,13 @@
 import type { Vec2 } from "@vibewars/game-core";
 
 import type { MessageKey } from "../i18n/index.js";
-import { codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
+import {
+  bindingLabel,
+  codeLabel,
+  type KeyAction,
+  type KeyBinding,
+  type Keymap,
+} from "../input/keymap.js";
 
 import type { Station, StationHighlight, TutorialView, TutorialWorldName } from "./stations.js";
 
@@ -47,7 +53,7 @@ export interface TutorialBeat {
 }
 
 /** Every key bound to `actions`, each action's first ones, then their second: W A S D ↑ ← ↓ →. */
-function keysOf(actions: readonly KeyAction[], map: Keymap): string[] {
+function keysOf(actions: readonly KeyAction[], map: Keymap): KeyBinding[] {
   const deepest = Math.max(0, ...actions.map((action) => map[action].length));
   return Array.from({ length: deepest }, (_, at) =>
     actions.flatMap((action) => map[action][at] ?? []),
@@ -107,7 +113,7 @@ export function createTutorialRunner(
     return {
       key,
       how: key === station.lines.praise ? undefined : station.lines.how,
-      keys: keysOf(station.keys ?? [], map).map(label),
+      keys: keysOf(station.keys ?? [], map).map((binding) => bindingLabel(binding, false, label)),
       skills,
     };
   };

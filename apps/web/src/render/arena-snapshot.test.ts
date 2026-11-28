@@ -1,7 +1,7 @@
 import { FLAT_STRUCTURE } from "./arena-snapshot.js";
 import { describe, expect, it } from "vitest";
 
-import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
+import { CREATURE_LOOKS, type CreatureLook, vec2 } from "@vibewars/game-core";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import {
@@ -19,6 +19,7 @@ import {
   healthFraction,
   nameLabelBottom,
   overheadRise,
+  figureTall,
   nameShown,
   nameTagBox,
   spiritRingAlpha,
@@ -45,7 +46,7 @@ import {
   type Rect,
   type RenderableActor,
 } from "./arena-snapshot.js";
-import { STACK_GLYPH_TINT, stackBadge, stackOverheadRise } from "./sprite-stack.js";
+import { STACK_GLYPH_TINT, creatureStack, stackBadge, stackOverheadRise } from "./sprite-stack.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import { recordBreakable } from "./breakable-objects.js";
@@ -180,6 +181,7 @@ function actor(
     spellCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    secondaryProfession: undefined,
     creatureLook: undefined,
     auraRadius: undefined,
     radius,
@@ -1086,21 +1088,60 @@ describe("bodyGlyphLayout (#1037)", () => {
   });
 
   it("gives a creature its kind's glyph, opaque, and keeps its size knocked down (#1162)", () => {
-    for (const look of CREATURE_LOOKS.filter((look) => look !== "spirit")) {
+    for (const look of CREATURE_LOOKS.filter(
+      (look) => look !== "spirit" && creatureStack(look) === undefined,
+    )) {
       const standing = bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look }));
       expect(standing).toEqual({
         glyph: { kind: "creature", look },
         x: 200,
         y: 100,
         size: CREATURE_GLYPH_SIZE,
-        // A Ghostly Hero's stand-in glyph is pale (#1377).
-        tint: look === "ghostly-hero" ? GHOST_GLYPH_TINT : BODY_EDGE,
+        tint: BODY_EDGE,
         alpha: 1,
       });
       expect(
         bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look, knockedDown: true })),
       ).toEqual(standing);
     }
+  });
+
+  it("puts a standing minion's glyph on a badge over its own figure's height, its bar over that (#4172)", () => {
+    const rise = (look: CreatureLook): number =>
+      overheadRise(actor("c", 200, 100, 10, { creatureLook: look }));
+    for (const look of ["bone-minion", "bone-horror", "flesh-golem"] as const) {
+      const minion = actor("c", 200, 100, 10, { creatureLook: look });
+      expect(bodyGlyphLayout(minion)).toMatchObject({
+        x: 200,
+        y: 100 - stackBadge(10, figureTall(minion)).rise,
+        tint: STACK_GLYPH_TINT,
+      });
+      expect(rise(look)).toBe(stackOverheadRise(10, figureTall(minion)));
+      expect(figureTall(minion)).toBeGreaterThan(0);
+      // Dead or knocked down it is its disc again, its glyph on the disc.
+      for (const fallen of [{ dead: true }, { knockedDown: true }]) {
+        const down = actor("c", 200, 100, 10, { creatureLook: look, ...fallen });
+        expect(bodyGlyphLayout(down)).toMatchObject({ x: 200, y: 100 });
+        expect(overheadRise(down)).toBe(0);
+      }
+    }
+    expect(rise("bone-minion")).toBeLessThan(rise("bone-horror"));
+    expect(rise("bone-horror")).toBeLessThan(rise("flesh-golem"));
+    expect(rise("flesh-golem")).toBeGreaterThan(stackOverheadRise(10));
+  });
+
+  it("puts a standing Ghostly Hero's glyph on its figure's badge, as a player's, and clears its bar over it (#4171)", () => {
+    const ghost = actor("c", 200, 100, 10, { creatureLook: "ghostly-hero" });
+    expect(bodyGlyphLayout(ghost)).toMatchObject({
+      x: 200,
+      y: 100 - stackBadge(10).rise,
+      tint: STACK_GLYPH_TINT,
+    });
+    expect(overheadRise(ghost)).toBe(stackOverheadRise(10));
+    // Knocked down it is its disc again, its glyph pale on it (#1377).
+    const down = actor("c", 200, 100, 10, { creatureLook: "ghostly-hero", knockedDown: true });
+    expect(bodyGlyphLayout(down)).toMatchObject({ x: 200, y: 100, tint: GHOST_GLYPH_TINT });
+    expect(overheadRise(down)).toBe(0);
   });
 
   it("gives a living spirit none, its wisp is its glyph, and greys a dead one's (#3306)", () => {

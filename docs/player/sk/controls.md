@@ -6,6 +6,12 @@ Každý kláves v tabuľke nižšie môžeš zmeniť v **Nastaveniach** v sekcii
 kláves, ktorý sa už používa, prejde na novú akciu a obrazovka povie, ktorá
 ho stratila. Zmeny sa ukladajú okamžite.
 
+Kláves môže byť aj kombinácia: podrž Shift, Ctrl alebo Alt a stlač kláves,
+napríklad **Shift + X**. Pohyb a Zobraziť mená berú len jeden kláves a
+prehliadač si niekoľko kombinácií necháva pre seba, napríklad Ctrl + W. Keď
+držíš Shift kvôli menám, tvoje obyčajné klávesy fungujú ďalej, pokiaľ
+samotná tá kombinácia so Shift nie je k niečomu priradená.
+
 ## Klávesy
 
 Predvolená predvoľba je **Klasické**, pre ruky zvyknuté na GW1. **VibeWars** zosiela ľavou rukou a pohybuje sa šípkami.
@@ -90,7 +96,7 @@ okrem Lobby, v **☰** vpravo hore na obrazovke, spolu s **Odísť**;
 **M** stále stlmí zvuk a **F10** stále odíde aj bez neho. V úzkom okne sa tieto ikony a
 ostatné tlačidlá obrazovky zbalia do **☰**; vonku zostane len jej hlavné tlačidlo.
 ⚙ otvorí Nastavenia ako okno pod lištou, obrazovka zostáva za ním; Esc, × alebo kliknutie mimo ho zatvorí.
-[?] otvorí Pomoc rovnako, ako okno pod ním s výberom stránky hore; zápas za ním beží ďalej.
+[?] otvorí Pomoc rovnako, ako okno pod ním so zoznamom svojich stránok vľavo; zápas za ním beží ďalej.
 Pomoc sa zatvára svojím krížikom ×, klávesom Esc, kliknutím mimo alebo ďalším stlačením [?].
 
 **Zdieľaj beat so svojím lobby.** V editore beatov (♪, potom **Upraviť**)

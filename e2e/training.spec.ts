@@ -47,8 +47,14 @@ async function expectFilledSlots(page: Page, names: readonly string[]): Promise<
   }
 }
 
-/** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
+/**
+ * A new elementalist, holding its Wand (#614), with Fireball on the bar, in
+ * a wide editor. Motion is reduced: a standing body breathes (#4060), and
+ * scorched ground, water and flames move, so only then does a shot of a
+ * world nobody moved hold still.
+ */
 async function openTraining(page: Page, keymap: Keymap = DEFAULT_KEYMAP): Promise<Locator> {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await openRail(page, "Character Builder");
@@ -336,8 +342,6 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
 }) => {
   // Three walks, in game time, which runs slower than wall time under load (#327).
   test.setTimeout(90_000);
-  // Scorched ground breathes, and never settles unless motion is reduced.
-  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("wilds");
   await expect(page.locator(".training-log")).toContainText("── Wilds ──");
@@ -394,8 +398,6 @@ async function walkedToHeightsWater(page: Page): Promise<{
     dy: number,
   ) => Promise<[number, number]>;
 }> {
-  // Water ripples never settle unless motion is reduced (#2984).
-  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("heights");
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
@@ -1004,7 +1006,12 @@ async function meanColour(
   }, shot.toString("base64"));
 }
 
+/**
+ * Until two shots of the arena match. Motion is reduced first: a standing
+ * body breathes (#4060), so without it the arena never holds still.
+ */
 async function stillArena(page: Page, canvas: Locator): Promise<Buffer> {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const shot = (): Promise<Buffer> =>
     canvas.screenshot({ mask: [page.locator(".training-overlay")] });
   let previous = await shot();
@@ -1708,8 +1715,6 @@ test("(44) a burning dummy wears flames on its top edge until the burning ends (
 }) => {
   // A walk and a wait for a still camera (#721), then 6 s of burning.
   test.setTimeout(90_000);
-  // Frozen flames, so a shot of them holds still.
-  await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
   await page
     .locator(".skill-box", { hasText: "Searing Flames" })

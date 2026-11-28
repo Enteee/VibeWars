@@ -1,5 +1,6 @@
 import { RANGE_SPELL } from "../../distances.js";
-import type { Skill } from "../../skills/types.js";
+import { raisedMaxHealth } from "../../skills/tick.js";
+import { isSpell, type Skill, type Surroundings } from "../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../vec2.js";
 import type {
   Behaviour,
@@ -13,17 +14,21 @@ import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { idleWander } from "./rules/idle-wander.js";
 import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
+import { blocksMe } from "./block-swap.js";
 import { diverOn } from "./peel.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
 import {
+  bearsDefence,
   FINISH_FRACTION,
   FOCUS_REACH,
   HEALER_PRIORITY,
   HURT_FRACTION,
   NOTHING,
+  PUNISH_KEEP_SELF,
+  PUNISH_SAVE_ALLY,
   foeReach,
   healthFraction,
   reactionSeconds,
@@ -31,7 +36,14 @@ import {
   skillsOf,
 } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
-import { sacrificesTooMuch } from "./skill-intent.js";
+import { punishments, type Punishments } from "./punish.js";
+import {
+  botUses,
+  removedCategories,
+  removesFromCaster,
+  sacrificesTooMuch,
+  stripsEnchantment,
+} from "./skill-intent.js";
 import { floorOf } from "../layer-rules.js";
 
 /**
@@ -70,6 +82,7 @@ export function playBuild(
     const front = foeFront(context, foes, cursor.front);
     cursor.front = front;
     const target = teamTarget(context, cursor, foes, front, behaviour.escort !== false);
+    cursor.focusId = target.id;
     return think(
       context,
       cursor,
@@ -351,6 +364,11 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   markHealth(cursor, context.now, healthFraction(self));
+  // Built only when a rule weighs a blow at a blocker (#4204).
+  let around: Surroundings | undefined;
+  const surroundings = (): Surroundings =>
+    (around ??= new Map(context.participants.map((body) => [body.id, body])));
+  const punished = punishments(self);
   const rule: RuleContext = {
     context,
     self,
@@ -359,6 +377,8 @@ function think(
     allies,
     targetId,
     targetFixed,
+    attackTarget: (attackSkill) =>
+      attackTarget(context, foes, targetId, attackSkill, surroundings()),
     nearestFirst: (bodies) =>
       [...bodies].sort(
         (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -377,6 +397,9 @@ function think(
       ) {
         return false;
       }
+      if (forbidden(self, skill, targetId, punished, context.participants)) {
+        return false;
+      }
       const check = context.check(skill.id, targetId);
       return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
     },
@@ -388,6 +411,7 @@ function think(
     escort,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
+    speedOf: (participant) => context.speedOf(participant.id),
     plan: teamPlan(
       context.seed,
       self.combatant.team,
@@ -396,9 +420,21 @@ function think(
     ),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
+  cursor.swapId = undefined;
   for (const each of BOT_RULES) {
     const intent = each.decide(rule);
     if (intent !== undefined) {
+      // Its weapon off a blocking team target (#4204): `heldTarget` reads
+      // the team target for it, so it comes back once the block ends.
+      const attack = rule.bar.find((held) => held.id === intent.useSkillId);
+      const weapon =
+        intent.useSkillId === undefined
+          ? intent.attackTargetId !== undefined
+          : attack?.attack !== undefined;
+      cursor.swapId =
+        weapon && intent.targetId !== targetId && intent.targetId === rule.attackTarget(attack)
+          ? intent.targetId
+          : undefined;
       // Any other answer, a fight first among them, ends a wait for the team (#2621).
       if (each !== regroup) {
         cursor.regrouping = false;
@@ -407,12 +443,100 @@ function think(
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
-      return intent;
+      return holdAttack(self, intent, punished);
     }
   }
-  return NOTHING;
+  return holdAttack(self, NOTHING, punished);
 }
 
+/**
+ * Under a hex that punishes attacking (#4199), Empathy's: no swing, and
+ * the one running ends.
+ */
+function holdAttack(
+  self: Participant,
+  intent: BehaviourIntent,
+  punished: Punishments,
+): BehaviourIntent {
+  return punished.attacks
+    ? { ...intent, attackTargetId: undefined, stopAttack: self.combatant.attack !== undefined }
+    : intent;
+}
+
+/**
+ * Whether a punishing hex (#4199) bars `skill`: a spell under Backfire,
+ * any skill under Spiteful Spirit, an attack skill under Empathy. Never a
+ * skill that takes a hex off the bot itself, its way out; nor a heal or
+ * protection for an ally below `PUNISH_SAVE_ALLY` while the bot keeps
+ * more than `PUNISH_KEEP_SELF` of its health after paying.
+ */
+function forbidden(
+  self: Participant,
+  skill: Skill,
+  targetId: string | undefined,
+  punished: Punishments,
+  participants: readonly Participant[],
+): boolean {
+  const barred =
+    punished.skills ||
+    (punished.spells && isSpell(skill.type)) ||
+    (punished.attacks && skill.type === "attack");
+  if (!barred) {
+    return false;
+  }
+  if (
+    removedCategories(skill).includes("hex") &&
+    (removesFromCaster(skill) || targetId === self.id)
+  ) {
+    return false;
+  }
+  const ally = participants.find((each) => each.id === targetId);
+  const saves =
+    ally?.combatant.team === self.combatant.team &&
+    healthFraction(ally) < PUNISH_SAVE_ALLY &&
+    botUses(skill).some((use) => use === "healing" || use === "defence");
+  if (!saves) {
+    return true;
+  }
+  const maxHealth = raisedMaxHealth(self.combatant);
+  return maxHealth <= 0 || (self.combatant.health - punished.cost) / maxHealth <= PUNISH_KEEP_SELF;
+}
+
+/**
+ * The foe `context.self` hits with `attackSkill`, or a plain swing when
+ * `undefined` (#4204): the team's `targetId`, unless that foe blocks at
+ * least `BLOCK_SWAP_CHANCE` of the blow (`blocksMe`). Then, as in GW1 PvP,
+ * it swings at the `focusPick` of the other foes in spell range that do
+ * not, and goes back the think the block ends. Never off a human's call
+ * (#4188); with no other foe to hit, at the blocker still. A creature
+ * only while no fighter is in range.
+ */
+function attackTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  targetId: string | undefined,
+  attackSkill: Skill | undefined,
+  surroundings: Surroundings,
+): string | undefined {
+  const self = context.self;
+  const target = foes.find((foe) => foe.id === targetId);
+  if (
+    target === undefined ||
+    target.id === context.calledTargetId ||
+    !blocksMe(self.combatant, target.combatant, attackSkill, surroundings)
+  ) {
+    return targetId;
+  }
+  const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  const eligible = fightable([target, ...near]);
+  const others = near.filter(
+    (foe) =>
+      foe.id !== target.id &&
+      eligible(foe) &&
+      !blocksMe(self.combatant, foe.combatant, attackSkill, surroundings),
+  );
+  return focusPick(self, others)?.id ?? targetId;
+}
 /**
  * The foe a bot fights, and whether it is `fixed` (#4147): called, a
  * ghost on the altar or a kill being finished, so not one an area skill
@@ -438,7 +562,8 @@ interface TeamTarget {
  * `planPlaced`), the team's target only within `FOCUS_REACH` past spell
  * range, so a holding, flanking or escorting bot is not pulled across the map into its teammates' fight. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
- * the `front` team (#2685); a diver from any.
+ * the `front` team (#2685); a diver from any. Past the diver, only a foe
+ * the team can hurt (#4269, `hurtable`).
  */
 function teamTarget(
   context: BehaviourContext,
@@ -465,7 +590,9 @@ function teamTarget(
   if (diver !== undefined) {
     return { id: diver.id, fixed: false };
   }
-  const teams = heldTarget(context, foes, inRange);
+  const hurt = hurtable(context, inRange);
+  const targets = inRange.filter(hurt);
+  const teams = heldTarget(context, cursor, foes.filter(hurt), targets);
   const held =
     teams !== undefined &&
     distance(teams.position, self.position) > RANGE_SPELL + FOCUS_REACH &&
@@ -487,17 +614,36 @@ function teamTarget(
   if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
     return { id: held.id, fixed: true };
   }
-  const dying = weakest(self, inRange);
+  const dying = weakest(self, targets);
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
     return { id: dying.id, fixed: true };
   }
   if (
     held !== undefined &&
-    (inRange.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
+    (targets.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
   ) {
     return { id: held.id, fixed: false };
   }
-  return { id: focusPick(self, inRange)?.id, fixed: false };
+  return { id: focusPick(self, targets)?.id, fixed: false };
+}
+
+/**
+ * Which of `inRange` the team can hurt (#4269): with no strip on a living
+ * bot's bar, self included, a foe bearing a defence enchantment
+ * (`bearsDefence`) is passed over while another eligible one in range
+ * does not bear it. A human teammate's strip is not one the bots plan
+ * around; a recharging strip still counts, as `stripFirst` waits for it.
+ */
+function hurtable(
+  context: BehaviourContext,
+  inRange: readonly Participant[],
+): (foe: Participant) => boolean {
+  const canStrip = livingMembers(context).some(
+    (mate) => context.isBot(mate.id) && skillsOf(mate).some(stripsEnchantment),
+  );
+  const eligible = fightable(inRange);
+  const open = !canStrip && inRange.some((foe) => eligible(foe) && !bearsDefence(foe));
+  return (foe) => !open || !bearsDefence(foe);
 }
 
 /**
@@ -558,9 +704,15 @@ function foeGhostOnAltar(
   return nearest;
 }
 
-/** The first living foe a bot of `context.self`'s team targets, if it may be fought. */
+/**
+ * The first living foe a bot of `context.self`'s team targets, if it may
+ * be fought. Its own, while its weapon went off a blocker (`swapId`), is
+ * the team target it last chose (`focusId`, #4204), so it comes back once
+ * the block ends.
+ */
 function heldTarget(
   context: BehaviourContext,
+  cursor: BehaviourCursor,
   foes: readonly Participant[],
   inRange: readonly Participant[],
 ): Participant | undefined {
@@ -581,7 +733,11 @@ function heldTarget(
     ) {
       continue;
     }
-    const held = foes.find((foe) => foe.id === ally.targetId);
+    const id =
+      ally.id === self.id && cursor.swapId !== undefined && ally.targetId === cursor.swapId
+        ? cursor.focusId
+        : ally.targetId;
+    const held = foes.find((foe) => foe.id === id);
     if (held !== undefined && eligible(held) && (!objectives || inRange.includes(held))) {
       return held;
     }

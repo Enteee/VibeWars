@@ -7,7 +7,7 @@ import {
   ownStatuses,
   wardedDamageType,
 } from "../skill-intent.js";
-import { skillsOf } from "./shared.js";
+import { keepsReserve, skillsOf } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** A cast this long or longer is worth a guard against interrupts (#1964). */
@@ -34,7 +34,8 @@ const mantra: BotRule = {
     for (const skill of mantras) {
       if (
         ownStatuses(skill).some((id) => self.combatant.statuses.has(id)) ||
-        !mayUse(skill, self.id)
+        !mayUse(skill, self.id) ||
+        keepsReserve(self, skill)
       ) {
         continue;
       }

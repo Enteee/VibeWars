@@ -11,23 +11,19 @@ Ingen delar ut den: vem som helst kan kolla topplistan och se vad du har tjänat
 | ----------------------------------------------- | ----------------------- |
 | Jaderam och titeln Utmanare                     | 5 rankade vinster       |
 | Mossaura, Mosspår, Mossving                     | 5 rankade vinster       |
-| Randig mantel                                   | 5 rankade vinster       |
 | Emblemram i bårdens färg                        | 5 rankade vinster       |
 | Rosenram och titeln Veteran                     | 25 rankade vinster      |
 | Glödaura, Glödspår, Glödsving                   | 25 rankade vinster      |
-| Sparremantel                                    | 25 rankade vinster      |
 | Stigande ljus, Askupplösning                    | 25 rankade vinster      |
 | Frostaura, Frostspår, Frostsving                | 75 rankade vinster      |
 | Lövvirvel, Dimupplösning                        | 75 rankade vinster      |
 | Emblemram av järn                               | 75 rankade vinster      |
 | Blågrön ram och titeln Krigsherre               | 200 rankade vinster     |
-| Kvadrerad mantel                                | 200 rankade vinster     |
 | Fallande kronblad, Skärvupplösning              | 200 rankade vinster     |
 | Emblemram av silver                             | 200 rankade vinster     |
 | Stjärnljusaura, Stjärnljusspår, Stjärnljussving | 500 rankade vinster     |
 | Stjärnfall, Stjärnstoftsupplösning              | 500 rankade vinster     |
 | Orkidéram och titeln Mästare                    | En plats på Topp 100    |
-| Stjärnmantel                                    | En plats på Topp 100    |
 | Förgylld emblemram                              | En plats på Topp 100    |
 | Segersvitens låga                               | 3 rankade vinster i rad |
 
@@ -39,9 +35,9 @@ Det du har valt förblir valt.
 
 En markaura är en svag ring vid dina fötter. Fotspår lämnar små korn där du går, som bleknar på ett ögonblick. Båda ritas under varje ring, markering och varning och har aldrig en lagfärg. Har du slagit på minskad rörelse i ditt system står auran still och inga spår ritas.
 
-## På ditt vapen och din mantel
+## På ditt vapen
 
-Ett vapenspår är ett band bakom ditt vapen när en närstridsattack träffar, bleknat inom en femtedels sekund efter träffen. Pilbågar, spjut, trollspön och stavar får inget, och ingen besvärjelse eller kastning visar någonsin ett. Ett mantelmönster lägger ränder, sparrar, kvarter eller stjärnor på din gillesmantel i dess egen kantfärg, och ditt emblem ligger alltid överst, lika tydligt som på en slät mantel. Har du slagit på minskad rörelse i ditt system ritas inget vapenspår.
+Ett vapenspår är ett band bakom ditt vapen när en närstridsattack träffar, bleknat inom en femtedels sekund efter träffen. Pilbågar, spjut, trollspön och stavar får inget, och ingen besvärjelse eller kastning visar någonsin ett. Har du slagit på minskad rörelse i ditt system ritas inget vapenspår.
 
 ## Att komma tillbaka och falla
 
@@ -59,7 +55,7 @@ har en blå ring. Texten bredvid raden (under den på en telefon) namnger rutan 
 fokus på, och vad som låser upp den. En låst ruta är nedtonad, med ett litet hänglås. Ditt val
 gäller direkt. Andra spelare ser det från nästa lobby du går med i.
 
-Ovanför raderna bär din karaktär din stil och står, går och svingar, så att auran, spåret och vapenspåret syns i rörelse. Tryck och håll på ett prov för att prova det, även ett låst: raden säger vad du förhandsvisar och, så länge det är låst, vad som ger det. Släpp på ett intjänat föremål för att bära det. Släpp på ett låst, eller dra av provet, så ändras ingenting. Med tangentbord håller du ned mellanslag på ett prov.
+Bredvid raderna (ovanför dem på en telefon) bär din karaktär din stil och vandrar omkring: går, står, svingar och kastar besvärjelser, så att auran, spåret och vapenspåret syns i rörelse. Den stannar i bild medan du skrollar. Väljarna Primär och Sekundär under den visar stilen på valfritt yrkespar; de ändrar bara förhandsvisningen, aldrig din karaktär. Tryck och håll på ett prov för att prova det, även ett låst: raden säger vad du förhandsvisar och, så länge det är låst, vad som ger det. Släpp på ett intjänat föremål för att bära det. Släpp på ett låst, eller dra av provet, så ändras ingenting. Med tangentbord håller du ned mellanslag på ett prov.
 
 ## Se andra spelares kosmetik
 

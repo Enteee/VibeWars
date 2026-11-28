@@ -11,23 +11,19 @@ wyników. Nikt ich nie rozdaje: każdy może sprawdzić tabelę wyników i zobac
 | ------------------------------------------------------------ | ------------------------------- |
 | Nefrytowa ramka i tytuł Pretendent                           | 5 zwycięstw rankingowych        |
 | Aura mchu, Ślad mchu, Cięcie mchu                            | 5 zwycięstw rankingowych        |
-| Peleryna w paski                                             | 5 zwycięstw rankingowych        |
 | Ramka herbu w kolorze lamówki                                | 5 zwycięstw rankingowych        |
 | Różana ramka i tytuł Weteran                                 | 25 zwycięstw rankingowych       |
 | Aura żaru, Ślad żaru, Cięcie żaru                            | 25 zwycięstw rankingowych       |
-| Peleryna w krokwie                                           | 25 zwycięstw rankingowych       |
 | Wznoszące się światło, Rozpad w popiół                       | 25 zwycięstw rankingowych       |
 | Aura szronu, Ślad szronu, Cięcie szronu                      | 75 zwycięstw rankingowych       |
 | Wir liści, Rozpad w mgłę                                     | 75 zwycięstw rankingowych       |
 | Żelazna ramka herbu                                          | 75 zwycięstw rankingowych       |
 | Morska ramka i tytuł Watażka                                 | 200 zwycięstw rankingowych      |
-| Peleryna w ćwiartki                                          | 200 zwycięstw rankingowych      |
 | Deszcz płatków, Rozpad w odłamki                             | 200 zwycięstw rankingowych      |
 | Srebrna ramka herbu                                          | 200 zwycięstw rankingowych      |
 | Aura blasku gwiazd, Ślad blasku gwiazd, Cięcie blasku gwiazd | 500 zwycięstw rankingowych      |
 | Deszcz gwiazd, Rozpad w gwiezdny pył                         | 500 zwycięstw rankingowych      |
 | Storczykowa ramka i tytuł Czempion                           | Miejsce w Top 100               |
-| Peleryna w gwiazdy                                           | Miejsce w Top 100               |
 | Złocona ramka herbu                                          | Miejsce w Top 100               |
 | Płomień serii zwycięstw                                      | 3 zwycięstwa rankingowe z rzędu |
 
@@ -39,9 +35,9 @@ wybrałeś, pozostaje wybrane.
 
 Aura na ziemi to blady pierścień u twoich stóp. Ślad kroków zostawia drobne drobinki tam, gdzie idziesz, które znikają w mgnieniu oka. Oba rysują się pod każdym pierścieniem, znakiem i ostrzeżeniem i nigdy nie mają koloru drużyny. Jeśli w systemie masz włączone ograniczenie ruchu, aura stoi w miejscu, a ślad się nie rysuje.
 
-## Na broni i pelerynie
+## Na broni
 
-Ślad broni to wstęga za twoją bronią, gdy trafia atak wręcz, blaknąca w ciągu jednej piątej sekundy od trafienia. Łuki, włócznie, różdżki i kostury go nie mają, a żadne zaklęcie ani rzucanie nigdy go nie pokazuje. Wzór peleryny kładzie na twojej pelerynie gildii pasy, krokwie, ćwiartki lub gwiazdy w jej własnym kolorze obszycia, a twój herb zawsze zostaje na wierzchu, tak wyraźny jak na gładkiej pelerynie. Jeśli w systemie masz włączone ograniczenie ruchu, ślad broni się nie rysuje.
+Ślad broni to wstęga za twoją bronią, gdy trafia atak wręcz, blaknąca w ciągu jednej piątej sekundy od trafienia. Łuki, włócznie, różdżki i kostury go nie mają, a żadne zaklęcie ani rzucanie nigdy go nie pokazuje. Jeśli w systemie masz włączone ograniczenie ruchu, ślad broni się nie rysuje.
 
 ## Powrót i upadek
 
@@ -60,7 +56,7 @@ wskazujesz lub która ma fokus, i to, za co się ją zdobywa. Zablokowana próbk
 małą kłódką. Twój wybór działa od razu. Inni gracze widzą go od następnego lobby, do którego
 dołączysz.
 
-Nad rzędami twoja postać nosi twój wygląd, stoi, chodzi i wymachuje bronią, więc aurę, ślad i smugę broni widać w ruchu. Przytrzymaj próbkę, aby ją przymierzyć, nawet zablokowaną: wiersz mówi, co oglądasz, a dopóki jest zablokowana, czym się ją zdobywa. Puść na zdobytym przedmiocie, aby go nosić. Puść na zablokowanym albo zsuń palec z próbki, a nic się nie zmieni. Na klawiaturze przytrzymaj spację na próbce.
+Obok rzędów (nad nimi na telefonie) twoja postać nosi twój wygląd i krąży wokoło: chodzi, stoi, wymachuje bronią i rzuca czary, więc aurę, ślad i smugę broni widać w ruchu. Zostaje na widoku, gdy przewijasz. Wybory Główna i Drugorzędna pod nią pokazują wygląd na dowolnej parze profesji; zmieniają tylko podgląd, nigdy twoją postać. Przytrzymaj próbkę, aby ją przymierzyć, nawet zablokowaną: wiersz mówi, co oglądasz, a dopóki jest zablokowana, czym się ją zdobywa. Puść na zdobytym przedmiocie, aby go nosić. Puść na zablokowanym albo zsuń palec z próbki, a nic się nie zmieni. Na klawiaturze przytrzymaj spację na próbce.
 
 ## Kosmetyki innych graczy
 

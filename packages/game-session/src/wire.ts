@@ -265,6 +265,7 @@ export function skillBarSlots(
       activationSeconds: skill?.activationSeconds ?? 0,
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
       copyEndsAt: copy === undefined ? null : tenths(elapsedSeconds + copy.remainingSeconds),
+      copySeconds: copy === undefined ? null : copy.totalSeconds,
     };
   });
 }
@@ -327,7 +328,8 @@ export function sameSkillBar(
         slot.adrenalineCost === other.adrenalineCost &&
         slot.activationSeconds === other.activationSeconds &&
         slot.rechargeSeconds === other.rechargeSeconds &&
-        slot.copyEndsAt === other.copyEndsAt
+        slot.copyEndsAt === other.copyEndsAt &&
+        slot.copySeconds === other.copySeconds
       );
     })
   );
@@ -506,10 +508,12 @@ function combatEvent(event: WireCombatEvent, combat: WireCombat): CombatEvent | 
     return undefined;
   }
   switch (event.kind) {
+    // What a flat cut took off is not sent (#4163): only the server
+    // charges adrenaline from it.
     case "damage":
       return amount === null || crit === null
         ? undefined
-        : { kind: event.kind, targetId, amount, critical: crit };
+        : { kind: event.kind, targetId, amount, unreduced: amount, critical: crit };
     case "heal":
     case "energy-gain":
     case "energy-loss":

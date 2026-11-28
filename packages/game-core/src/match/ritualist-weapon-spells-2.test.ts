@@ -167,7 +167,7 @@ describe("the three weapon spells' tooltips (#1022)", () => {
       "the next time it takes damage or life steal from a foe: steals 51 Health from that foe",
     );
     expect(describeStatus("splinter-weapon", undefined, EN_WORDS, EN_NAMES)).toBe(
-      "your attacks: Adjacent foes take 25 damage, ends after 4 hits",
+      "your attacks: Adjacent foes take 33 damage, ends after 4 hits",
     );
   });
 });
@@ -355,11 +355,11 @@ describe("Splinter Weapon (#1022)", () => {
     };
   }
 
-  it("a sword's 4 hits each deal 25 to the foe beside the one hit, then it ends", () => {
+  it("a sword's 4 hits each deal 33 to the foe beside the one hit, then it ends", () => {
     const { splashes } = untilSpent(splinter(swordsman("war", vec2(0, 0), 0), vec2(TOUCHING, 0)));
     expect(splashes).toEqual(
       Array.from({ length: 4 }, () => [
-        { kind: "damage", targetId: "near", amount: 25, critical: false },
+        { kind: "damage", targetId: "near", amount: 33, unreduced: 33, critical: false },
       ]),
     );
   });
@@ -379,7 +379,7 @@ describe("Splinter Weapon (#1022)", () => {
     });
     const { splashes } = untilSpent(splinter(archer, vec2(300, 0)));
     expect(splashes[0]).toEqual([
-      { kind: "damage", targetId: "near", amount: 25, critical: false },
+      { kind: "damage", targetId: "near", amount: 33, unreduced: 33, critical: false },
     ]);
   });
 });
@@ -406,16 +406,16 @@ describe("Mending Grip (#1022)", () => {
     return ally;
   }
 
-  it("heals 68 and, under a weapon spell, takes one condition", () => {
+  it("heals 78 and, under a weapon spell, takes one condition", () => {
     const ally = grip(true);
-    expect(ally.health).toBe(168);
+    expect(ally.health).toBe(178);
     expect(ally.statuses.has("poison")).toBe(false);
     expect(ally.statuses.has("weapon-of-warding")).toBe(true);
   });
 
   it("with no weapon spell, only heals", () => {
     const ally = grip(false);
-    expect(ally.health).toBe(168);
+    expect(ally.health).toBe(178);
     expect(ally.statuses.has("poison")).toBe(true);
   });
 });

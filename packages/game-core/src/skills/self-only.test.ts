@@ -24,7 +24,7 @@ describe("a status only its caster bears (#2341)", () => {
       "mist-form",
       "33% less damage from foes with a Water Magic hex. Whenever you cast an elemental spell: you and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
     ],
-    ["echo", "the next time you use a skill: that skill takes this skill's slot for 20 seconds"],
+    ["echo", "the next time you use a skill: that skill takes this skill's slot for 30 seconds"],
     [
       "feigned-neutrality",
       "+7 Health regeneration, +80 armor, ends if you hit with an attack, ends if you use a skill",

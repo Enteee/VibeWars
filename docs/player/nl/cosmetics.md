@@ -11,23 +11,19 @@ telt. Niemand deelt ze uit: iedereen kan de ranglijst bekijken en zien wat je ve
 | ------------------------------------------------------ | ------------------------------- |
 | Jaden rand en de titel Uitdager                        | 5 gerankte overwinningen        |
 | Mosaura, Mosspoor, Moszwaai                            | 5 gerankte overwinningen        |
-| Gestreepte cape                                        | 5 gerankte overwinningen        |
 | Embleemlijst in de boordkleur                          | 5 gerankte overwinningen        |
 | Rozen rand en de titel Veteraan                        | 25 gerankte overwinningen       |
 | Sintelaura, Sintelspoor, Sintelzwaai                   | 25 gerankte overwinningen       |
-| Kepercape                                              | 25 gerankte overwinningen       |
 | Rijzend licht, Asoplossing                             | 25 gerankte overwinningen       |
 | Vorstaura, Vorstspoor, Vorstzwaai                      | 75 gerankte overwinningen       |
 | Bladerwerveling, Neveloplossing                        | 75 gerankte overwinningen       |
 | IJzeren embleemlijst                                   | 75 gerankte overwinningen       |
 | Blauwgroene rand en de titel Krijgsheer                | 200 gerankte overwinningen      |
-| Gevierendeelde cape                                    | 200 gerankte overwinningen      |
 | Bloemblaadjesregen, Scherfoplossing                    | 200 gerankte overwinningen      |
 | Zilveren embleemlijst                                  | 200 gerankte overwinningen      |
 | Sterrenlichtaura, Sterrenlichtspoor, Sterrenlichtzwaai | 500 gerankte overwinningen      |
 | Sterrenregen, Sterrenstofoplossing                     | 500 gerankte overwinningen      |
 | Orchideeën rand en de titel Kampioen                   | Een plek in de Top 100          |
-| Sterrencape                                            | Een plek in de Top 100          |
 | Vergulde embleemlijst                                  | Een plek in de Top 100          |
 | Zegereeksvlam                                          | 3 gerankte overwinningen op rij |
 
@@ -39,9 +35,9 @@ opnieuw verdient. Wat je gekozen hebt, blijft gekozen.
 
 Een grondaura is een vage ring aan je voeten. Voetsporen laten kleine deeltjes achter waar je loopt, die binnen een ogenblik vervagen. Beide liggen onder elke ring, markering en waarschuwing en hebben nooit een teamkleur. Staat verminderde beweging aan in je systeem, dan staat de aura stil en wordt er geen spoor getekend.
 
-## Op je wapen en cape
+## Op je wapen
 
-Een wapenspoor is een lint achter je wapen terwijl een melee-aanval raakt, binnen een vijfde seconde na de treffer vervaagd. Bogen, speren, toverstokken en staven krijgen er geen, en geen enkele spreuk of cast toont er ooit een. Een capepatroon legt strepen, kepers, kwartieren of sterren op je gildecape in zijn eigen randkleur, en je embleem blijft altijd bovenop, even duidelijk als op een effen cape. Staat verminderde beweging aan in je systeem, dan wordt er geen wapenspoor getekend.
+Een wapenspoor is een lint achter je wapen terwijl een melee-aanval raakt, binnen een vijfde seconde na de treffer vervaagd. Bogen, speren, toverstokken en staven krijgen er geen, en geen enkele spreuk of cast toont er ooit een. Staat verminderde beweging aan in je systeem, dan wordt er geen wapenspoor getekend.
 
 ## Terugkomen en vallen
 
@@ -59,7 +55,7 @@ regel naast de rij (eronder op een telefoon) noemt het staal waar je naar wijst 
 en waarmee je het verdient. Een vergrendeld staal is gedimd, met een klein hangslot. Je keuze geldt
 meteen. Andere spelers zien hem vanaf de volgende lobby waar je in gaat.
 
-Boven de rijen draagt je personage jouw look en staat, loopt en slaat, zodat je de aura, het spoor en het wapenspoor in beweging ziet. Houd een staal ingedrukt om het te passen, ook een vergrendeld staal: de regel zegt wat je bekijkt en, zolang het vergrendeld is, waarmee je het verdient. Laat los op een verdiend item om het te dragen. Laat los op een vergrendeld item, of schuif van het staal af, en er verandert niets. Met een toetsenbord houd je de spatiebalk ingedrukt op een staal.
+Naast de rijen (erboven op een telefoon) draagt je personage jouw look en zwerft het rond: het loopt, staat, slaat en spreekt spreuken uit, zodat je de aura, het spoor en het wapenspoor in beweging ziet. Het blijft in beeld terwijl je scrolt. De keuzes Primair en Secundair eronder tonen de look op elk paar beroepen; ze veranderen alleen de voorvertoning, nooit je personage. Houd een staal ingedrukt om het te passen, ook een vergrendeld staal: de regel zegt wat je bekijkt en, zolang het vergrendeld is, waarmee je het verdient. Laat los op een verdiend item om het te dragen. Laat los op een vergrendeld item, of schuif van het staal af, en er verandert niets. Met een toetsenbord houd je de spatiebalk ingedrukt op een staal.
 
 ## Cosmetics van andere spelers zien
 

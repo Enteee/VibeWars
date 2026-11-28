@@ -27,7 +27,13 @@ Een bot speelt de rol die zijn build hem geeft. Een bot met een melee-wapen is
 meer genezingen of beschermingen die hij op een bondgenoot kan casten, is een
 **healer**: hij staat achter de bondgenoot die het meest gewond is, weg van de
 vijanden. Als twee of meer vijanden zich op één bondgenoot richten, geeft een
-healer die bondgenoot zijn bescherming voordat de klap aankomt. Elke andere bot
+healer die bondgenoot zijn bescherming voordat de klap aankomt. Een healer
+houdt genoeg Energie achter voor zijn goedkoopste genezing of bescherming, en
+gaat daar alleen onder voor een bondgenoot in echt gevaar. Een bot met twee
+vloeken legt zijn goedkope vloek over zijn belangrijke, zodat de
+vloekverwijdering van een vijand eerst de goedkope weghaalt. Een bot met
+energieontzegging verbrandt de Energie van de vijandelijke healer, niet die van
+de Krijger. Elke andere bot
 is **ranged**: hij blijft waar elk van zijn aanvallen reikt, en blijft staan
 om te vechten met een vijand die te dichtbij komt. Ranged bots en healers
 stappen naar plekken waar minder vijanden ze kunnen bereiken, en gebruiken
@@ -46,7 +52,9 @@ Een bot met een verlammende of vertragende vaardigheid gebruikt die op een vijan
 
 Tegen een team met gebiedsskills houden afstandsbots en genezers afstand van elkaar, zodat één explosie er geen twee raakt. Dekking geven ze daarvoor nooit op.
 
-Een afstandsbot of genezer bij wie een vijand te dichtbij komt, trekt zich eerst terug naar de dichtstbijzijnde frontliniebot, als die dichtbij genoeg is, en vecht daar.
+Een afstandsbot of genezer bij wie een vijand te dichtbij komt, trekt zich eerst terug naar de dichtstbijzijnde frontliniebot, als die dichtbij genoeg is, en vecht daar. Een vertraagde aanvaller van dichtbij, bijvoorbeeld kreupel, kan het niet bijhouden, dus daartegen stapt de bot in plaats daarvan tussen de schoten door achteruit.
+
+Een bot onder een vloek die aanvallen of spreuken bestraft, zoals Empathy of Backfire, stopt daarmee tot de vloek afloopt.
 
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
 Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.
@@ -61,7 +69,9 @@ wacht maximaal vier seconden op zijn teamgenoten, en wacht helemaal niet om
 een vijand onder 30% gezondheid af te maken. Staat het doelwit onder een
 beschermende betovering zoals Protective Spirit of Aegis, dan haalt een bot
 met een betoveringsstrip, zoals Strip Enchantment, die er eerst af, en houden
-de anderen hun klappen daarvoor in.
+de anderen hun klappen daarvoor in. Heeft het team geen betoveringsstrip, dan
+laten de bots een beschermde vijand met rust en richten ze zich op een
+andere tot de betovering afloopt.
 
 Een zwaargewonde bot die zijn gevecht verliest, valt terug achter zijn healer,
 of naar zijn basis, en rust buiten bereik tot hij het grootste deel van zijn
@@ -77,6 +87,7 @@ net als voor jou.
 
 Bots lopen om brandende grond en andere schadelijke plekken heen als de
 omweg niet veel langer is, en stappen uit een plek waar ze in staan.
+Ze stappen ook uit een schadelijk gebied van een tegenstander, zoals een put, een afweer tegen hen of een storm, en vechten vanaf de rand.
 
 Een bot met een onderbreking bewaart die voor de casts die ertoe doen: eerst
 een reanimatie of een Spookheld die het altaar claimt, dan een genezing of een
@@ -87,6 +98,15 @@ speler mist hij ongeveer een op de vier van die casts.
 Een bot neemt een menselijk moment, een fractie van een seconde, om te reageren
 op wat er gebeurt, dus een snelle onderbreking of een late ontwijking kan hem
 verslaan.
+
+Als niemand in je team een doelwit heeft aangewezen, wijst een van je bots de
+vijand aan waar je bots zich op richten, net zoals jij zou doen: je ziet de
+markering en de naam van de bot, zodat je kunt meedoen. Een aanwijzing van een
+bot laat alleen zien waar de bots heen gaan; ze schieten nog steeds een
+teamgenoot te hulp en maken een stervende vijand af. Een aanwijzing van jou
+wint altijd: elke bot in het team richt zich op jouw doelwit, geen bot
+vervangt jouw aanwijzing, en de bots wijzen pas weer aan als dat doelwit dood
+of weg is.
 
 In een gevecht met drie teams vechten bots tegen één vijandelijk team tegelijk:
 het team dat hen aanvalt, of, als niemand dat doet, het meest gewonde team

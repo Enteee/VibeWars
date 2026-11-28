@@ -31,6 +31,7 @@
  *                      times the calibration's. CI's regression gate.
  *   --url <url>        measure a client already served there.
  *   --follow           only the follow case (#3240), below.
+ *   --crowd            only the crowd case (#4171), below.
  *
  * Then the follow case: on every map measured and `FLAT_BASELINE`, a Hosted
  * 1v1 whose body walks `followLoop` while the camera follows it and the
@@ -48,6 +49,13 @@
  *   BENCH_PROFILE=<mapId> record a CPU profile of that map's walk to
  *                      `bench-<mapId>.cpuprofile` and print its 15
  *                      functions of most self time (#3499). Off in CI.
+ *
+ * The crowd case, on its own (`--crowd`), as no gate judges it: the
+ * bench scene `creature-crowd` (`apps/web/src/dev/diagram-scenes.ts`),
+ * 16 bodies, 8 spirits and 16 bone minions in a fight, drawn on for
+ * `BENCH_SECONDS`, its creatures as baked figures and then, with
+ * `?discs`, as the flat discs they replace. A row each and the figures'
+ * p50 over the discs': stacked creatures must not draw slower than discs.
  *
  * The menu background never draws faster than 30 fps (#3119): a map
  * under that cap measures as the cap. Software GL is far over it.
@@ -126,7 +134,11 @@ const MAX_FOLLOW_RATIO =
     ? undefined
     : Number(process.env.BENCH_MAX_FOLLOW_RATIO);
 const { values: options } = parseArgs({
-  options: { url: { type: "string" }, follow: { type: "boolean" } },
+  options: {
+    url: { type: "string" },
+    follow: { type: "boolean" },
+    crowd: { type: "boolean" },
+  },
 });
 
 /**
@@ -631,6 +643,27 @@ function writeProfile(mapId, profile) {
   }
 }
 
+/** `--crowd`'s bench scene (#4171), and how its creatures are drawn in each row. */
+const CROWD_SCENE = "creature-crowd";
+const CROWD_DRAWS = [
+  { label: "figures", query: "" },
+  { label: "discs", query: "&discs" },
+];
+
+/**
+ * The crowd scene's frames over `BENCH_SECONDS`, drawn as `query` says.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} query
+ * @returns {Promise<number[]>}
+ */
+async function crowd(page, query) {
+  await page.goto(`${url}?scene=${CROWD_SCENE}${query}`);
+  await page.waitForFunction(() => window.__sceneReady === true, null, { timeout: 120_000 });
+  await sleep(SETTLE_MS);
+  return frameTimes(page);
+}
+
 /**
  * The median of numbers.
  *
@@ -673,175 +706,197 @@ try {
   };
   /** One calibration window: the reference map, drawn as a map is, alone (#3255). */
   const calibrationWindow = async () => percentile(await mapWindow(REFERENCE_MAP, SECONDS), 50);
-  const mapIds = options.follow === true ? [] : mapsToMeasure();
-  const runStart = Date.now();
-  /** @type {(phase: string, since: number) => void} */
-  const timed = (phase, since) => {
-    console.log(`phase ${phase} ${((Date.now() - since) / 1000).toFixed(0)} s`);
-  };
-  // The runner is slow for the first 20-40 s of a run: load the first map, then
-  // calibrate until the runner has had that long and two windows in a row agree,
-  // and keep none of it (#3243).
-  const [warmMap] = mapIds;
-  if (warmMap !== undefined) {
-    const start = Date.now();
-    await mapWindow(warmMap, WARMUP_LOAD_SECONDS);
-    const warm = [];
-    const times = [];
-    let after;
-    while (after === undefined && Date.now() - start < WARMUP_CAP_MS) {
-      warm.push(await calibrationWindow());
-      times.push(Date.now() - start);
-      after = settled(warm, times, { minMs: WARMUP_MIN_MS, tol: WARMUP_TOLERANCE });
-    }
-    const list = warm.map((w) => w.toFixed(1)).join(", ");
-    if (after === undefined) {
-      console.error(
-        `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
-      );
-      noisy = true;
-      unsettled = true;
-    } else {
-      console.log(
-        `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
-      );
-    }
-  }
-  timed("warm-up", runStart);
-  const stillStart = Date.now();
-  const windows = [await calibrationWindow()];
-  const rows = [];
-  for (const mapId of noisy ? [] : mapIds) {
-    // A bracket the runner moved under is measured again, with the window that
-    // closed it opening the next one: a few seconds, not a rerun (#3503).
-    for (let attempt = 1; ; attempt++) {
-      const before = windows.at(-1) ?? NaN;
-      const frames = await mapWindow(mapId, SECONDS);
-      const passes = lastPasses;
-      const after = await calibrationWindow();
-      windows.push(after);
-      const spread = Math.abs(before - after) / ((before + after) / 2);
-      if (spread > MAX_CALIBRATION_SPREAD && attempt <= MAX_REMEASURES) {
-        console.log(`re-measure ${mapId} (spread ${(spread * 100).toFixed(0)} %)`);
-        continue;
+  if (options.crowd === true) {
+    console.log("| crowd | frames | p50 ms | p95 ms | p50 / discs |");
+    console.log("|---|---|---|---|---|");
+    const runs = [];
+    for (const draw of CROWD_DRAWS) {
+      const page = await browser.newPage({ viewport });
+      try {
+        runs.push({ ...draw, frames: await crowd(page, draw.query) });
+      } finally {
+        await page.close();
       }
-      rows.push({
-        passes,
-        mapId,
-        frames: frames.length,
-        p50: percentile(frames, 50),
-        p95: percentile(frames, 95),
-        before,
-        after,
-      });
-      break;
     }
-  }
-  timed("still", stillStart);
-  const followStart = Date.now();
-  const followed = [];
-  for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
-    const match = await browser.newPage({ viewport });
-    try {
-      await match.goto(`${url}?frametiming`);
-      const run = await follow(match, mapId);
-      /** @type {(times: number[]) => number} */
-      const sum = (times) => times.reduce((total, time) => total + time, 0);
-      /** @type {(times: number[]) => number[]} */
-      const sorted = (times) => [...times].sort((a, b) => a - b);
-      const mean = sum(run.snapshots) / run.snapshots.length;
-      followed.push({
-        mapId: `${mapId} (follow)`,
-        frames: run.frames.length,
-        p50: percentile(run.frames, 50),
-        p95: percentile(run.frames, 95),
-        update: percentile(sorted(run.update), 50),
-        render: percentile(sorted(run.render), 50),
-        share: sum(run.update) / sum(run.frames),
-        snapshotP50: percentile(sorted(run.snapshots), 50),
-        snapshotP95: percentile(sorted(run.snapshots), 95),
-        jitter: Math.sqrt(
-          sum(run.snapshots.map((time) => (time - mean) ** 2)) / run.snapshots.length,
-        ),
-        reached: run.reached,
-        hostP50: percentile(sorted(run.host), 50),
-        hostP95: percentile(sorted(run.host), 95),
-        passes: run.passes,
-      });
-    } finally {
-      await match.close();
-    }
-  }
-  timed("follow", followStart);
-  const wholeRun = (Math.max(...windows) - Math.min(...windows)) / median(windows);
-  console.log(
-    `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
-  );
-  const verdicts = verdict({
-    maps: rows,
-    maxRatio: MAX_RATIO,
-    maxSpread: MAX_CALIBRATION_SPREAD,
-    ceilings: BENCH_CEILINGS,
-  });
-  console.log("| map | frames | p50 ms | p95 ms | base ms | p50 / calibration |");
-  console.log("|---|---|---|---|---|---|");
-  for (const [i, row] of rows.entries()) {
-    const v = verdicts[i];
-    if (v === undefined) continue;
-    console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${v.base.toFixed(1)} | ${v.ratio.toFixed(2)}${v.ceiling === undefined ? "" : ` (ceiling ${v.ceiling.ratio.toFixed(1)}, #${String(v.ceiling.issue)})`}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
-    );
-  }
-  for (const v of verdicts) {
-    if (v.noisy !== undefined) {
-      console.error(v.noisy);
-      noisy = true;
-    }
-    for (const failure of v.failures) {
-      console.error(failure);
-      failed = true;
-    }
-    if (!(v.base >= MIN_CALIBRATION_MS)) {
-      throw new Error(
-        `the calibration around ${v.mapId} is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+    const discs = runs.find((run) => run.label === "discs");
+    for (const run of runs) {
+      const p50 = percentile(run.frames, 50);
+      const ratio = discs === undefined ? Number.NaN : p50 / percentile(discs.frames, 50);
+      console.log(
+        `| ${CROWD_SCENE} (${run.label}) | ${String(run.frames.length)} | ${p50.toFixed(1)} | ${percentile(run.frames, 95).toFixed(1)} | ${ratio.toFixed(2)}${CAPS_MS.some((cap) => Math.abs(p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
       );
     }
-  }
-  /** @type {(label: string, mapRows: { mapId: string, p50: number, passes: Record<string, number> }[]) => void} */
-  const printPasses = (label, mapRows) => {
+  } else {
+    const mapIds = options.follow === true ? [] : mapsToMeasure();
+    const runStart = Date.now();
+    /** @type {(phase: string, since: number) => void} */
+    const timed = (phase, since) => {
+      console.log(`phase ${phase} ${((Date.now() - since) / 1000).toFixed(0)} s`);
+    };
+    // The runner is slow for the first 20-40 s of a run: load the first map, then
+    // calibrate until the runner has had that long and two windows in a row agree,
+    // and keep none of it (#3243).
+    const [warmMap] = mapIds;
+    if (warmMap !== undefined) {
+      const start = Date.now();
+      await mapWindow(warmMap, WARMUP_LOAD_SECONDS);
+      const warm = [];
+      const times = [];
+      let after;
+      while (after === undefined && Date.now() - start < WARMUP_CAP_MS) {
+        warm.push(await calibrationWindow());
+        times.push(Date.now() - start);
+        after = settled(warm, times, { minMs: WARMUP_MIN_MS, tol: WARMUP_TOLERANCE });
+      }
+      const list = warm.map((w) => w.toFixed(1)).join(", ");
+      if (after === undefined) {
+        console.error(
+          `calibration never settled in warm-up (${list}): the runner is too noisy to judge`,
+        );
+        noisy = true;
+        unsettled = true;
+      } else {
+        console.log(
+          `warm-up: map ${warmMap} ${String(WARMUP_LOAD_SECONDS)} s; calibration ${list} ms (settled after ${String(after)} windows, ${((times[after - 1] ?? 0) / 1000).toFixed(0)} s, discarded)`,
+        );
+      }
+    }
+    timed("warm-up", runStart);
+    const stillStart = Date.now();
+    const windows = [await calibrationWindow()];
+    const rows = [];
+    for (const mapId of noisy ? [] : mapIds) {
+      // A bracket the runner moved under is measured again, with the window that
+      // closed it opening the next one: a few seconds, not a rerun (#3503).
+      for (let attempt = 1; ; attempt++) {
+        const before = windows.at(-1) ?? NaN;
+        const frames = await mapWindow(mapId, SECONDS);
+        const passes = lastPasses;
+        const after = await calibrationWindow();
+        windows.push(after);
+        const spread = Math.abs(before - after) / ((before + after) / 2);
+        if (spread > MAX_CALIBRATION_SPREAD && attempt <= MAX_REMEASURES) {
+          console.log(`re-measure ${mapId} (spread ${(spread * 100).toFixed(0)} %)`);
+          continue;
+        }
+        rows.push({
+          passes,
+          mapId,
+          frames: frames.length,
+          p50: percentile(frames, 50),
+          p95: percentile(frames, 95),
+          before,
+          after,
+        });
+        break;
+      }
+    }
+    timed("still", stillStart);
+    const followStart = Date.now();
+    const followed = [];
+    for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
+      const match = await browser.newPage({ viewport });
+      try {
+        await match.goto(`${url}?frametiming`);
+        const run = await follow(match, mapId);
+        /** @type {(times: number[]) => number} */
+        const sum = (times) => times.reduce((total, time) => total + time, 0);
+        /** @type {(times: number[]) => number[]} */
+        const sorted = (times) => [...times].sort((a, b) => a - b);
+        const mean = sum(run.snapshots) / run.snapshots.length;
+        followed.push({
+          mapId: `${mapId} (follow)`,
+          frames: run.frames.length,
+          p50: percentile(run.frames, 50),
+          p95: percentile(run.frames, 95),
+          update: percentile(sorted(run.update), 50),
+          render: percentile(sorted(run.render), 50),
+          share: sum(run.update) / sum(run.frames),
+          snapshotP50: percentile(sorted(run.snapshots), 50),
+          snapshotP95: percentile(sorted(run.snapshots), 95),
+          jitter: Math.sqrt(
+            sum(run.snapshots.map((time) => (time - mean) ** 2)) / run.snapshots.length,
+          ),
+          reached: run.reached,
+          hostP50: percentile(sorted(run.host), 50),
+          hostP95: percentile(sorted(run.host), 95),
+          passes: run.passes,
+        });
+      } finally {
+        await match.close();
+      }
+    }
+    timed("follow", followStart);
+    const wholeRun = (Math.max(...windows) - Math.min(...windows)) / median(windows);
+    console.log(
+      `calibration windows p50 ms: ${windows.map((w) => w.toFixed(1)).join(", ")} (whole-run spread ${(wholeRun * 100).toFixed(0)} %, not gated)`,
+    );
+    const verdicts = verdict({
+      maps: rows,
+      maxRatio: MAX_RATIO,
+      maxSpread: MAX_CALIBRATION_SPREAD,
+      ceilings: BENCH_CEILINGS,
+    });
+    console.log("| map | frames | p50 ms | p95 ms | base ms | p50 / calibration |");
+    console.log("|---|---|---|---|---|---|");
+    for (const [i, row] of rows.entries()) {
+      const v = verdicts[i];
+      if (v === undefined) continue;
+      console.log(
+        `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${v.base.toFixed(1)} | ${v.ratio.toFixed(2)}${v.ceiling === undefined ? "" : ` (ceiling ${v.ceiling.ratio.toFixed(1)}, #${String(v.ceiling.issue)})`}${CAPS_MS.some((cap) => Math.abs(row.p50 - cap) < CAP_TOLERANCE_MS) ? " (cap-bound)" : ""} |`,
+      );
+    }
+    for (const v of verdicts) {
+      if (v.noisy !== undefined) {
+        console.error(v.noisy);
+        noisy = true;
+      }
+      for (const failure of v.failures) {
+        console.error(failure);
+        failed = true;
+      }
+      if (!(v.base >= MIN_CALIBRATION_MS)) {
+        throw new Error(
+          `the calibration around ${v.mapId} is under ${String(MIN_CALIBRATION_MS)} ms, so it is bound by the frame-rate cap and the ratio would be meaningless`,
+        );
+      }
+    }
+    /** @type {(label: string, mapRows: { mapId: string, p50: number, passes: Record<string, number> }[]) => void} */
+    const printPasses = (label, mapRows) => {
+      console.log();
+      console.log(
+        `| ${label} | ${PASSES.map((pass) => `${pass} ms/frame`).join(" | ")} | passes % of p50 |`,
+      );
+      console.log(`|---|${PASSES.map(() => "---|").join("")}---|`);
+      for (const row of mapRows) {
+        const costs = PASSES.map((pass) => row.passes[pass] ?? 0);
+        const share = costs.reduce((a, b) => a + b, 0) / row.p50;
+        console.log(
+          `| ${row.mapId} | ${costs.map((cost) => cost.toFixed(2)).join(" | ")} | ${(share * 100).toFixed(0)} % |`,
+        );
+      }
+    };
+    if (rows.length > 0) printPasses("passes (still)", rows);
     console.log();
     console.log(
-      `| ${label} | ${PASSES.map((pass) => `${pass} ms/frame`).join(" | ")} | passes % of p50 |`,
+      "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | host p50 ms | host p95 ms | waypoints | p50 / flat |",
     );
-    console.log(`|---|${PASSES.map(() => "---|").join("")}---|`);
-    for (const row of mapRows) {
-      const costs = PASSES.map((pass) => row.passes[pass] ?? 0);
-      const share = costs.reduce((a, b) => a + b, 0) / row.p50;
+    console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+    const flat = followed.at(-1);
+    for (const row of followed) {
+      const ratio = flat === undefined ? Number.NaN : row.p50 / flat.p50;
       console.log(
-        `| ${row.mapId} | ${costs.map((cost) => cost.toFixed(2)).join(" | ")} | ${(share * 100).toFixed(0)} % |`,
+        `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${row.hostP50.toFixed(1)} | ${row.hostP95.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
       );
+      if (MAX_FOLLOW_RATIO !== undefined && !(ratio <= MAX_FOLLOW_RATIO)) {
+        console.error(
+          `${row.mapId}: p50 is ${ratio.toFixed(2)}× the flat baseline's walked, over ${String(MAX_FOLLOW_RATIO)}×`,
+        );
+        failed = true;
+      }
     }
-  };
-  if (rows.length > 0) printPasses("passes (still)", rows);
-  console.log();
-  console.log(
-    "| follow | frames | p50 ms | p95 ms | update p50 ms | render p50 ms | update share | snapshot p50 ms | snapshot p95 ms | snapshot jitter ms | host p50 ms | host p95 ms | waypoints | p50 / flat |",
-  );
-  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
-  const flat = followed.at(-1);
-  for (const row of followed) {
-    const ratio = flat === undefined ? Number.NaN : row.p50 / flat.p50;
-    console.log(
-      `| ${row.mapId} | ${String(row.frames)} | ${row.p50.toFixed(1)} | ${row.p95.toFixed(1)} | ${row.update.toFixed(1)} | ${row.render.toFixed(1)} | ${(row.share * 100).toFixed(0)} % | ${row.snapshotP50.toFixed(1)} | ${row.snapshotP95.toFixed(1)} | ${row.jitter.toFixed(1)} | ${row.hostP50.toFixed(1)} | ${row.hostP95.toFixed(1)} | ${String(row.reached)} | ${ratio.toFixed(2)} |`,
-    );
-    if (MAX_FOLLOW_RATIO !== undefined && !(ratio <= MAX_FOLLOW_RATIO)) {
-      console.error(
-        `${row.mapId}: p50 is ${ratio.toFixed(2)}× the flat baseline's walked, over ${String(MAX_FOLLOW_RATIO)}×`,
-      );
-      failed = true;
-    }
+    printPasses("passes (follow)", followed);
   }
-  printPasses("passes (follow)", followed);
 } finally {
   await browser?.close();
   served?.stop();

@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { Leaderboard, LeaderboardEntry } from "../net/leaderboard.js";
 import { loadPlayerKey } from "../net/transport/player-key.js";
 import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
-import { COSMETIC_CATALOG, cosmeticById, type CosmeticEntry } from "./catalog.js";
+import { NO_BODY_CHOICE, bodyFromKey } from "./body.js";
+import { COSMETIC_CATALOG, COSMETIC_SLOTS, cosmeticById, type CosmeticEntry } from "./catalog.js";
 import { checkCosmetic } from "./check.js";
 import {
   buildSelection,
@@ -11,6 +12,7 @@ import {
   ownCosmetics,
   signSelection,
   verifySelection,
+  visibleBody,
   visibleCosmetics,
   wornOf,
 } from "./selection.js";
@@ -170,12 +172,17 @@ describe("a cosmetic selection (ADR-0056)", () => {
   const key = loadPlayerKey(memory());
   const other = loadPlayerKey(memory());
   const choice = { frame: "frame-rose", title: "title-contender" } as const;
-  const signed = signSelection(key, choice, 1_700_000_000_000);
+  const signed = signSelection(key, choice, { height: "tall", build: null }, 1_700_000_000_000);
 
   it("lists its ids in slot order, one per slot", () => {
     expect(
-      buildSelection(key.pubkey, { title: "title-veteran", frame: "frame-jade" }, 5).ids,
+      buildSelection(key.pubkey, { title: "title-veteran", frame: "frame-jade" }, NO_BODY_CHOICE, 5)
+        .ids,
     ).toEqual(["frame-jade", "title-veteran"]);
+  });
+
+  it("has no cape pattern slot, which the operator removed (#4219)", () => {
+    expect(COSMETIC_SLOTS).not.toContain("cape");
   });
 
   it("verifies for its own key and nothing changed", () => {
@@ -185,8 +192,32 @@ describe("a cosmetic selection (ADR-0056)", () => {
     expect(verifySelection(key.pubkey, { ...signed, at: signed.at + 1 })).toBe(false);
   });
 
+  it("signs its body, each axis, the ones never picked as its key's (#4250)", () => {
+    expect(signed.body).toEqual({ height: "tall", build: bodyFromKey(key.pubkey).build });
+    for (const body of [
+      { ...signed.body, height: signed.body.height === "tall" ? "short" : "tall" },
+      { ...signed.body, build: signed.body.build === "lean" ? "heavy" : "lean" },
+    ] as const) {
+      expect(verifySelection(key.pubkey, { ...signed, body })).toBe(false);
+    }
+  });
+
+  it("draws a verified body even with nothing earned, and the key's for anything else (#4250)", () => {
+    const seat = { playerPubkey: key.pubkey, cosmetics: signed };
+    expect(visibleCosmetics(seat, undefined)).toEqual({});
+    expect(visibleBody(seat, "p1")).toBe(signed.body);
+    const forged = { ...signed, body: { height: "short", build: "heavy" } } as const;
+    expect(visibleBody({ playerPubkey: key.pubkey, cosmetics: forged }, "p1")).toEqual(
+      bodyFromKey(key.pubkey),
+    );
+    expect(visibleBody({ playerPubkey: other.pubkey, cosmetics: signed }, "p1")).toEqual(
+      bodyFromKey(other.pubkey),
+    );
+    expect(visibleBody(undefined, "bot-3")).toEqual(bodyFromKey("bot-3"));
+  });
+
   it("signs an empty list too", () => {
-    expect(verifySelection(key.pubkey, signSelection(key, {}, 0))).toBe(true);
+    expect(verifySelection(key.pubkey, signSelection(key, {}, NO_BODY_CHOICE, 0))).toBe(true);
   });
 
   it("shows another seat what its board says it earned", () => {
@@ -265,5 +296,29 @@ describe("the cosmetics store (ADR-0056)", () => {
     );
     expect(createCosmeticsStore(storage).choice()).toEqual({});
     expect(storage.items.has("vibewars.cosmetics")).toBe(false);
+  });
+
+  it("keeps the body as picked, axis by axis, none, some or all (#4250)", () => {
+    const storage = memory();
+    expect(createCosmeticsStore(storage).body()).toEqual(NO_BODY_CHOICE);
+    const store = createCosmeticsStore(storage);
+    store.pickBody({ build: "heavy" });
+    expect(createCosmeticsStore(storage).body()).toEqual({ height: null, build: "heavy" });
+    store.pickBody({ height: "short" });
+    expect(createCosmeticsStore(storage).body()).toEqual({ height: "short", build: "heavy" });
+    store.pickBody({ build: null });
+    expect(createCosmeticsStore(storage).body()).toEqual({ height: "short", build: null });
+  });
+
+  it("deletes a stored record with no body or an unknown one (#4250)", () => {
+    for (const body of [undefined, { height: "giant", build: null }, { height: null }]) {
+      const storage = memory();
+      storage.setItem(
+        "vibewars.cosmetics",
+        JSON.stringify({ choice: { frame: "frame-jade" }, body, facts: null }),
+      );
+      expect(createCosmeticsStore(storage).choice()).toEqual({});
+      expect(storage.items.has("vibewars.cosmetics")).toBe(false);
+    }
   });
 });

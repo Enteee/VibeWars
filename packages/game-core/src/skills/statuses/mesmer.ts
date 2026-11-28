@@ -230,13 +230,13 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     endsWhenBearerUsesSkill: true,
   }),
   // "For 30 seconds, Echo is replaced with the next skill you use. Echo
-  // acts as this skill for 20 seconds" (#469).
+  // acts as this skill for 30 seconds" (#469).
   echo: define("echo", "Echo", "enchantment", {
     profession: "mesmer",
     triggers: [
       {
         on: "bearer-uses-skill",
-        effects: [{ kind: "echo", spellsOnly: false, seconds: 20 }],
+        effects: [{ kind: "echo", spellsOnly: false, seconds: 30 }],
         target: "bearer",
         skillId: "mesmer.echo",
       },
@@ -983,6 +983,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // 1 Energy. If the target foe's Energy drops to 0, Mind Wrack ends and
   // that foe takes 15...100 damage": once, as the hex goes with it.
   "mind-wrack": define("mind-wrack", "Mind Wrack", "hex", {
+    endsOnSourceDeath: true,
     profession: "mesmer",
     attribute: "mesmer.domination-magic",
     triggers: [

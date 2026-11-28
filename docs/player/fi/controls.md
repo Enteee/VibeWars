@@ -6,6 +6,13 @@ Valitse siellä **Esiasetus** tai napsauta näppäinsolua ja paina haluamaasi
 näppäintä; jo käytössä oleva näppäin siirtyy uudelle toiminnolle, ja
 näkymä kertoo, mikä toiminto menetti sen. Muutokset tallentuvat heti.
 
+Näppäin voi olla myös yhdistelmä: pidä Shift, Ctrl tai Alt pohjassa ja paina
+näppäintä, esimerkiksi **Shift + X**. Liike ja Näytä nimet ottavat vain
+yhden näppäimen, ja selain pitää muutaman yhdistelmän itsellään, kuten
+Ctrl + W. Kun pidät Shiftiä pohjassa nimien näyttämiseksi, tavalliset
+näppäimesi toimivat silti, ellei juuri se Shift-yhdistelmä ole itse sidottu
+johonkin.
+
 ## Näppäimet
 
 Oletusesiasetus on **Klassinen**, GW1:een tottuneille käsille. **VibeWars**
@@ -96,7 +103,7 @@ Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa **☰**-valikossa
 yhdessä **Poistu**-painikkeen kanssa; **M** mykistää yhä ja **F10** poistuu yhä ilman sitä. Kapeassa ikkunassa nämä kuvakkeet ja
 näkymän muut painikkeet taittuvat **☰**-valikkoon; vain sen pääpainike jää näkyviin.
 ⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen.
-[?] avaa Ohjeen samalla tavalla, ikkunana sen alle, ylimpänä sivuvalitsin; ottelu jatkuu sen takana.
+[?] avaa Ohjeen samalla tavalla, ikkunana sen alle, sivut lueteltuina vasemmalla; ottelu jatkuu sen takana.
 Ohje sulkeutuu sen ×:llä, Escillä, napsautuksella ikkunan ulkopuolelle tai painamalla [?] uudelleen.
 
 **Jaa biitti aulasi kanssa.** Biittieditorissa (♪, sitten **Muokkaa**)

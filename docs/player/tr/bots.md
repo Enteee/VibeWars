@@ -28,6 +28,11 @@ müttefike yapabileceği iki ya da daha fazla iyileştirmesi veya koruması
 olan bir bot **şifacı**dır: en çok yaralanan müttefikin arkasında,
 düşmanlardan uzakta durur. İki ya da daha fazla düşman tek bir müttefike
 yüklendiğinde şifacı, darbe inmeden önce korumasını o müttefike koyar.
+Şifacı en ucuz iyileştirmesi veya koruması için yeterli Enerjiyi elinde
+tutar ve bunun altına yalnızca gerçekten tehlikedeki bir müttefik için iner. İki
+laneti olan bir bot ucuz lanetini önemli lanetinin üstüne koyar, böylece bir
+düşmanın lanet kaldırması önce ucuz olanı alır. Enerji engellemesi olan bir bot,
+Warrior'ın değil, düşman şifacının Enerjisini yakar.
 Diğer her bot **menzilli**dir: tüm saldırılarının erişebildiği yerde
 durur, çok yaklaşan bir düşmanla da yerinde durup dövüşür. Menzilli
 botlar ve şifacılar daha az düşmanın erişebileceği yere geçer ve
@@ -47,7 +52,9 @@ Sakatlayan ya da yavaşlatan bir becerisi olan bot, onu takımın hedefinden ön
 
 Alan becerileri olan bir takıma karşı menzilli botlar ve şifacılar birbirinden uzak durur, böylece tek bir patlama ikisini birden vurmaz. Bunun için siperden asla vazgeçmezler.
 
-Bir düşmanın fazla yaklaştığı uzak menzilli bir bot ya da şifacı, yeterince yakında biri varsa önce en yakın ön saf takım arkadaşına geri çekilir ve orada savaşır.
+Bir düşmanın fazla yaklaştığı uzak menzilli bir bot ya da şifacı, yeterince yakında biri varsa önce en yakın ön saf takım arkadaşına geri çekilir ve orada savaşır. Yavaşlatılmış, örneğin sakatlanmış bir yakın dövüşçü ise yetişemez; bu yüzden ona karşı bot bunun yerine atışlar arasında geri çekilir.
+
+Saldırmayı ya da büyü yapmayı cezalandıran bir lanet altındaki bot, örneğin Empathy veya Backfire, lanet bitene kadar bunu yapmayı bırakır.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.
@@ -62,7 +69,9 @@ yapmaya devam ederler. Bir bot takım arkadaşlarını en fazla dört saniye
 bekler ve canı %30'un altındaki bir düşmanı bitirmek için hiç beklemez.
 Hedef Protective Spirit ya da Aegis gibi koruyucu bir tılsımın
 altındaysa, Strip Enchantment gibi tılsım sökme becerisi olan bir bot
-önce onu söker, diğerleri de vuruşlarını onun için bekletir.
+önce onu söker, diğerleri de vuruşlarını onun için bekletir. Takımda
+tılsım sökme yoksa botlar korunan düşmanı bırakır ve tılsım bitene
+kadar başka birine yönelir.
 
 Dövüşü kaybeden ağır yaralı bir bot şifacısının arkasına ya da üssüne
 çekilir ve canının çoğu geri gelene kadar erişim dışında dinlenir.
@@ -78,6 +87,7 @@ ya da dönmek onlara karşı da sana karşı olduğu gibi işe yarar.
 
 Botlar, dolaşmak çok daha uzun değilse yanan zeminin ve diğer zararlı
 alanların çevresinden dolaşır, içinde durdukları alandan da çıkarlar.
+Rakibin kuyu, onlara karşı bir koruma ya da fırtına gibi zararlı bir alanından da çıkar ve kenarından savaşırlar.
 
 Kesintisi olan bir bot onu önemli yapımlar için saklar: önce bir
 diriliş ya da sunağı ele geçiren bir Ghostly Hero, sonra bir
@@ -89,6 +99,15 @@ yaklaşık dörtte birini kaçırır.
 Bir bot, olanlara tepki vermek için insan gibi bir an, saniyenin bir
 kesri kadar süre alır; bu yüzden hızlı bir kesinti ya da geç bir kaçış
 onu alt edebilir.
+
+Takımında kimse bir hedef bildirmemişse, botlarından biri botlarının
+yoğunlaştığı düşmanı tıpkı senin yapacağın gibi bildirir: işareti ve
+botun adını görürsün, böylece sen de katılabilirsin. Bir botun
+bildirimi yalnızca botların nereye gittiğini gösterir; yine de bir
+takım arkadaşını korur ve can çekişen bir düşmanı bitirirler. Senin
+bildirdiğin hedef her zaman kazanır: takımdaki her bot senin hedefine
+yoğunlaşır, hiçbir bot senin bildirdiğinin yerine geçmez ve botlar
+ancak bildirilen hedef öldüğünde ya da gittiğinde yeniden bildirir.
 
 Üç takımlı bir dövüşte botlar aynı anda tek bir düşman takımıyla
 dövüşür: onlara saldıran takımla ya da kimse saldırmıyorken erişimdeki

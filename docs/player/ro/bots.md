@@ -27,7 +27,14 @@ Un bot joacă rolul pe care i-l dă buildul. Unul cu armă de corp la corp este
 vindecări sau protecții pe care le poate lansa asupra unui aliat este
 **vindecător**: stă în spatele aliatului cel mai rănit, departe de inamici. Când
 doi sau mai mulți inamici se concentrează pe un aliat, un vindecător îi pune
-protecția înainte să ajungă lovitura. Orice alt bot este **la distanță**: stă
+protecția înainte să ajungă lovitura. Un vindecător păstrează destulă Energie
+pentru cea mai ieftină vindecare sau protecție a sa și cheltuie sub acest prag
+doar pentru un aliat aflat în pericol real. Un bot cu două blesteme își pune
+blestemul ieftin peste cel important, astfel încât îndepărtarea blestemelor de
+către un inamic îl ia mai întâi pe cel ieftin. Un bot cu abilități de negare a
+Energiei arde Energia vindecătorului inamic, nu pe cea a Warrior-ului. Orice alt
+bot este **la
+distanță**: stă
 acolo unde ajunge fiecare dintre atacurile lui și se oprește să lupte cu un
 inamic care vine prea aproape. Boții la distanță și vindecătorii se mută unde îi
 pot ajunge mai puțini inamici și folosesc coloanele drept acoperire. O echipă se
@@ -46,7 +53,9 @@ Un bot cu o abilitate care schilodește sau încetinește o folosește asupra un
 
 Împotriva unei echipe cu abilități de zonă, boții de la distanță și vindecătorii stau departe unii de alții, ca o explozie să nu prindă doi dintre ei. Nu renunță niciodată la adăpost pentru asta.
 
-Un bot la distanță sau un vindecător de care un inamic se apropie prea mult se retrage mai întâi spre cel mai apropiat coechipier din prima linie, dacă e destul de aproape, și luptă acolo.
+Un bot la distanță sau un vindecător de care un inamic se apropie prea mult se retrage mai întâi spre cel mai apropiat coechipier din prima linie, dacă e destul de aproape, și luptă acolo. Un atacator corp la corp încetinit, de exemplu schilodit, nu poate ține pasul, așa că în fața lui botul se retrage în schimb între trageri.
+
+Un bot sub un blestem care pedepsește atacul sau vrăjile, precum Empathy sau Backfire, se oprește până când blestemul se termină.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.
@@ -61,7 +70,9 @@ afecțiunile. Un bot își așteaptă coechipierii cel mult patru secunde și nu
 așteaptă deloc ca să termine un inamic sub 30% din viață. Când ținta se află
 sub un farmec protector, precum Protective Spirit sau Aegis, un bot cu o
 abilitate de eliminare a farmecelor, precum Strip Enchantment, îl scoate mai
-întâi, iar ceilalți își rețin loviturile pentru asta.
+întâi, iar ceilalți își rețin loviturile pentru asta. Dacă echipa nu are
+nicio eliminare a farmecelor, boții lasă inamicul protejat și trec la altul
+până când farmecul se termină.
 
 Un bot grav rănit care își pierde lupta se retrage în spatele vindecătorului
 său sau la bază și se odihnește în afara razei până își recapătă cea mai mare
@@ -77,6 +88,7 @@ sau schimbarea direcției funcționează pentru ei ca și pentru tine.
 
 Boții ocolesc pământul în flăcări și alte zone dăunătoare când ocolul nu e
 mult mai lung și ies din cea în care stau.
+Ies și din zona dăunătoare a unui adversar, cum ar fi o fântână, o protecție împotriva lor sau o furtună, și luptă de la marginea ei.
 
 Un bot cu o întrerupere o păstrează pentru lansările care contează: mai întâi o
 înviere sau un Erou Fantomatic care revendică altarul, apoi o vindecare sau o
@@ -86,6 +98,14 @@ La fel ca un jucător, ratează cam una din patru astfel de lansări.
 
 Unui bot îi ia un moment omenesc, o fracțiune de secundă, ca să reacționeze la
 ce se întâmplă, așa că o întrerupere rapidă sau o eschivă târzie îl pot păcăli.
+
+Când nimeni din echipa ta nu a anunțat o țintă, unul dintre boții tăi anunță
+inamicul pe care se concentrează boții tăi, la fel cum ai face tu: vezi
+marcajul și numele botului, ca să te poți alătura. Anunțul unui bot arată doar
+încotro merg boții; ei tot apără un coechipier și termină un inamic muribund.
+Anunțul tău câștigă mereu: toți boții echipei se concentrează pe ținta ta,
+niciun bot nu îți înlocuiește anunțul, iar boții anunță din nou doar după ce
+ținta anunțată e moartă sau a dispărut.
 
 Într-o luptă cu trei echipe, boții luptă cu o singură echipă inamică odată:
 echipa care îi atacă sau, cât timp nu îi atacă nimeni, cea mai rănită echipă la

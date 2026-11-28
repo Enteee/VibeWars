@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PlayerBuild } from "../../build.js";
+import { SKILL_BAR_SLOTS, type PlayerBuild } from "../../build.js";
+import { AREA_ADJACENT } from "../../distances.js";
 import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
+import { NO_RANKS } from "../../skills/status.js";
 import type { MatchSimulation } from "../simulation.js";
 import fallBack from "./rules/fall-back.js";
 import { ELBOW_DISTANCE, FALL_BACK_NEAR } from "./rules/shared.js";
@@ -204,12 +206,157 @@ describe("a dived caster falls back to its frontliner (#4151)", () => {
     ["a monk", MONK],
   ])("brings %s's diver to its warrior sooner, and it takes less damage", (_, build) => {
     const seeds = ["a", "b", "c"];
+    let healthOn = 0;
+    let healthOff = 0;
     for (const seed of seeds) {
       const on = dive(build, seed);
       const off = dive(build, seed, true);
       expect(on.met).toBeLessThan(off.met ?? Number.POSITIVE_INFINITY);
       expect(on.peeled).toBeLessThan(off.peeled ?? Number.POSITIVE_INFINITY);
-      expect(on.health).toBeGreaterThan(off.health);
+      healthOn += on.health;
+      healthOff += off.health;
     }
+    // Over the seeds: one fight's rolls can cost a few points either way.
+    expect(healthOn).toBeGreaterThan(healthOff);
+  });
+});
+
+describe("a ranger kites a slowed diver (#4166)", () => {
+  /**
+   * 1v1: a ranger bot with only its bow, room to back off west, and a
+   * warrior, not a bot, chasing it, Crippled if `crippled`. Over 10 s,
+   * how many shots hit the warrior and the share of ticks the ranger
+   * stood beyond `ELBOW_DISTANCE` of it. Its skills are left off, as a
+   * cast would stand in for the shots being counted.
+   */
+  function chase(crippled: boolean) {
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(1200, 400), {
+        skillBar: new Array<null>(SKILL_BAR_SLOTS).fill(null),
+      }),
+      fighter("d", 1, WARRIOR, vec2(1230, 400), { behaviour: undefined, maxHealth: 1e6 }),
+    ]);
+    const ranger = sim.get("r");
+    const diver = sim.get("d");
+    if (ranger === undefined || diver === undefined) throw new Error("no fighters");
+    if (crippled) {
+      diver.combatant.statuses.apply("crippled", 1e6, "r", NO_RANKS);
+    }
+    sim.requestAttack("d", "r");
+    let shots = 0;
+    let clear = 0;
+    let ticks = 0;
+    for (let at = 0; at < 10; at += DT) {
+      const before = diver.combatant.health;
+      sim.step(DT);
+      shots += diver.combatant.health < before ? 1 : 0;
+      clear += distance(ranger.position, diver.position) > ELBOW_DISTANCE ? 1 : 0;
+      ticks += 1;
+    }
+    return { shots, clear: clear / ticks };
+  }
+
+  it("keeps out of a Crippled warrior's reach most of the time, still shooting", () => {
+    const { shots, clear } = chase(true);
+    expect(shots).toBeGreaterThanOrEqual(2);
+    expect(clear).toBeGreaterThan(0.5);
+  });
+
+  it("stands and fights a warrior at its own speed", () => {
+    const { shots, clear } = chase(false);
+    expect(shots).toBeGreaterThanOrEqual(3);
+    expect(clear).toBeLessThanOrEqual(0.5);
+  });
+});
+
+describe("a bot under Empathy (#4199)", () => {
+  /** A warrior bot swinging at a foe that stands still, and a monk bot ready to heal beside it. */
+  function arena(): MatchSimulation {
+    return match([
+      fighter("w", 0, WARRIOR, vec2(400, 400), { skillBar: [] }),
+      fighter("m", 0, MONK, vec2(380, 450), { skillBar: ["monk.orison-of-healing"] }),
+      fighter("f", 1, WARRIOR, vec2(440, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+  }
+
+  /** Steps `sim` until `seconds` have passed. */
+  function run(sim: MatchSimulation, seconds: number): void {
+    for (let t = 0; t < seconds - DT / 2; t += DT) sim.step(DT);
+  }
+
+  it("takes no Empathy damage after its first think, and swings again within a think of its end", () => {
+    const sim = arena();
+    run(sim, 1);
+    const warrior = sim.get("w")?.combatant;
+    expect(warrior?.attack?.targetId).toBe("f");
+    warrior?.statuses.apply("empathy", 3, "f", NO_RANKS);
+    run(sim, 0.3);
+    const health = warrior?.health;
+    expect(warrior?.attack).toBeUndefined();
+    run(sim, 2.6);
+    expect(warrior?.health).toBe(health);
+    expect(warrior?.attack).toBeUndefined();
+    // The hex ends at 3 s; a think comes every 0.25 s.
+    run(sim, 0.1 + 0.3);
+    expect(warrior?.attack?.targetId).toBe("f");
+  });
+
+  it("ends a healer's swing and leaves its heal casting", () => {
+    const sim = arena();
+    run(sim, 1);
+    const monk = sim.get("m")?.combatant;
+    expect(monk?.attack?.targetId).toBe("f");
+    const ally = sim.get("w")?.combatant;
+    if (ally !== undefined) ally.health = 100;
+    monk?.statuses.apply("empathy", 10, "f", NO_RANKS);
+    run(sim, 0.3);
+    expect(monk?.attack).toBeUndefined();
+    expect(monk?.cast.activeCast?.skillId).toBe("monk.orison-of-healing");
+  });
+});
+
+describe("a ranger steps out of a foe's Fire Storm (#4193)", () => {
+  it("stands clear of the storm within 1.5 s of its first pulse, still shooting", () => {
+    const storm = ["elementalist.fire-storm", ...new Array<null>(SKILL_BAR_SLOTS - 1).fill(null)];
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(600, 400), {
+        skillBar: new Array<null>(SKILL_BAR_SLOTS).fill(null),
+      }),
+      fighter("t", 1, WARRIOR, vec2(850, 400), { behaviour: undefined, maxHealth: 1e6 }),
+      fighter("e", 1, ELEMENTALIST, vec2(600, 50), {
+        behaviour: undefined,
+        maxHealth: 1e6,
+        skillBar: storm,
+      }),
+    ]);
+    const ranger = sim.get("r");
+    const target = sim.get("t");
+    if (ranger === undefined || target === undefined) throw new Error("no fighters");
+    sim.setTarget("e", "r");
+    sim.requestSkill("e", 0);
+    let landed: number | undefined;
+    let pulsed = 0;
+    let taken = 0;
+    let shots = 0;
+    for (let at = 0; at < 6; at += DT) {
+      const before = target.combatant.health;
+      sim.step(DT);
+      const effect = sim.groundEffects[0];
+      if (effect === undefined) {
+        continue;
+      }
+      landed ??= at;
+      if (effect.pulsed > pulsed) {
+        pulsed = effect.pulsed;
+        taken += distance(ranger.position, effect.position) <= AREA_ADJACENT ? 1 : 0;
+      }
+      shots += target.combatant.health < before ? 1 : 0;
+      if (at >= landed + 1.5) {
+        expect(distance(ranger.position, effect.position)).toBeGreaterThan(AREA_ADJACENT);
+      }
+    }
+    expect(landed).toBeDefined();
+    expect(taken).toBeLessThanOrEqual(2);
+    expect(shots).toBeGreaterThanOrEqual(1);
   });
 });

@@ -204,6 +204,13 @@ describe("dagger chains (#831)", () => {
     expect(get(match, "foe").combatant.statuses.get("sprint")).toBeUndefined();
   });
 
+  it("Black Lotus Strike costs 5 energy (#4241)", () => {
+    const match = fight();
+    const before = get(match, "a").combatant.energy;
+    use(match, "a", BLACK_LOTUS_STRIKE);
+    expect(before - get(match, "a").combatant.energy).toBeCloseTo(5, 0);
+  });
+
   it("Black Lotus Strike gives energy only on a hexed target", () => {
     const plain = fight();
     const gained = (entry: CombatLogEntry) =>

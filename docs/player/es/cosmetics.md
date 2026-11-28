@@ -12,23 +12,19 @@ has conseguido.
 | --------------------------------------------------------------- | ------------------------------------ |
 | Marco jade y el título Aspirante                                | 5 victorias clasificatorias          |
 | Aura de musgo, Rastro de musgo, Tajo de musgo                   | 5 victorias clasificatorias          |
-| Capa a rayas                                                    | 5 victorias clasificatorias          |
 | Marco del emblema en el color del ribete                        | 5 victorias clasificatorias          |
 | Marco rosa y el título Veterano                                 | 25 victorias clasificatorias         |
 | Aura de brasas, Rastro de brasas, Tajo de brasas                | 25 victorias clasificatorias         |
-| Capa de galones                                                 | 25 victorias clasificatorias         |
 | Luz ascendente, Disolución en ceniza                            | 25 victorias clasificatorias         |
 | Aura de escarcha, Rastro de escarcha, Tajo de escarcha          | 75 victorias clasificatorias         |
 | Remolino de hojas, Disolución en niebla                         | 75 victorias clasificatorias         |
 | Marco del emblema de hierro                                     | 75 victorias clasificatorias         |
 | Marco turquesa y el título Señor de la guerra                   | 200 victorias clasificatorias        |
-| Capa cuartelada                                                 | 200 victorias clasificatorias        |
 | Lluvia de pétalos, Disolución en esquirlas                      | 200 victorias clasificatorias        |
 | Marco del emblema de plata                                      | 200 victorias clasificatorias        |
 | Aura de luz estelar, Rastro de luz estelar, Tajo de luz estelar | 500 victorias clasificatorias        |
 | Lluvia de estrellas, Disolución en polvo estelar                | 500 victorias clasificatorias        |
 | Marco orquídea y el título Campeón                              | Un puesto en el Top 100              |
-| Capa estrellada                                                 | Un puesto en el Top 100              |
 | Marco del emblema dorado                                        | Un puesto en el Top 100              |
 | Llama de racha                                                  | 3 victorias clasificatorias seguidas |
 
@@ -40,9 +36,9 @@ nuevo. Lo que elegiste sigue elegido.
 
 Un aura de suelo es un anillo tenue a tus pies. Un rastro de pasos deja pequeñas motas por donde caminas, que se desvanecen en un momento. Ambos se dibujan bajo cada anillo, marca y aviso, y nunca usan un color de equipo. Si tu sistema tiene activado el movimiento reducido, el aura se queda quieta y no se dibuja ningún rastro.
 
-## En tu arma y tu capa
+## En tu arma
 
-Un rastro del arma es una cinta tras tu arma cuando golpea un ataque cuerpo a cuerpo, y se desvanece en menos de un quinto de segundo desde el impacto. Los arcos, las lanzas, las varitas y los bastones no tienen ninguno, y ningún hechizo ni lanzamiento muestra uno jamás. Un diseño de capa pone franjas, galones, cuarteles o estrellas sobre tu capa de gremio en su propio color de ribete, y tu emblema queda siempre encima, tan claro como en una capa lisa. Si tu sistema tiene activado el movimiento reducido, no se dibuja ningún rastro del arma.
+Un rastro del arma es una cinta tras tu arma cuando golpea un ataque cuerpo a cuerpo, y se desvanece en menos de un quinto de segundo desde el impacto. Los arcos, las lanzas, las varitas y los bastones no tienen ninguno, y ningún hechizo ni lanzamiento muestra uno jamás. Si tu sistema tiene activado el movimiento reducido, no se dibuja ningún rastro del arma.
 
 ## Volver y caer
 
@@ -61,7 +57,7 @@ enfocas, y lo que la consigue. Una muestra bloqueada aparece atenuada, con un pe
 elección se aplica al instante. Los demás jugadores la ven a partir del siguiente lobby al que te
 unas.
 
-Sobre las filas, tu personaje lleva tu aspecto y se queda quieto, camina y golpea, para que el aura, el rastro y la estela del arma se vean en movimiento. Mantén pulsada una muestra para probártela, aunque esté bloqueada: la línea dice qué estás previsualizando y, mientras esté bloqueada, qué la consigue. Suelta sobre un objeto conseguido para llevarlo. Suelta sobre uno bloqueado, o desliza fuera de la muestra, y no cambia nada. Con teclado, mantén Espacio sobre una muestra.
+Junto a las filas (encima de ellas en un móvil), tu personaje lleva tu aspecto y deambula: camina, se queda quieto, golpea y lanza hechizos, para que el aura, el rastro y la estela del arma se vean en movimiento. Sigue a la vista mientras te desplazas. Los selectores Principal y Secundaria que hay debajo muestran el aspecto con cualquier par de profesiones; solo cambian la vista previa, nunca tu personaje. Mantén pulsada una muestra para probártela, aunque esté bloqueada: la línea dice qué estás previsualizando y, mientras esté bloqueada, qué la consigue. Suelta sobre un objeto conseguido para llevarlo. Suelta sobre uno bloqueado, o desliza fuera de la muestra, y no cambia nada. Con teclado, mantén Espacio sobre una muestra.
 
 ## Ver los cosméticos de otros jugadores
 

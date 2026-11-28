@@ -7,7 +7,7 @@ import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js
 import { guard, playBuild, prepareInBubble } from "./bot/play-build.js";
 import type { FlankPlace, HoldPlace } from "./bot/plan.js";
 import type { PlanOverride } from "./bot/stalemate.js";
-import type { BreakableField } from "./breakables.js";
+import { strikePointOf, type BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
 import type { Gate } from "./gates.js";
@@ -230,6 +230,11 @@ export interface BehaviourIntent {
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
   readonly attackTargetId: string | undefined;
+  /**
+   * End the weapon attack that is running, not the cast (#4199): a bot
+   * under Empathy stops swinging.
+   */
+  readonly stopAttack: boolean;
   readonly applyStatuses: readonly StatusApplication[];
   /**
    * A maintained enchantment of its own to end (#2492), as a player's
@@ -268,6 +273,10 @@ export interface BehaviourCursor {
   regroupSpent: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
   front: number | undefined;
+  /** `play-build`: the team target its last think chose (#4188), `undefined` before it chose one. */
+  focusId: string | undefined;
+  /** `play-build`: the foe its weapon went to last think off a team target that blocks it (#4204), else `undefined`. */
+  swapId: string | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
@@ -381,6 +390,8 @@ export interface BehaviourContext {
   seesBetween(from: Vec2, to: Vec2, fromLayer: number, toLayer: number): boolean;
   /** Whether `self` could walk straight to `point` and stand there (#2545). */
   walkable(point: Vec2): boolean;
+  /** Any participant's current movement-speed factor by id, 1 at base (#4166). */
+  speedOf(participantId: string): number;
   /** Where the living players of every other team stand on average (#2545). */
   readonly foeCentroid: Vec2 | undefined;
   /** What a bot plays for besides the foes (#2542). */
@@ -464,10 +475,27 @@ export interface BotObjectives {
   readonly gates: readonly Gate[];
   /** The map's harmful ground (#3026), which a bot steps out of; `[]` on a map without any. */
   readonly harmfulZones: readonly MatchZone[];
+  /**
+   * The live ground effects that hurt someone (#4193): a foe's ward or well
+   * aura, and a pulse with a pulse or an end still to land. A bot of a team
+   * one hits steps out of it as it does `harmfulZones`; `[]` with none.
+   */
+  readonly hostileGround: readonly HostileGround[];
   /** The map's levers (#3138), and what throwing each would win; `[]` on a map without any. */
   readonly levers: readonly BotLever[];
   /** The map's standing breakable walls (#3140), and what each crumbling would win; `[]` on a map without any. */
   readonly breakables: readonly BotBreakable[];
+}
+
+/** A ground effect that hurts the bodies standing in it, as bots read it (#4193). */
+export interface HostileGround {
+  /** Its owner's team. */
+  readonly team: number;
+  /** `foes`: bodies off `team`; `all`: every body, `team`'s too. */
+  readonly hits: "foes" | "all";
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly radius: number;
 }
 
 /** A lever as bots read it (#2542). */
@@ -506,6 +534,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   altarHolder: null,
   gates: [],
   harmfulZones: [],
+  hostileGround: [],
   levers: [],
   breakables: [],
 };
@@ -526,6 +555,8 @@ export function createCursor(): BehaviourCursor {
     regroupSince: undefined,
     regroupSpent: false,
     front: undefined,
+    focusId: undefined,
+    swapId: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
     spikeReadySeconds: undefined,
@@ -613,6 +644,7 @@ const STAND_STILL: BehaviourIntent = {
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
+  stopAttack: false,
   applyStatuses: [],
   endUpkeep: undefined,
 };
@@ -833,9 +865,18 @@ function followAndAttack(
       : context.participants.find(
           (other) => other.id === id && other.combatant.team !== team && !other.combatant.dead,
         );
+  // A wall its owner strikes is struck too (#4220), never one it picks
+  // itself: walls belong to nobody, so there is no team to test.
+  const standingWall = (id: string | undefined): BotBreakable | undefined =>
+    owner.combatant.dead || id === undefined
+      ? undefined
+      : context.objectives.breakables.find((wall) => wall.targetId === id);
+  const wallWithin = (wall: BotBreakable, from: Vec2, units: number): boolean =>
+    wall.layer === self.layer && distance(strikePointOf(wall.field, from, 0), from) <= units;
   // A spell at a foe is not attacking it: only a weapon attack or an
   // attack skill sets `attack` (#1079).
   const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
+  const ownerWall = standingWall(owner.combatant.attack?.targetId);
   const drawnTo = behaviour.drawnTo;
   if (
     drawnTo !== undefined &&
@@ -874,6 +915,10 @@ function followAndAttack(
     if (foe !== undefined && inAggro(foe)) {
       return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
     }
+    const wall = mode === "fight" ? standingWall(owner.targetId) : ownerWall;
+    if (wall !== undefined && wallWithin(wall, self.position, behaviour.aggroUnits)) {
+      return { ...STAND_STILL, targetId: wall.targetId, attackTargetId: wall.targetId };
+    }
   }
   const attack = self.combatant.attack;
   if (attack !== undefined) {
@@ -881,8 +926,12 @@ function followAndAttack(
   }
   if (behaviour.engage === "owner-target-then-nearest") {
     const assisted =
-      ownerFoe !== undefined && distance(ownerFoe.position, owner.position) <= behaviour.leashUnits;
-    const foe = assisted ? ownerFoe.id : nearestLiving(self, context.participants, inAggro);
+      ownerFoe !== undefined && distance(ownerFoe.position, owner.position) <= behaviour.leashUnits
+        ? ownerFoe.id
+        : ownerWall !== undefined && wallWithin(ownerWall, owner.position, behaviour.leashUnits)
+          ? ownerWall.targetId
+          : undefined;
+    const foe = assisted ?? nearestLiving(self, context.participants, inAggro);
     if (foe !== undefined) {
       return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
     }
@@ -1027,6 +1076,7 @@ function parallel(
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,
+    stopAttack: intents.some((intent) => intent.stopAttack),
     applyStatuses: intents.flatMap((intent) => intent.applyStatuses),
     endUpkeep: intents.find((intent) => intent.endUpkeep !== undefined)?.endUpkeep,
   };

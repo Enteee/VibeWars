@@ -305,20 +305,23 @@ describe("Life Transfer (#2313)", () => {
   it.each([
     [R12, 11, 7],
     [R0, 6, 3],
-  ])("hexes the foe and those beside it, and regenerates its caster", (ranks, seconds, pips) => {
-    const match = arena([TRANSFER], ranks);
-    cast(match, "c", 0, "foe", 1.5);
-    for (const id of ["foe", "foeAlly"]) {
-      const hexed = get(match, id);
-      expect(hexed.statuses.get("life-transfer")?.durationSeconds).toBe(seconds);
-      expect(aggregateModifiers(hexed.statuses.active).healthPips).toBe(-pips);
-    }
-    expect(get(match, "foeNear").statuses.has("life-transfer")).toBe(false);
-    expect(get(match, "ally").statuses.has("life-transfer")).toBe(false);
-    const c = get(match, "c");
-    expect(c.statuses.get("life-transfer-regen")?.durationSeconds).toBe(seconds);
-    expect(aggregateModifiers(c.statuses.active).healthPips).toBe(pips);
-  });
+  ])(
+    "hexes the foe and those beside it, and regenerates its caster for each (#4167)",
+    (ranks, seconds, pips) => {
+      const match = arena([TRANSFER], ranks);
+      cast(match, "c", 0, "foe", 1.5);
+      for (const id of ["foe", "foeAlly"]) {
+        const hexed = get(match, id);
+        expect(hexed.statuses.get("life-transfer")?.durationSeconds).toBe(seconds);
+        expect(aggregateModifiers(hexed.statuses.active).healthPips).toBe(-pips);
+      }
+      expect(get(match, "foeNear").statuses.has("life-transfer")).toBe(false);
+      expect(get(match, "ally").statuses.has("life-transfer")).toBe(false);
+      const c = get(match, "c");
+      expect(c.statuses.get("life-transfer-regen")?.durationSeconds).toBe(seconds);
+      expect(aggregateModifiers(c.statuses.active).healthPips).toBe(2 * pips);
+    },
+  );
 });
 
 describe("Demonic Flesh (#2313)", () => {
@@ -351,7 +354,7 @@ describe("Feast of Corruption (#2313)", () => {
     [R0, 16, 8],
   ])("strikes the foe and those beside it, and steals from each hexed", (ranks, damage, steal) => {
     const match = arena([FEAST], ranks);
-    get(match, "foeAlly").statuses.apply("life-siphon", 30, "c", NO_RANKS);
+    get(match, "foeAlly").statuses.apply("reckless-haste", 30, "c", NO_RANKS);
     const c = get(match, "c");
     c.health = 5e4;
     const log = cast(match, "c", 0, "foe", 2.5);

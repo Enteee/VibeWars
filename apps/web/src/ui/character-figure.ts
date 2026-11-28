@@ -35,7 +35,9 @@ import {
   STACK_BAKE_SCALE,
   bakeFigure,
   type BakeContext,
+  type BodyStackLook,
 } from "../render/stack-atlas.js";
+import { WARRIOR_OUTFIT } from "../render/profession-outfits.js";
 import { t } from "../i18n/index.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -62,16 +64,15 @@ const BOX_WEAPON_FACING = 0;
 const BOX_OFFHAND_FACING = Math.PI + FOCUS_ANGLE;
 /** How far the bake's shadow reaches below the feet, in radii (`STACK_FRAME_HEIGHT`). */
 const SHADOW_DROP = 0.91;
-/** How high the figure's helmet stands over its feet, its outline included. */
+/** How high the warrior's helmet, a figure of the most lifts, stands over its feet, its outline included. */
 const HELMET_TOP =
   STACK_OUTLINE_WIDTH -
   Math.min(
     ...stackLayers(
-      stackSlices("stand"),
+      stackSlices("stand", WARRIOR_OUTFIT, undefined),
       bucketFacing(headingBucket(FIGURE_FACING)),
       BODY_RADIUS,
-      stackTones(0, undefined),
-      undefined,
+      stackTones(0, undefined, WARRIOR_OUTFIT, undefined),
     ).flatMap((layer) => layer.points.map((point) => point.y)),
   );
 /** How much of its box the figure fills (#4082): helmet to shadow, or mark to mark. */
@@ -151,9 +152,12 @@ export function figureBody(
     cape:
       cape === undefined
         ? undefined
-        : { look: cape, motion: newCapeMotion(), pattern: undefined, emblemFrame: undefined },
+        : { look: cape, motion: newCapeMotion(), emblemFrame: undefined },
   };
 }
+
+/** The professions a figure's outfit and accent follow (#4175). */
+export type FigureWearing = Pick<BodyStackLook, "primary" | "secondary">;
 
 /** What a figure's slices are drawn into: a bake's calls, and a transform to place them. */
 export type FigureContext = BakeContext &
@@ -192,22 +196,27 @@ export function boxDecor(body: StandingBody): FigureDecor {
 /**
  * The figure's body as a match draws a standing one (ADR-0057): what
  * lies on the ground under it through `painter`; its stacked figure in
- * `pose` at its nearest heading, `body.r` wide, into `context`; the badge
+ * `pose` at its nearest heading, `body.r` wide, in the outfit `wearing`
+ * picks (#4175), into `context`; the badge
  * where `decor` puts it, `paintGlyph` on that; then its marks.
  */
 export function paintFigure(
   painter: Painter,
   context: FigureContext,
   body: StandingBody,
+  wearing: FigureWearing,
   pose: StackPose,
   decor: FigureDecor,
   paintGlyph: () => void,
 ): void {
   paintFigureGround(painter, body);
   const { cape } = body;
-  const look = {
+  const look: BodyStackLook = {
+    kind: "body",
     body: teamColour(body.team),
-    cape: cape === undefined ? undefined : { look: cape.look, pattern: cape.pattern },
+    cape: cape?.look,
+    primary: wearing.primary,
+    secondary: wearing.secondary,
   };
   const size = body.r / (STACK_BAKE_RADIUS * STACK_BAKE_SCALE);
   context.save();
@@ -359,7 +368,7 @@ export function createCharacterFigure(
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
     context.clearRect(0, 0, FIGURE_FRAME, FIGURE_FRAME);
-    paintFigure(painter, context, body, "stand", decor, () => {
+    paintFigure(painter, context, body, look, "stand", decor, () => {
       const size = Math.round(BODY_GLYPH_SIZE * perUnit);
       const tinted = glyph === undefined ? undefined : tintedGlyph(glyph, size);
       if (tinted !== undefined) {

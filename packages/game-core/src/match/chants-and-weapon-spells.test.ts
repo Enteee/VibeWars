@@ -92,12 +92,12 @@ function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] 
 }
 
 describe("Anthem of Flame on an attack skill (#758)", () => {
-  it("an attack skill that hits burns its target for 3 s and ends the chant", () => {
+  it("an attack skill that hits burns its target for 4 s and ends the chant", () => {
     const attacker = chanted();
     const target = victim();
     const events = chop(attacker, [target]);
     expect(burned(events)).toEqual(["t"]);
-    expect(target.statuses.get("burning")?.remainingSeconds).toBe(3);
+    expect(target.statuses.get("burning")?.remainingSeconds).toBe(4);
     expect(attacker.statuses.has("anthem-of-flame")).toBe(false);
     expect(events).toContainEqual({
       kind: "status-expired",
@@ -185,7 +185,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
     const description = describeSkill(skill(ANTHEM), undefined, EN_WORDS, EN_NAMES);
     expect(description.typeText).toBe("Chant.");
     expect(description.effects.map((effect) => effect.text)).toEqual([
-      "Applies Anthem of Flame for 10s (next attack skill: Burning 3s)",
+      "Applies Anthem of Flame for 10s (next attack skill: Burning 4s)",
     ]);
   });
 });
@@ -432,7 +432,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     );
     expect(first?.skill.id).toBe("ranger.barrage");
     expect(first?.next.effects).toEqual([
-      { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } },
+      { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 4 } },
     ]);
     expect(second?.skill.id).toBe("ranger.broad-head-arrow");
     expect(second?.next).toEqual({ statusIds: [], effects: [] });
@@ -457,7 +457,7 @@ describe("Anthem of Flame in the match (#758)", () => {
       ticks += 1;
       expect(ticks).toBeLessThan(SLOW_FLIGHT_SECONDS * RULES.tickRateHz);
     }
-    expect(get(match, "foe").combatant.statuses.get("burning")?.remainingSeconds).toBeCloseTo(3, 0);
+    expect(get(match, "foe").combatant.statuses.get("burning")?.remainingSeconds).toBeCloseTo(4, 0);
   });
 
   it("a paragon with Anthem of Flame is a legal build", () => {

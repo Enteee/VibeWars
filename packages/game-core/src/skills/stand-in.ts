@@ -68,6 +68,7 @@ export function standIn(
     skillId,
     key,
     remainingSeconds: seconds,
+    totalSeconds: seconds,
     restores: { skillId: ownSkillId, rechargeSeconds: own.rechargeSeconds },
   });
   addCopyPool(bearer, key);

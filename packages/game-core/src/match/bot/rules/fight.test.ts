@@ -154,6 +154,22 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     expect(sim.get("b")?.targetId).toBe("hurt");
   });
 
+  it("tells the host the target a bot decided on, and none for a body no bot drives (#4188)", () => {
+    const sim = match([
+      fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+      fighter("foe", 1, WARRIOR, vec2(700, 400), { behaviour: undefined }),
+    ]);
+    expect(sim.botTargetOf("a")).toBeUndefined();
+    sim.step(DT);
+    expect(sim.botTargetOf("a")).toBe("foe");
+    const foe = sim.get("foe");
+    if (foe !== undefined) {
+      foe.targetId = "a";
+    }
+    expect(sim.botTargetOf("foe")).toBeUndefined();
+    expect(sim.botTargetOf("nobody")).toBeUndefined();
+  });
+
   it("casts Mirrored Stance only on a foe with a stance on its bar", () => {
     const at = (foeBar: readonly string[]) =>
       match([
@@ -587,5 +603,82 @@ describe("snares on the diver (#4156)", () => {
     expect(
       fight.decide(ruleFor(dived([CRIPPLING_SHOT], ghost), "r", { targetId: ghost })),
     ).toMatchObject({ useSkillId: CRIPPLING_SHOT, targetId: ghost });
+  });
+});
+
+describe("knocks down a foe blocking an ally's blows (#4228)", () => {
+  const SHOCK = "elementalist.shock";
+
+  /**
+   * An elementalist with Shock at (400, 400), the team's target `t` at
+   * (420, 430), and `b` at (420, 370) in Gladiator's Defense, its warrior
+   * swinging at `b`.
+   */
+  function stancing(): MatchSimulation {
+    const sim = match([
+      fighter("e", 0, ELEMENTALIST, vec2(400, 400), { skillBar: [SHOCK] }),
+      fighter("w", 0, WARRIOR, vec2(450, 370), { behaviour: undefined }),
+      fighter("t", 1, WARRIOR, vec2(420, 430), { behaviour: undefined }),
+      fighter("b", 1, WARRIOR, vec2(420, 370), { behaviour: undefined }),
+    ]);
+    sim.get("b")?.combatant.statuses.apply("gladiators-defense", 10, "b", NO_RANKS);
+    sim.setTarget("w", "b");
+    return sim;
+  }
+
+  it("casts Shock at the blocker, not the team target", () => {
+    expect(fight.decide(ruleFor(stancing(), "e", { targetId: "t" }))).toMatchObject({
+      useSkillId: SHOCK,
+      targetId: "b",
+    });
+  });
+
+  it("casts it at a fixed target, the spike aside", () => {
+    expect(
+      fight.decide(
+        ruleFor(stancing(), "e", { targetId: "t", targetFixed: true, spikeHold: false }),
+      ),
+    ).toMatchObject({ useSkillId: SHOCK, targetId: "t" });
+  });
+});
+
+describe("blinds on an attacker (#4239)", () => {
+  const BLINDING_FLASH = "elementalist.blinding-flash";
+
+  /** An elementalist with Blinding Flash at (400, 400), its monk at (300, 600), the team's target `t` a caster at (700, 400), and `d` at (340, 600). */
+  function dived(attacking: boolean): MatchSimulation {
+    const sim = match([
+      fighter("m", 0, ELEMENTALIST, vec2(400, 400), { skillBar: [BLINDING_FLASH] }),
+      fighter("monk", 0, MONK, vec2(300, 600), { behaviour: undefined }),
+      fighter("t", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+      fighter("d", 1, WARRIOR, vec2(340, 600), { behaviour: undefined }),
+    ]);
+    if (attacking) {
+      sim.setTarget("d", "monk");
+      const foe = sim.get("d");
+      if (foe === undefined) throw new Error("no d");
+      foe.combatant.attack = { targetId: "monk", swingElapsed: 0.1, unreachableSeconds: 0 };
+    }
+    return sim;
+  }
+
+  it("casts Blinding Flash at the warrior on its monk, not the caster it targets", () => {
+    expect(fight.decide(ruleFor(dived(true), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: BLINDING_FLASH,
+      targetId: "d",
+    });
+  });
+
+  it("casts it at the team's target with no foe attacking", () => {
+    expect(fight.decide(ruleFor(dived(false), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: BLINDING_FLASH,
+      targetId: "t",
+    });
+  });
+
+  it("casts it at a called target", () => {
+    expect(
+      fight.decide(ruleFor(dived(true), "m", { targetId: "t", targetFixed: true })),
+    ).toMatchObject({ useSkillId: BLINDING_FLASH, targetId: "t" });
   });
 });

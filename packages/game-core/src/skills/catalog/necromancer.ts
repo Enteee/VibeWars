@@ -85,8 +85,16 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // "(4...18 seconds.) Target foe attacks 50% slower and has -1...3
+    // Health degeneration."
     effects: [
-      { kind: "apply-status", statusId: "faintheartedness", durationSeconds: { flat: 13 } },
+      {
+        kind: "apply-status",
+        statusId: "faintheartedness",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 15.2 },
+        },
+      },
     ],
   },
   {
@@ -154,10 +162,18 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // GW1's energy-degeneration hex (#503), at its rank-12 duration.
+    // GW1's energy-degeneration hex (#503), for 5...35 seconds.
     // Left out: the caster's own -1 health degeneration while it lasts,
     // and the damage that ends it when the foe's energy reaches 0.
-    effects: [{ kind: "apply-status", statusId: "malaise", durationSeconds: { flat: 24 } }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "malaise",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 29 },
+        },
+      },
+    ],
   },
   {
     id: "necromancer.enfeeble",
@@ -347,7 +363,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
-    rechargeSeconds: 20,
+    rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
@@ -1544,10 +1560,10 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "necromancer",
     attributeId: "necromancer.curses",
-    cost: { kind: "energy", amount: 15 },
+    cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 1,
-    rechargeSeconds: 12,
+    rechargeSeconds: 8,
     range: RANGE_SPELL,
     target: "single-enemy",
     area: undefined,
@@ -1724,7 +1740,9 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...35 seconds, target foe gains only two-thirds Health from
     // healing": 29 s, its rank-12 value. Every heal, as Deep Wound's.
+    // The corpus's 10% sacrifice is paid once a cast.
     effects: [
+      { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "apply-status",
         statusId: "defile-flesh",
@@ -2438,7 +2456,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 21.6 },
         },
       },
-      { kind: "caster-gains-status", statusId: "life-siphon-regen", durationSeconds: 22 },
     ],
   },
   {
@@ -4864,7 +4881,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 6...12 seconds, target foe and adjacent foes suffer -3...8
     // Health degeneration, which you gain as Health regeneration": as Life
-    // Siphon's, the caster's regeneration once.
+    // Siphon's, the caster's regeneration for each foe it hexed (#4167).
     effects: [
       { kind: "apply-status", statusId: "life-transfer", durationSeconds: LIFE_TRANSFER_SECONDS },
       {
@@ -4879,12 +4896,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
             durationSeconds: LIFE_TRANSFER_SECONDS,
           },
         ],
-      },
-      {
-        kind: "apply-status",
-        statusId: "life-transfer-regen",
-        durationSeconds: LIFE_TRANSFER_SECONDS,
-        on: "caster",
       },
     ],
   },

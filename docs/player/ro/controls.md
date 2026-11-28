@@ -6,6 +6,12 @@ Orice tastă din tabelul de mai jos poate fi schimbată în **Opțiuni**, la
 deja folosită trece la noua acțiune, iar ecranul îți spune care acțiune a
 pierdut-o. Modificările se salvează imediat.
 
+O tastă poate fi și o combinație: ține apăsat Shift, Ctrl sau Alt și apasă
+tasta, de exemplu **Shift + X**. Mișcare și Arată nume primesc o singură
+tastă, iar browserul păstrează câteva combinații pentru el, de exemplu
+Ctrl + W. Când ții Shift ca să arăți numele, tastele tale simple merg în
+continuare, dacă acea combinație cu Shift nu e ea însăși atribuită cuiva.
+
 ## Taste
 
 Presetarea implicită este **Clasic**, pentru mâinile obișnuite cu GW1. **VibeWars** folosește abilitățile cu mâna stângă și se mișcă cu săgețile.
@@ -91,7 +97,7 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
 **M** încă oprește sunetul și **F10** încă iese și fără el. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **☰**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
-[?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
+[?] deschide Ajutorul la fel, ca fereastră sub el cu paginile sale listate în stânga; meciul continuă în spate.
 Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].
 
 **Trimite un beat lobby-ului tău.** În editorul de beaturi (♪, apoi **Editează**),

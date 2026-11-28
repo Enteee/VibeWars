@@ -211,6 +211,16 @@ describe("Soothing (#1550)", () => {
     expect([...foe.adrenaline.values()]).toEqual([25]);
     expect([...ally.adrenaline.values()]).toEqual([50]);
   });
+
+  it("halves damage taken and blows alike (#4163)", () => {
+    const sim = match([spec("f", 1, vec2(300, 0), { skillBar: ["warrior.sever-artery"] })]);
+    ritual(sim, SOOTHING);
+    const foe = get(sim, "f").combatant;
+    fillPools(foe, 50, false);
+    expect([...foe.adrenaline.values()]).toEqual([25]);
+    fillPools(foe, 50, true);
+    expect([...foe.adrenaline.values()]).toEqual([50]);
+  });
 });
 
 describe("death bursts (#1550)", () => {

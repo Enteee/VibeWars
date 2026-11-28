@@ -6,6 +6,12 @@ Elke toets in de tabel hieronder kun je wijzigen in **Opties**, onder
 die al in gebruik is, gaat naar de nieuwe actie, en het scherm zegt welke
 actie hem kwijt is. Wijzigingen worden meteen opgeslagen.
 
+Een toets kan ook een combinatie zijn: houd Shift, Ctrl of Alt ingedrukt en
+druk op de toets, zoals **Shift + X**. Bewegen en Namen tonen nemen maar één
+toets, en de browser houdt een paar combinaties voor zichzelf, zoals Ctrl +
+W. Als je Shift ingedrukt houdt om namen te tonen, werken je gewone toetsen
+nog steeds, tenzij die Shift-combinatie zelf aan iets gekoppeld is.
+
 ## Toetsen
 
 De standaardpreset is **Klassiek**, voor GW1-handen. **VibeWars** cast met de linkerhand en beweegt met de pijltjestoetsen.
@@ -89,7 +95,7 @@ behalve Lobby, in **☰** rechtsboven in het scherm, samen met **Verlaten**;
 **M** dempt nog steeds en **F10** verlaat de match nog steeds zonder. In een smal venster klappen deze pictogrammen en
 de andere knoppen van het scherm in tot **☰**; alleen de hoofdknop blijft staan.
 ⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het.
-[?] opent Help op dezelfde manier, als venster eronder met een paginakiezer bovenaan; een match loopt erachter door.
+[?] opent Help op dezelfde manier, als venster eronder met zijn pagina's links onder elkaar; een match loopt erachter door.
 Help sluit met zijn ×, Esc, een klik erbuiten, of nog een druk op [?].
 
 **Deel een beat met je lobby.** In de beat-editor (♪, dan **Bewerken**)

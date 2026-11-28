@@ -6,6 +6,12 @@ un **Preajuste**, o haz clic en la celda de una tecla y pulsa la que
 quieras; una tecla ya en uso pasa a la nueva acción, y la pantalla dice cuál
 la perdió. Los cambios se guardan al instante.
 
+Una tecla también puede ser una combinación: mantén Shift, Ctrl o Alt y
+pulsa la tecla, como **Shift + X**. Moverse y Ver nombres solo aceptan una
+tecla, y el navegador se reserva algunas combinaciones, como Ctrl + W.
+Mantener Shift para ver nombres deja que tus teclas normales sigan
+funcionando, salvo que esa combinación con Shift esté asignada a algo.
+
 ## Teclas
 
 El preajuste por defecto es **Clásico**, para manos de GW1. **VibeWars** lanza con la mano izquierda y se mueve con las flechas.
@@ -97,7 +103,7 @@ estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **☰**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
 cierran. [?] abre la Ayuda igual, como una
-ventana bajo él con un selector de página arriba; la partida sigue detrás. La
+ventana bajo él con sus páginas listadas a la izquierda; la partida sigue detrás. La
 Ayuda se cierra con su ×, Esc, un clic fuera u otra pulsación de [?].
 
 **Comparte un ritmo con tu sala.** En el editor de ritmos (♪, luego

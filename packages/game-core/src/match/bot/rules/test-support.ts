@@ -139,6 +139,7 @@ export function contextFor(
     sees: () => true,
     seesBetween: () => true,
     walkable: () => true,
+    speedOf: (participantId) => sim.moveSpeedFactorOf(participantId),
     foeCentroid: centroidOf(participants, (other) => other.combatant.team !== team),
     objectives: NO_OBJECTIVES,
     projectiles: sim.projectiles,
@@ -208,6 +209,7 @@ export function ruleFor(
     ),
     targetId: undefined,
     targetFixed: false,
+    attackTarget: () => extra.targetId,
     nearestFirst: (bodies) => [...bodies],
     mayUse: () => true,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
@@ -220,6 +222,7 @@ export function ruleFor(
     cursor: createCursor(),
     foeReach: (foe) => foeReach(reaches, foe),
     plan: "push",
+    speedOf: (participant) => view.speedOf(participant.id),
     ...extra,
   };
 }

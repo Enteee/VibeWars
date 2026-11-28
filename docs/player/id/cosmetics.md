@@ -12,23 +12,19 @@ melihat apa yang kamu dapatkan.
 | ---------------------------------------------------------------- | ------------------------------------- |
 | Bingkai giok dan gelar Penantang                                 | 5 kemenangan peringkat                |
 | Aura lumut, Jejak lumut, Ayunan lumut                            | 5 kemenangan peringkat                |
-| Jubah bergaris                                                   | 5 kemenangan peringkat                |
 | Bingkai lambang warna pinggiran                                  | 5 kemenangan peringkat                |
 | Bingkai mawar dan gelar Veteran                                  | 25 kemenangan peringkat               |
 | Aura bara, Jejak bara, Ayunan bara                               | 25 kemenangan peringkat               |
-| Jubah chevron                                                    | 25 kemenangan peringkat               |
 | Cahaya naik, Larut jadi abu                                      | 25 kemenangan peringkat               |
 | Aura embun beku, Jejak embun beku, Ayunan embun beku             | 75 kemenangan peringkat               |
 | Pusaran daun, Larut jadi kabut                                   | 75 kemenangan peringkat               |
 | Bingkai lambang besi                                             | 75 kemenangan peringkat               |
 | Bingkai hijau toska dan gelar Panglima perang                    | 200 kemenangan peringkat              |
-| Jubah perempat                                                   | 200 kemenangan peringkat              |
 | Hujan kelopak, Larut jadi serpihan                               | 200 kemenangan peringkat              |
 | Bingkai lambang perak                                            | 200 kemenangan peringkat              |
 | Aura cahaya bintang, Jejak cahaya bintang, Ayunan cahaya bintang | 500 kemenangan peringkat              |
 | Hujan bintang, Larut jadi debu bintang                           | 500 kemenangan peringkat              |
 | Bingkai anggrek dan gelar Juara                                  | Tempat di Top 100                     |
-| Jubah bintang                                                    | Tempat di Top 100                     |
 | Bingkai lambang bersepuh emas                                    | Tempat di Top 100                     |
 | Api kemenangan beruntun                                          | 3 kemenangan peringkat berturut-turut |
 
@@ -40,9 +36,9 @@ lagi. Pilihanmu tetap terpilih.
 
 Aura tanah adalah cincin samar di kakimu. Jejak langkah meninggalkan butiran kecil di tempat kamu berjalan, yang memudar dalam sekejap. Keduanya digambar di bawah setiap cincin, tanda, dan peringatan, dan tidak pernah memakai warna tim. Jika sistemmu menyalakan gerakan yang dikurangi, aura diam di tempat dan tidak ada jejak yang digambar.
 
-## Di senjata dan jubahmu
+## Di senjatamu
 
-Jejak senjata adalah pita di belakang senjatamu saat serangan jarak dekat mengenai sasaran, dan memudar dalam seperlima detik sejak pukulan mengena. Busur, tombak, tongkat sihir, dan tongkat tidak mendapatkannya, dan tidak ada mantra atau rapalan yang pernah menampilkannya. Corak jubah menaruh garis, chevron, perempat, atau bintang di jubah guild-mu dengan warna pinggirannya sendiri, dan lambangmu selalu tetap di atas, sejelas pada jubah polos. Jika sistemmu menyalakan gerakan yang dikurangi, tidak ada jejak senjata yang digambar.
+Jejak senjata adalah pita di belakang senjatamu saat serangan jarak dekat mengenai sasaran, dan memudar dalam seperlima detik sejak pukulan mengena. Busur, tombak, tongkat sihir, dan tongkat tidak mendapatkannya, dan tidak ada mantra atau rapalan yang pernah menampilkannya. Jika sistemmu menyalakan gerakan yang dikurangi, tidak ada jejak senjata yang digambar.
 
 ## Kembali dan tumbang
 
@@ -61,7 +57,7 @@ contoh yang kamu tunjuk atau fokuskan, beserta cara mendapatkannya. Contoh yang 
 redup, dengan gembok kecil. Pilihanmu langsung berlaku. Pemain lain melihatnya mulai dari lobi
 berikutnya yang kamu masuki.
 
-Di atas baris, karaktermu memakai tampilanmu dan berdiri, berjalan, serta mengayun, sehingga aura, jejak, dan jejak senjata terlihat saat bergerak. Tekan lama sebuah contoh untuk mencobanya, bahkan yang terkunci: baris itu menyebut apa yang sedang kamu pratinjau dan, selama masih terkunci, cara mendapatkannya. Lepaskan pada item yang sudah didapat untuk memakainya. Lepaskan pada item terkunci, atau geser keluar dari contoh, dan tidak ada yang berubah. Dengan keyboard, tahan Spasi pada sebuah contoh.
+Di samping baris (di atasnya pada ponsel), karaktermu memakai tampilanmu dan berkeliling: berjalan, berdiri, mengayun, dan merapal mantra, sehingga aura, jejak, dan jejak senjata terlihat saat bergerak. Ia tetap terlihat saat kamu menggulir. Pemilih Utama dan Sekunder di bawahnya menampilkan tampilan itu pada pasangan profesi mana pun; keduanya hanya mengubah pratinjau, tidak pernah karaktermu. Tekan lama sebuah contoh untuk mencobanya, bahkan yang terkunci: baris itu menyebut apa yang sedang kamu pratinjau dan, selama masih terkunci, cara mendapatkannya. Lepaskan pada item yang sudah didapat untuk memakainya. Lepaskan pada item terkunci, atau geser keluar dari contoh, dan tidak ada yang berubah. Dengan keyboard, tahan Spasi pada sebuah contoh.
 
 ## Melihat kosmetik pemain lain
 

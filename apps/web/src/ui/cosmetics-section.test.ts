@@ -4,6 +4,7 @@ import { COSMETIC_CATALOG, type CosmeticEntry } from "../cosmetics/catalog.js";
 import { createCosmeticsStore, type CosmeticsStore } from "../cosmetics/store.js";
 import { t } from "../i18n/index.js";
 import type { WornCosmetics } from "../cosmetics/selection.js";
+import type { FigureLook } from "./character-card.js";
 import type { CosmeticsPreview } from "./cosmetics-preview.js";
 import {
   HOLD_MS,
@@ -32,15 +33,27 @@ function emptyStore(): CosmeticsStore {
   });
 }
 
-/** What the last mounted section's figure wears, and how often it replayed a spawn and dissolve. */
-const figure: { look: () => WornCosmetics; replays: number } = { look: () => ({}), replays: 0 };
+/**
+ * What the last mounted section's figure wears, how often it replayed a
+ * spawn and dissolve, and the professions it was last set to wear.
+ */
+const figure: {
+  look: () => WornCosmetics;
+  replays: number;
+  professions: readonly string[] | undefined;
+} = { look: () => ({}), replays: 0, professions: undefined };
 
-/** The section mounted over `store`, the player wearing `cape`; its figure a stub. */
-function mounted(store: CosmeticsStore, cape: SwatchCape | null = CAPE): FakeElement {
+/** The section mounted over `store`, the player wearing `cape`, playing `character`; its figure a stub. */
+function mounted(
+  store: CosmeticsStore,
+  cape: SwatchCape | null = CAPE,
+  character?: FigureLook,
+): FakeElement {
   const container = new FakeElement();
   figure.replays = 0;
+  figure.professions = undefined;
   cosmeticsSection(store, () => cape, {
-    look: () => Promise.resolve(undefined),
+    look: () => Promise.resolve(character),
     preview: (look): CosmeticsPreview => {
       figure.look = look;
       return {
@@ -49,6 +62,9 @@ function mounted(store: CosmeticsStore, cape: SwatchCape | null = CAPE): FakeEle
         stop: () => undefined,
         replayReactions: () => {
           figure.replays += 1;
+        },
+        setProfessions: (primary, secondary) => {
+          figure.professions = [primary, secondary];
         },
       };
     },
@@ -237,13 +253,10 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
     expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([picked]);
   });
 
-  it("draws a swatch from its catalog entry, a cape's in the player's own colours", () => {
+  it("draws a swatch from its catalog entry, an emblem frame's in the player's own trim", () => {
     expect(swatchStyle(firstOf("frame"), null).colours["--swatch"]).toMatch(/^#[0-9a-f]{6}$/);
     const title = swatchStyle(firstOf("title"), null);
     expect(Object.keys(title.colours)).toEqual(["--swatch", "--swatch-glow"]);
-    const cape = swatchStyle(firstOf("cape"), CAPE);
-    expect(cape.colours).toEqual({ "--swatch": "#203040", "--swatch-trim": "#c0a060" });
-    expect(cape.variant).not.toBeNull();
     const trim = COSMETIC_CATALOG.find(
       (entry) => entry.look.kind === "emblemFrame" && entry.look.colour === "trim",
     );
@@ -411,5 +424,71 @@ describe("Options > Cosmetics, held (#3989)", () => {
     expect(figure.replays).toBe(1);
     pointer(swatch, "pointercancel");
     expect(figure.look().spawn).toBeUndefined();
+  });
+});
+
+describe("Options > Cosmetics, the preview's professions (#4177)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** A monk/necromancer, all the section reads of a character. */
+  const MONK = { primary: "monk", secondary: "necromancer" } as unknown as FigureLook;
+
+  const picker = (container: FakeElement, which: "primary" | "secondary"): FakeElement => {
+    const found = container.all(`cosmetics-${which}`)[0];
+    if (found === undefined) {
+      throw new Error(`no ${which} picker`);
+    }
+    return found;
+  };
+  const offered = (select: FakeElement): string[] => select.children.map((option) => option.value);
+
+  it("shows no note above the figure", () => {
+    expect(mounted(emptyStore()).all("cosmetics-note")).toHaveLength(0);
+  });
+
+  it("starts on the character's professions, else the first two", async () => {
+    const played = mounted(emptyStore(), CAPE, MONK);
+    await Promise.resolve();
+    expect(picker(played, "primary").value).toBe("monk");
+    expect(picker(played, "secondary").value).toBe("necromancer");
+
+    const fresh = mounted(emptyStore());
+    await Promise.resolve();
+    expect(picker(fresh, "primary").value).toBe("warrior");
+    expect(picker(fresh, "secondary").value).toBe("ranger");
+    expect(figure.professions).toEqual(["warrior", "ranger"]);
+  });
+
+  it("never offers the picked primary as secondary, and moves a clashing secondary off it", async () => {
+    const container = mounted(emptyStore(), CAPE, MONK);
+    await Promise.resolve();
+    const primary = picker(container, "primary");
+    const secondary = picker(container, "secondary");
+    expect(offered(primary)).toHaveLength(10);
+    expect(offered(secondary)).not.toContain("monk");
+    expect(offered(secondary)).toHaveLength(9);
+
+    primary.value = "necromancer";
+    primary.fire("change");
+    expect(offered(secondary)).not.toContain("necromancer");
+    expect(secondary.value).toBe("warrior");
+    expect(figure.professions).toEqual(["necromancer", "warrior"]);
+  });
+
+  it("dresses the figure only: a pick stores nothing", async () => {
+    const setItem = vi.fn();
+    const store = createCosmeticsStore({ getItem: () => null, setItem, removeItem: setItem });
+    const container = mounted(store, CAPE, MONK);
+    await Promise.resolve();
+    const secondary = picker(container, "secondary");
+    secondary.value = "mesmer";
+    secondary.fire("change");
+    expect(figure.professions).toEqual(["monk", "mesmer"]);
+    expect(setItem).not.toHaveBeenCalled();
   });
 });

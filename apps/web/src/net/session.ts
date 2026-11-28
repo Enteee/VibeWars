@@ -61,6 +61,7 @@ import { frameTiming } from "../render/frame-timing.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { leaderboard } from "./leaderboard.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
+import { holdBots } from "./hold-bots.js";
 import { preMatchTimes } from "./pre-match-times.js";
 import {
   arenaIds,
@@ -234,6 +235,8 @@ function startMatch(plan: MatchPlan) {
     recordReplay: { buildHash: __VIBEWARS_BUILD__, sha256 },
     // Everyone held in its spawn until all are in, then 10 s (#3818); 1 s in e2e (#3855).
     preMatch: preMatchTimes(import.meta.env.VITE_VIBEWARS_PRE_MATCH, window.location.search),
+    // Bots that stand still, when an e2e spec asks (#4146).
+    holdBots: holdBots(import.meta.env.VITE_VIBEWARS_BOTS, window.location.search),
   });
 }
 
@@ -441,7 +444,12 @@ export async function hostLobby(
       relayPub: null,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -545,7 +553,12 @@ export async function joinLobbyByCode(
       relayPub,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
       ...guild,
       timeoutMs:
         rejoin === undefined ? JOIN_TIMEOUT_MS : Math.max(0, rejoin.expiresAt - Date.now()),

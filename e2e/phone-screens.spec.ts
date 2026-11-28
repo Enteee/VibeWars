@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { joinFriend, openRail, showRail, type RailLabel } from "./helpers/menu.js";
-import { clickTopbarIcon } from "./helpers/overlay.js";
+import { clickTopbarIcon, optionsEntry } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
 import {
   PIXEL_8A_LANDSCAPE,
@@ -26,6 +26,25 @@ test.use(PIXEL_8A_PORTRAIT);
 async function openPhone(page: Page, url = "./"): Promise<void> {
   await page.goto(url);
   await expect(page.locator(".rail-title")).toBeVisible();
+}
+
+/** Back from a drilled-in flyout page to its list (#4216). */
+async function backToList(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Back to the list", exact: true }).click();
+}
+
+/**
+ * Until a drilled-in page has stopped sliding in (#4216): mid-slide, a
+ * 44 px box is mapped through its transform and reads 43.99.
+ */
+async function drilledIn(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page
+        .locator(".flyout-rail-main")
+        .evaluateAll((mains) => mains.some((main) => main.getAnimations().length > 0)),
+    )
+    .toBe(false);
 }
 
 /** `locator`'s box is a finger's at least (#3776). */
@@ -115,25 +134,46 @@ for (const label of [
   });
 }
 
-test("Options, every section, fits the phone (#3776)", async ({ page }) => {
+test("Options, every section, fits the phone, drilled into from a list of 44 px entries (#3776, #4216)", async ({
+  page,
+}) => {
   await openPhone(page);
   await clickTopbarIcon(page, ".topbar-options");
-  const entries = page.locator(".options-entry");
+  const entries = page.locator(".flyout-rail-entry");
+  await expect(optionsEntry(page, "player")).toBeFocused();
+  await expectFitsPhone(page, "Options: the list");
   for (let i = 0; i < (await entries.count()); i += 1) {
+    const title = (await entries.nth(i).textContent()) ?? "";
     await entries.nth(i).click();
-    await expectFitsPhone(page, `Options: ${(await entries.nth(i).textContent()) ?? ""}`);
+    await expect(page.locator(".flyout-rail-title")).toHaveText(title);
+    await drilledIn(page);
+    await expectFitsPhone(page, `Options: ${title}`);
+    await backToList(page);
+    await expect(entries.nth(i)).toBeFocused();
   }
+});
+
+test("Options > Controls fits a 360 px phone: every key row stacks (#4238)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await openPhone(page);
+  await clickTopbarIcon(page, ".topbar-options");
+  await optionsEntry(page, "controls").click();
+  await drilledIn(page);
+  await expect(page.locator(".keys-table")).toBeVisible();
+  await expectFitsPhone(page, "Options: Controls, 360 px");
 });
 
 test("Help, every page, fits the phone (#3776)", async ({ page }) => {
   await openPhone(page);
   await clickTopbarIcon(page, ".topbar-help");
-  const picker = page.locator(".help-picker");
-  for (const value of await picker
-    .locator("option")
-    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))) {
-    await picker.selectOption(value);
-    await expectFitsPhone(page, `Help: ${value}`);
+  const entries = page.locator(".flyout-rail-entry");
+  await expect(entries).toHaveCount(14);
+  await expectFitsPhone(page, "Help: the list");
+  for (let i = 0; i < 14; i += 1) {
+    await entries.nth(i).click();
+    await drilledIn(page);
+    await expectFitsPhone(page, `Help: ${(await entries.nth(i).getAttribute("data-id")) ?? ""}`);
+    await backToList(page);
   }
 });
 
@@ -224,7 +264,7 @@ test("the queue's window fits the phone (#3776)", async ({ page }) => {
   await expectFitsPhone(page, "queue");
 });
 
-test("the menu and Options fit the phone in German, the menu in Arabic (#3776)", async ({
+test("the menu and Options fit the phone in German, the menu in Arabic, where back points right (#3776, #4237)", async ({
   browser,
 }) => {
   for (const locale of ["de", "ar"]) {
@@ -235,6 +275,19 @@ test("the menu and Options fit the phone in German, the menu in Arabic (#3776)",
     if (locale === "de") {
       await clickTopbarIcon(page, ".topbar-options");
       await expectFitsPhone(page, `Options, ${locale}`);
+    }
+    if (locale === "ar") {
+      // Back points to the list, which is on the right in Arabic (#4237).
+      await clickTopbarIcon(page, ".topbar-options");
+      await page.locator('.flyout-rail-entry[data-id="controls"]').click();
+      await drilledIn(page);
+      const back = page.locator(".flyout-rail-back-button");
+      await expect(back).toHaveText("");
+      const degrees = await back.evaluate((button) => {
+        const { a, b } = new DOMMatrix(getComputedStyle(button, "::after").transform);
+        return Math.round((Math.atan2(b, a) * 180) / Math.PI);
+      });
+      expect(degrees, "the RTL rotation").toBe(-45);
     }
     await context.close();
   }

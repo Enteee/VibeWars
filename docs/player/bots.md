@@ -27,7 +27,12 @@ A bot plays the role its build gives it. One wielding a melee weapon is
 heals or protections it can cast on an ally is a **healer**: it stands
 behind whichever ally is hurt most, away from the foes. When two or more
 foes focus one ally, a healer puts its protection on that ally before the
-hit lands. Every other bot is **ranged**: it keeps where every one of its
+hit lands. A healer keeps enough Energy back for its cheapest heal or
+protection, and spends below that only on an ally in real danger. A bot with two
+hexes lays its cheap hex over its important one, so a foe's hex removal takes
+the cheap one first. A bot with energy denial burns the foe healer's Energy, not
+the warrior's. Every
+other bot is **ranged**: it keeps where every one of its
 attacks reaches, and stands and fights a foe who comes too close. Ranged
 bots and healers step to where fewer foes can reach them, and use pillars
 as cover. A team turns on any foe in reach who drops below 60% health,
@@ -45,7 +50,9 @@ A bot with a crippling or slowing skill uses it on a foe at its side, or on one 
 
 Against a team with area skills, ranged bots and healers keep apart, so one blast can't catch two of them. They never give up cover to do it.
 
-A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there.
+A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there. A melee attacker that is slowed, Crippled for example, can't keep up, so against one it backs away between shots instead.
+
+A bot under a hex that punishes attacking or casting, such as Empathy or Backfire, stops doing it until the hex ends.
 
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.
@@ -60,6 +67,8 @@ seconds for its teammates, and doesn't wait at all to finish a foe below
 30% health. When the target is under a protective enchantment such as
 Protective Spirit or Aegis, a bot with an enchantment strip, like Strip
 Enchantment, takes it off first, and the others hold their hits for it.
+With no strip on the team, the bots leave a protected foe and turn to
+another until the enchantment ends.
 
 A badly hurt bot that is losing its fight falls back behind its healer, or
 to its base, and rests out of reach until it has most of its health back.
@@ -74,6 +83,7 @@ them as it does for you.
 
 Bots walk round burning ground and other harmful patches when the way round
 is not much longer, and step out of any they find themselves standing in.
+They also step out of a foe's harmful area, such as a well, a ward against them or a storm, and fight from its edge.
 
 A bot with an interrupt saves it for the casts that matter: a
 resurrection or a Ghostly Hero claiming the altar first, then a heal or a
@@ -84,6 +94,14 @@ in four of those casts.
 
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.
+
+When nobody on your team has a target called, one of your bots calls the
+foe your bots are focusing, just as you would: you see the marker and the
+bot's name, so you can join in. A bot's call only shows where the bots
+are going; they still peel for a teammate and finish a dying foe. A call
+of yours always wins: every bot on the team focuses your target, no bot
+replaces your call, and the bots call again only once its target is dead
+or gone.
 
 In a three-team fight, bots fight one foe team at
 a time: the team attacking them, or, while nobody is, the most hurt team

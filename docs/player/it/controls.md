@@ -2,6 +2,8 @@
 
 Ogni tasto della tabella qui sotto si può cambiare in **Opzioni**, nella sezione **comandi**; Esc, Enter, F10 e i pulsanti del mouse sono fissi. Scegli lì un **Preset**, oppure clicca su una casella tasto e premi il tasto che vuoi; un tasto già in uso passa alla nuova azione, e la schermata dice quale l'ha perso. Le modifiche si salvano subito.
 
+Un tasto può anche essere una combinazione: tieni premuto Shift, Ctrl o Alt e premi il tasto, per esempio **Shift + X**. Movimento e Nomi accettano un solo tasto, e il browser si tiene alcune combinazioni, come Ctrl + W. Tenere premuto Shift per vedere i nomi lascia funzionare i tuoi tasti semplici, a meno che quella combinazione con Shift non sia assegnata a qualcosa.
+
 ## Tasti
 
 Il preset predefinito è **Classico**, per chi viene da GW1. **VibeWars** lancia con la mano sinistra e si muove con i tasti freccia.
@@ -62,7 +64,7 @@ Su un telefono o un tablet, in partita e nel campo di allenamento:
 
 ## La barra superiore
 
-Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Entra in una lobby, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in **☰** in alto a destra, insieme a **Esci**; **M** continua a silenziare e **F10** continua a uscire anche senza. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **☰**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. [?] apre Aiuto allo stesso modo, in una finestra sotto di esso con un selettore di pagina in alto; la partita continua dietro. Aiuto si chiude con la sua ×, con Esc, con un clic fuori o premendo di nuovo [?].
+Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Entra in una lobby, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in **☰** in alto a destra, insieme a **Esci**; **M** continua a silenziare e **F10** continua a uscire anche senza. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **☰**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. [?] apre Aiuto allo stesso modo, in una finestra sotto di esso con le sue pagine elencate a sinistra; la partita continua dietro. Aiuto si chiude con la sua ×, con Esc, con un clic fuori o premendo di nuovo [?].
 
 **Condividi un beat con la tua lobby.** Nell'editor del beat (♪, poi **Modifica**), **Condividi in lobby** invia ciò che hai scritto, salvato o no, a tutti gli altri in una lobby che ospiti o a cui ti sei unito tramite link (mai in una trovata dalla coda; al massimo 8 KB, una condivisione ogni dieci secondi). Vedono un badge su ♪, e in **Condivisi con te** nella sua finestra una riga per giocatore, "Ann · Ember Deep", con **Avvia**. Non parte nulla finché non premi Avvia, e solo fuori dalla partita; **Torna alla mia musica** riporta alla tua. Un beat condiviso non viene mai salvato: sparisce quando lasci la lobby o ricarichi.
 

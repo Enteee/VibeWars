@@ -12,23 +12,19 @@ ansainnut.
 | -------------------------------------------- | ----------------------------- |
 | Jadekehys ja arvonimi Haastaja               | 5 rankattua voittoa           |
 | Sammalaura, Sammaljälki, Sammalisku          | 5 rankattua voittoa           |
-| Raitaviitta                                  | 5 rankattua voittoa           |
 | Tunnuksen kehys reunuksen värissä            | 5 rankattua voittoa           |
 | Ruusukehys ja arvonimi Veteraani             | 25 rankattua voittoa          |
 | Hiillosaura, Hiillosjälki, Hiillosisku       | 25 rankattua voittoa          |
-| Kulmaraitaviitta                             | 25 rankattua voittoa          |
 | Nouseva valo, Tuhkahaihtuminen               | 25 rankattua voittoa          |
 | Huurreaura, Huurrejälki, Huurreisku          | 75 rankattua voittoa          |
 | Lehtipyörre, Usvahaihtuminen                 | 75 rankattua voittoa          |
 | Rautainen tunnuksen kehys                    | 75 rankattua voittoa          |
 | Sinivihreä kehys ja arvonimi Sotaherra       | 200 rankattua voittoa         |
-| Neljännesviitta                              | 200 rankattua voittoa         |
 | Terälehtisade, Sirpalehaihtuminen            | 200 rankattua voittoa         |
 | Hopeinen tunnuksen kehys                     | 200 rankattua voittoa         |
 | Tähtivaloaura, Tähtivalojälki, Tähtivaloisku | 500 rankattua voittoa         |
 | Tähtisade, Tähtipölyhaihtuminen              | 500 rankattua voittoa         |
 | Orkideakehys ja arvonimi Mestari             | Sija Top 100:ssa              |
-| Tähtiviitta                                  | Sija Top 100:ssa              |
 | Kullattu tunnuksen kehys                     | Sija Top 100:ssa              |
 | Voittoputken liekki                          | 3 rankattua voittoa peräkkäin |
 
@@ -40,9 +36,9 @@ pysyy valittuna.
 
 Maa-aura on himmeä rengas jalkojesi juuressa. Askeljälki jättää kulkemaasi kohtaan pieniä hiukkasia, jotka häviävät hetkessä. Molemmat piirretään jokaisen renkaan, merkin ja varoituksen alle, eikä kumpikaan ole koskaan joukkueen värinen. Jos järjestelmässäsi on vähennetty liike päällä, aura pysyy paikallaan eikä jälkeä piirretä.
 
-## Aseessa ja viitassa
+## Aseessa
 
-Asejälki on nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se haalistuu viidesosasekunnissa osumasta. Jouset, keihäät, taikasauvat ja sauvat eivät saa sitä, eikä mikään loitsu tai loitsiminen koskaan näytä sitä. Viitan kuvio lisää kiltaviittaasi raitoja, kulmaraitoja, neljänneksiä tai tähtiä viitan omalla reunusvärillä, ja tunnuksesi pysyy aina päällimmäisenä, yhtä selvänä kuin tavallisessa viitassa. Jos järjestelmässäsi on vähennetty liike päällä, asejälkeä ei piirretä.
+Asejälki on nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se haalistuu viidesosasekunnissa osumasta. Jouset, keihäät, taikasauvat ja sauvat eivät saa sitä, eikä mikään loitsu tai loitsiminen koskaan näytä sitä. Jos järjestelmässäsi on vähennetty liike päällä, asejälkeä ei piirretä.
 
 ## Palaaminen ja kaatuminen
 
@@ -61,7 +57,7 @@ johon osoitat tai joka on kohdistettuna, sekä sen, millä sen ansaitsee. Lukitt
 himmennetty, ja siinä on pieni riippulukko. Valintasi tulee voimaan heti. Muut pelaajat näkevät sen
 seuraavasta aulasta alkaen, johon liityt.
 
-Rivien yläpuolella hahmosi pitää ulkoasuasi ja seisoo, kävelee ja lyö, joten aura, jälki ja aseen jälki näkyvät liikkeessä. Pidä näytettä painettuna kokeillaksesi sitä, lukittuakin: rivi kertoo, mitä esikatselet, ja niin kauan kuin se on lukittu, millä sen ansaitsee. Päästä irti ansaitun esineen kohdalla pukeaksesi sen. Päästä irti lukitun kohdalla tai liu'uta pois näytteeltä, eikä mikään muutu. Näppäimistöllä pidä välilyöntiä pohjassa näytteen kohdalla.
+Rivien vieressä (puhelimella niiden yläpuolella) hahmosi pitää ulkoasuasi ja kuljeskelee ympäriinsä: kävelee, seisoo, lyö ja loitsii, joten aura, jälki ja aseen jälki näkyvät liikkeessä. Se pysyy näkyvissä, kun vierität. Sen alla olevat Ensisijainen- ja Toissijainen-valitsimet näyttävät ulkoasun millä tahansa ammattiparilla; ne muuttavat vain esikatselua, eivät koskaan hahmoasi. Pidä näytettä painettuna kokeillaksesi sitä, lukittuakin: rivi kertoo, mitä esikatselet, ja niin kauan kuin se on lukittu, millä sen ansaitsee. Päästä irti ansaitun esineen kohdalla pukeaksesi sen. Päästä irti lukitun kohdalla tai liu'uta pois näytteeltä, eikä mikään muutu. Näppäimistöllä pidä välilyöntiä pohjassa näytteen kohdalla.
 
 ## Muiden pelaajien kosmetiikan näkeminen
 

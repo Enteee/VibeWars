@@ -11,23 +11,19 @@ Nimeni nu le împarte: oricine poate verifica clasamentul și vedea ce ai obțin
 | ----------------------------------------------------------------------------- | -------------------------- |
 | Ramă de jad și titlul Pretendent                                              | 5 victorii clasate         |
 | Aură de mușchi, Urmă de mușchi, Lovitură de mușchi                            | 5 victorii clasate         |
-| Pelerină cu dungi                                                             | 5 victorii clasate         |
 | Ramă de emblemă în culoarea tivului                                           | 5 victorii clasate         |
 | Ramă roz și titlul Veteran                                                    | 25 de victorii clasate     |
 | Aură de jar, Urmă de jar, Lovitură de jar                                     | 25 de victorii clasate     |
-| Pelerină cu căpriori                                                          | 25 de victorii clasate     |
 | Lumină înălțătoare, Destrămare în cenușă                                      | 25 de victorii clasate     |
 | Aură de brumă, Urmă de brumă, Lovitură de brumă                               | 75 de victorii clasate     |
 | Vârtej de frunze, Destrămare în ceață                                         | 75 de victorii clasate     |
 | Ramă de emblemă din fier                                                      | 75 de victorii clasate     |
 | Ramă turcoaz și titlul Senior al războiului                                   | 200 de victorii clasate    |
-| Pelerină sfertuită                                                            | 200 de victorii clasate    |
 | Ploaie de petale, Destrămare în cioburi                                       | 200 de victorii clasate    |
 | Ramă de emblemă din argint                                                    | 200 de victorii clasate    |
 | Aură de lumina stelelor, Urmă de lumina stelelor, Lovitură de lumina stelelor | 500 de victorii clasate    |
 | Ploaie de stele, Destrămare în praf de stele                                  | 500 de victorii clasate    |
 | Ramă orhidee și titlul Campion                                                | Un loc în Top 100          |
-| Pelerină cu stele                                                             | Un loc în Top 100          |
 | Ramă de emblemă aurită                                                        | Un loc în Top 100          |
 | Flacăra seriei de victorii                                                    | 3 victorii clasate la rând |
 
@@ -38,9 +34,9 @@ pierzi un meci clasat, revin la aspectul implicit până le obții din nou. Ce a
 
 O aură la sol este un inel slab la picioarele tale. O urmă de pași lasă particule mici pe unde mergi, care se sting într-o clipă. Amândouă se desenează sub fiecare inel, semn și avertizare și nu folosesc niciodată o culoare de echipă. Dacă sistemul tău cere mișcare redusă, aura stă nemișcată și nu se desenează nicio urmă.
 
-## Pe armă și pelerină
+## Pe armă
 
-O urmă de armă este o panglică în spatele armei tale când lovește un atac corp la corp și se estompează într-o cincime de secundă de la lovitură. Arcurile, sulițele, baghetele și toiegele nu au niciuna, iar nicio vrajă sau incantație nu arată vreodată una. Un model de pelerină așază dungi, căpriori, sferturi sau stele pe pelerina ta de breaslă, în propria ei culoare de tiv, iar emblema ta rămâne mereu deasupra, la fel de clară ca pe o pelerină simplă. Dacă sistemul tău cere mișcare redusă, nu se desenează nicio urmă de armă.
+O urmă de armă este o panglică în spatele armei tale când lovește un atac corp la corp și se estompează într-o cincime de secundă de la lovitură. Arcurile, sulițele, baghetele și toiegele nu au niciuna, iar nicio vrajă sau incantație nu arată vreodată una. Dacă sistemul tău cere mișcare redusă, nu se desenează nicio urmă de armă.
 
 ## Revenire și cădere
 
@@ -58,7 +54,7 @@ albastru. Textul de lângă rând (sub el pe telefon) numește mostra spre care 
 focusul, și ce o deblochează. O mostră blocată e estompată, cu un mic lacăt. Alegerea ta se aplică
 imediat. Ceilalți jucători o văd începând cu următorul lobby în care intri.
 
-Deasupra rândurilor, personajul tău poartă aspectul tău și stă, merge și lovește, ca să vezi aura, urma și urma armei în mișcare. Ține apăsată o mostră ca s-o probezi, chiar și blocată: rândul spune ce previzualizezi și, cât timp e blocată, ce o deblochează. Eliberează pe un obiect câștigat ca să-l porți. Eliberează pe unul blocat sau alunecă de pe mostră și nu se schimbă nimic. Cu tastatura, ține apăsat Space pe o mostră.
+Lângă rânduri (deasupra lor pe telefon), personajul tău poartă aspectul tău și se plimbă: merge, stă, lovește și aruncă vrăji, ca să vezi aura, urma și urma armei în mișcare. Rămâne la vedere cât derulezi. Selectoarele Principală și Secundară de sub el arată aspectul pe orice pereche de profesii; schimbă doar previzualizarea, niciodată personajul tău. Ține apăsată o mostră ca s-o probezi, chiar și blocată: rândul spune ce previzualizezi și, cât timp e blocată, ce o deblochează. Eliberează pe un obiect câștigat ca să-l porți. Eliberează pe unul blocat sau alunecă de pe mostră și nu se schimbă nimic. Cu tastatura, ține apăsat Space pe o mostră.
 
 ## Elementele cosmetice ale altor jucători
 

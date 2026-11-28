@@ -22,6 +22,12 @@ export interface RuleContext {
    * finished (#4147): every cast goes to it, never to a clump.
    */
   readonly targetFixed: boolean;
+  /**
+   * The foe its weapon hits with `attackSkill`, or a plain swing when
+   * `undefined` (#4204): `targetId`, or another foe in spell range while
+   * `targetId` blocks the blow. Spells always go to `targetId`.
+   */
+  readonly attackTarget: (attackSkill: Skill | undefined) => string | undefined;
   /** `bodies`, nearest to it first. */
   readonly nearestFirst: (bodies: readonly Participant[]) => Participant[];
   /** Whether it may begin `skill` at `targetId` now, walking in if need be. */
@@ -45,6 +51,8 @@ export interface RuleContext {
   readonly foeReach: (foe: Participant) => number;
   /** Its team's plan this phase (#3831). */
   readonly plan: TeamPlan;
+  /** Any participant's current movement-speed factor, 1 at base (#4166). */
+  readonly speedOf: (participant: Participant) => number;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

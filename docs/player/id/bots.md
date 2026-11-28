@@ -27,7 +27,13 @@ Bot memainkan peran yang diberikan build-nya. Bot yang memegang senjata jarak de
 penyembuhan atau perlindungan yang bisa dirapal pada sekutu adalah **penyembuh**: ia berdiri
 di belakang sekutu mana pun yang paling terluka, jauh dari musuh. Saat dua atau lebih
 musuh mengeroyok satu sekutu, penyembuh memasang perlindungannya pada sekutu itu sebelum
-pukulan mendarat. Setiap bot lainnya adalah **jarak jauh**: ia menjaga posisi di mana semua
+pukulan mendarat. Penyembuh menyisakan cukup Energi untuk penyembuhan atau perlindungan
+termurahnya, dan hanya memakai di bawah itu untuk sekutu yang benar-benar dalam
+bahaya. Bot dengan dua kutukan menaruh kutukan murahnya di atas kutukan
+pentingnya, sehingga penghapusan kutukan milik musuh mengambil yang murah lebih
+dulu. Bot dengan skill penguras Energi membakar Energi penyembuh musuh, bukan
+Energi Warrior.
+Setiap bot lainnya adalah **jarak jauh**: ia menjaga posisi di mana semua
 serangannya mencapai sasaran, dan berdiri melawan musuh yang datang terlalu dekat. Bot jarak jauh
 dan penyembuh bergeser ke tempat yang lebih sedikit dijangkau musuh, dan memakai pilar
 sebagai perlindungan. Sebuah tim berbalik menyerang musuh mana pun dalam jangkauan yang Darah-nya turun di bawah 60%,
@@ -45,7 +51,9 @@ Bot dengan skill yang melumpuhkan atau memperlambat memakainya pada lawan di sam
 
 Melawan tim dengan skill area, bot jarak jauh dan healer saling menjaga jarak, agar satu ledakan tidak mengenai dua dari mereka. Mereka tidak pernah melepas perlindungan untuk itu.
 
-Bot jarak jauh atau penyembuh yang didekati musuh terlalu dekat lebih dulu mundur ke rekan garis depan terdekatnya, jika ada yang cukup dekat, lalu bertarung di sana.
+Bot jarak jauh atau penyembuh yang didekati musuh terlalu dekat lebih dulu mundur ke rekan garis depan terdekatnya, jika ada yang cukup dekat, lalu bertarung di sana. Penyerang jarak dekat yang diperlambat, misalnya Crippled, tidak bisa mengejar, jadi terhadapnya bot justru mundur di sela tembakan.
+
+Bot yang terkena kutukan yang menghukum serangan atau perapalan mantra, seperti Empathy atau Backfire, berhenti melakukannya sampai kutukan itu berakhir.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
@@ -60,6 +68,8 @@ detik, dan sama sekali tidak menunggu untuk menghabisi musuh yang Darah-nya di b
 30%. Saat target berada di bawah berkah pelindung seperti
 Protective Spirit atau Aegis, bot yang punya skill pelucut berkah, seperti Strip
 Enchantment, melepasnya dulu, dan yang lain menahan pukulan mereka untuk itu.
+Jika tim tidak punya pelucut berkah, bot meninggalkan musuh yang terlindungi
+dan beralih ke musuh lain sampai berkahnya habis.
 
 Bot yang terluka parah dan sedang kalah bertarung mundur ke belakang penyembuhnya, atau
 ke markasnya, dan beristirahat di luar jangkauan sampai sebagian besar Darah-nya pulih.
@@ -75,6 +85,7 @@ mereka seperti halnya untukmu.
 Bot memutari tanah yang terbakar dan petak berbahaya lain bila jalan
 memutarnya tidak jauh lebih panjang, dan keluar dari petak yang mereka
 injak.
+Bot juga keluar dari area berbahaya milik lawan, seperti sumur, pelindung yang menangkal mereka, atau badai, lalu bertarung dari tepinya.
 
 Bot yang punya interupsi menyimpannya untuk rapalan yang penting: kebangkitan
 atau Ghostly Hero yang sedang merebut altar lebih dulu, lalu penyembuhan atau
@@ -85,6 +96,13 @@ dari empat rapalan itu.
 
 Bot butuh jeda seperti manusia, sepersekian detik, untuk bereaksi terhadap
 apa yang terjadi, jadi interupsi cepat atau menghindar di detik terakhir bisa mengalahkannya.
+
+Saat tidak ada seorang pun di timmu yang mengumumkan target, salah satu botmu mengumumkan musuh yang
+sedang difokuskan oleh bot-botmu, sama seperti yang akan kamu lakukan: kamu melihat penandanya dan
+nama bot itu, jadi kamu bisa ikut menyerang. Pengumuman dari bot hanya menunjukkan ke mana bot-bot itu
+pergi; mereka tetap melindungi rekan setim dan menghabisi musuh yang sekarat. Pengumumanmu selalu
+menang: setiap bot di tim memusatkan serangan ke targetmu, tidak ada bot yang mengganti pengumumanmu,
+dan bot baru mengumumkan lagi setelah target itu mati atau hilang.
 
 Dalam pertarungan tiga tim, bot melawan satu tim musuh
 pada satu waktu: tim yang menyerang mereka, atau, selama tidak ada yang menyerang, tim yang paling terluka

@@ -433,8 +433,12 @@ interface Entrant {
 }
 
 async function main(): Promise<void> {
-  // A docs diagram (#3557): dev builds only, so the scene table is not in production.
-  if (import.meta.env.DEV) {
+  // A docs diagram (#3557): dev builds only, so the scene table is not in
+  // production; and the render bench's build, which measures its scenes (#4171).
+  if (
+    import.meta.env.DEV ||
+    (typeof __VIBEWARS_BENCH_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_REFERENCE__)
+  ) {
     const wanted = new URLSearchParams(window.location.search).get("scene");
     if (wanted !== null) {
       const { sceneNamed, showScene } = await import("./dev/scene.js");
@@ -1425,9 +1429,16 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
-  /** The cosmetic ids picked in Options now (ADR-0056), as a selection lists them. */
-  const currentLook = (): string =>
-    JSON.stringify(buildSelection(playerKey.pubkey, cosmeticsStore.choice(), 0).ids);
+  /** The cosmetic ids and body picked in Options now (ADR-0056, #4250), as a selection lists them. */
+  const currentLook = (): string => {
+    const { ids, body } = buildSelection(
+      playerKey.pubkey,
+      cosmeticsStore.choice(),
+      cosmeticsStore.body(),
+      0,
+    );
+    return JSON.stringify({ ids, body });
+  };
 
   /**
    * The name, guild and cosmetics just set in Options, to the lobby this
@@ -1452,7 +1463,12 @@ async function main(): Promise<void> {
     lobby.setProfile({
       name,
       ...guild,
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
     });
     lobbyName = name;
     lobbyLook = look;

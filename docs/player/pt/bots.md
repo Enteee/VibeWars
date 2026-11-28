@@ -27,7 +27,13 @@ Um bot joga o papel que a build dele dá. Quem usa arma corpo a corpo é da
 ou proteções para usar em um aliado é **curandeiro**: fica atrás do
 aliado mais ferido, longe dos inimigos. Quando dois ou mais inimigos
 focam um aliado, o curandeiro coloca a proteção nele antes do golpe
-acertar. Todos os outros bots são **à distância**: ficam onde todos os
+acertar. O curandeiro guarda energia suficiente para sua cura ou
+proteção mais barata, e só gasta abaixo disso com um aliado em perigo real. Um
+bot com duas maldições põe a maldição barata por cima da importante, para que a
+remoção de maldições de um inimigo leve primeiro a barata. Um bot com negação de
+energia queima a energia do curandeiro inimigo, não a do Guerreiro. Todos os
+outros bots
+são **à distância**: ficam onde todos os
 seus ataques alcançam e param para lutar com um inimigo que chega perto
 demais. Bots à distância e curandeiros vão para onde menos inimigos os
 alcançam e usam pilares como cobertura. Uma equipe se volta contra
@@ -47,7 +53,9 @@ Um bot com uma habilidade que aleija ou abranda usa-a num inimigo ao seu lado, o
 
 Contra uma equipe com habilidades de área, os bots à distância e os curandeiros ficam afastados, para que uma explosão não atinja dois deles. Nunca abrem mão de cobertura para isso.
 
-Um bot à distância ou curandeiro de quem um inimigo chega perto demais recua primeiro até o seu bot da linha de frente mais próximo, se houver um perto o bastante, e luta ali.
+Um bot à distância ou curandeiro de quem um inimigo chega perto demais recua primeiro até o seu bot da linha de frente mais próximo, se houver um perto o bastante, e luta ali. Um atacante corpo a corpo desacelerado, aleijado por exemplo, não consegue acompanhar, então diante dele o bot recua entre os disparos.
+
+Um bot sob uma maldição que pune atacar ou lançar feitiços, como Empathy ou Backfire, para de fazê-lo até a maldição acabar.
 
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.
@@ -62,7 +70,9 @@ condições. Um bot espera os colegas no máximo quatro segundos e nem
 espera para acabar com um inimigo abaixo de 30% de vida. Quando o alvo
 está sob um encantamento protetor, como Protective Spirit ou Aegis, um
 bot que remove encantamentos, como com Strip Enchantment, tira esse
-encantamento primeiro, e os outros seguram os golpes para isso.
+encantamento primeiro, e os outros seguram os golpes para isso. Sem
+ninguém na equipe que remova encantamentos, os bots deixam o inimigo
+protegido e passam para outro até o encantamento acabar.
 
 Um bot muito ferido que está perdendo a luta recua para trás do
 curandeiro ou para a base e descansa fora de alcance até recuperar a
@@ -78,6 +88,7 @@ funciona com eles como funciona com você.
 
 Os bots contornam o chão em chamas e outras zonas nocivas quando o desvio
 não é muito mais longo, e saem de qualquer uma em que estejam.
+Também saem da área nociva de um adversário, como um poço, uma proteção contra eles ou uma tempestade, e lutam a partir da borda.
 
 Um bot com interrupção a guarda para as conjurações que importam: uma
 ressurreição ou um Herói Fantasmagórico tomando o altar primeiro, depois
@@ -89,6 +100,15 @@ em cada quatro dessas conjurações.
 Um bot leva um instante humano, uma fração de segundo, para reagir ao que
 acontece, então uma interrupção rápida ou uma esquiva de última hora
 podem vencê-lo.
+
+Quando ninguém da sua equipe tem um alvo anunciado, um dos seus bots
+anuncia o inimigo em que os seus bots estão concentrados, assim como
+você faria: você vê o marcador e o nome do bot, para poder se juntar a
+eles. O anúncio de um bot só mostra para onde os bots estão indo; eles
+ainda protegem um colega de equipe e finalizam um inimigo quase morto.
+Um anúncio seu sempre vence: todos os bots da equipe se concentram no
+seu alvo, nenhum bot substitui o seu anúncio, e os bots só anunciam de
+novo quando o alvo dele estiver morto ou tiver sumido.
 
 Em uma luta de três equipes, os bots enfrentam uma equipe inimiga por
 vez: a que os está atacando ou, se ninguém estiver, a mais ferida ao

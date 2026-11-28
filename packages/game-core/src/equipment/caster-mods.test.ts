@@ -209,8 +209,8 @@ describe("caster chance mods (#2011)", () => {
     };
     const plain = lasting({});
     expect(plain).toBeGreaterThan(0);
-    // Both measured the same ticks after it landed, so 20% of the full 11 s apart.
-    expect(lasting({ enchantmentDurationScale: 1.2 }) - plain).toBeCloseTo(11 * 0.2, 6);
+    // Both measured the same ticks after it landed: 11 s × 1.2 rounds to 13 s (#4165).
+    expect(lasting({ enchantmentDurationScale: 1.2 }) - plain).toBeCloseTo(13 - 11, 6);
   });
 
   it("Master of My Domain's +1 is read with the ranks: Orison heals as at rank 13", () => {

@@ -432,7 +432,7 @@ describe("networked combat (P2P)", () => {
     await target(match, a, b.selfSessionId);
     await target(match, b, a.selfSessionId);
 
-    // Fireball: a 1 s cast, the nuker's only Fire Magic skill.
+    // Fireball: a 1.5 s cast, the nuker's only Fire Magic skill.
     b.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(match, () => self(b)?.castingSkillId === "elementalist.fireball", "b's cast");
     a.sendIntent({ kind: "use-skill", slot: 0 });
@@ -600,12 +600,15 @@ describe("networked combat (P2P)", () => {
     );
     expect(a.getAdrenaline()[severArtery]).toBe(ADRENALINE_PER_STRIKE);
 
-    // A message a blow until Sever Artery holds its 4 strikes...
+    // A message a blow until "Watch Yourself!", the dearest, holds its 4
+    // strikes...
+    const watchYourself = slotOf("Warrior/Monk", "warrior.watch-yourself");
     await until(
       match,
-      () => a.getAdrenaline()[severArtery] === 4 * ADRENALINE_PER_STRIKE,
-      "Sever Artery charged",
+      () => a.getAdrenaline()[watchYourself] === 4 * ADRENALINE_PER_STRIKE,
+      "Watch Yourself charged",
     );
+    expect(a.getAdrenaline()[severArtery]).toBe(3 * ADRENALINE_PER_STRIKE);
     expect(toA).toHaveLength(4);
     // ...then more blows change no slot, and only start the loss again.
     await match.step(4);
@@ -619,7 +622,7 @@ describe("networked combat (P2P)", () => {
     // b is sent its own: what the blows it took charged (#827), never a's.
     expect(toB.length).toBeGreaterThan(0);
     expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());
-    expect(b.getAdrenaline()[severArtery]).toBeLessThan(4 * ADRENALINE_PER_STRIKE);
+    expect(b.getAdrenaline()[severArtery]).toBeLessThan(3 * ADRENALINE_PER_STRIKE);
   });
 
   it("sends each player only the chain marks it placed: a lead, then an off-hand, gone with its target (#916)", async () => {
@@ -686,15 +689,15 @@ describe("networked combat (P2P)", () => {
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
-    // Sever Artery costs 4 strikes of adrenaline, one per landed attack:
-    // so swing four times first. The adrenaline economy working as designed.
+    // Sever Artery costs 3 strikes of adrenaline, one per landed attack:
+    // so swing three times first. The adrenaline economy working as designed.
     const heard = combatMessages(a);
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
     const severArtery = slotOf("Warrior/Monk", "warrior.sever-artery");
     await until(
       match,
-      () => (a.getAdrenaline()[severArtery] ?? 0) >= 4 * ADRENALINE_PER_STRIKE,
-      "adrenaline from landing four hits",
+      () => (a.getAdrenaline()[severArtery] ?? 0) >= 3 * ADRENALINE_PER_STRIKE,
+      "adrenaline from landing three hits",
     );
 
     await closeDistance(match, a, b.selfSessionId, 30);
@@ -930,7 +933,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     attributeId: undefined,
     area: undefined,
     doubleStrike: false,
-    events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
+    events: [{ kind: "damage", targetId: "b", amount: 12, unreduced: 12, critical: false }],
     ...overrides,
   });
 
@@ -967,7 +970,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
         cause: "degeneration",
         sourceId: "a",
         weaponId: undefined,
-        events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
+        events: [{ kind: "damage", targetId: "b", amount: 2, unreduced: 2, critical: false }],
       }),
       entry({
         cause: "skill",
@@ -983,7 +986,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
       weaponId: "",
       attributeId: "",
       doubleStrike: false,
-      events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
+      events: [{ kind: "damage", targetId: "b", amount: 2, unreduced: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
     expect(fireball?.skillId).toBe("elementalist.fireball");
@@ -1234,7 +1237,13 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
   });
 
   it("carries a critical hit across, and only on damage (#533)", () => {
-    const crit = { kind: "damage", targetId: "b", amount: 31, critical: true } as const;
+    const crit = {
+      kind: "damage",
+      targetId: "b",
+      amount: 31,
+      unreduced: 31,
+      critical: true,
+    } as const;
     const heal = { kind: "heal", targetId: "a", amount: 5 } as const;
     const [wired] = wireCombat([entry({ events: [crit, heal] })]);
     expect(wired?.events.map((event) => event.crit)).toEqual([true, null]);

@@ -11,23 +11,19 @@ pubblica. Nessuno li regala: chiunque può controllare la classifica e vedere co
 | ----------------------------------------------------------------------- | ------------------------------- |
 | Cornice giada e il titolo Sfidante                                      | 5 vittorie classificate         |
 | Aura di muschio, Scia di muschio, Fendente di muschio                   | 5 vittorie classificate         |
-| Mantello a strisce                                                      | 5 vittorie classificate         |
 | Cornice dell’emblema color bordo                                        | 5 vittorie classificate         |
 | Cornice rosa e il titolo Veterano                                       | 25 vittorie classificate        |
 | Aura di brace, Scia di brace, Fendente di brace                         | 25 vittorie classificate        |
-| Mantello a scaglioni                                                    | 25 vittorie classificate        |
 | Luce ascendente, Dissolvenza in cenere                                  | 25 vittorie classificate        |
 | Aura di brina, Scia di brina, Fendente di brina                         | 75 vittorie classificate        |
 | Vortice di foglie, Dissolvenza in nebbia                                | 75 vittorie classificate        |
 | Cornice dell’emblema in ferro                                           | 75 vittorie classificate        |
 | Cornice verde acqua e il titolo Signore della guerra                    | 200 vittorie classificate       |
-| Mantello inquartato                                                     | 200 vittorie classificate       |
 | Pioggia di petali, Dissolvenza in schegge                               | 200 vittorie classificate       |
 | Cornice dell’emblema in argento                                         | 200 vittorie classificate       |
 | Aura di luce stellare, Scia di luce stellare, Fendente di luce stellare | 500 vittorie classificate       |
 | Pioggia di stelle, Dissolvenza in polvere di stelle                     | 500 vittorie classificate       |
 | Cornice orchidea e il titolo Campione                                   | Un posto nella Top 100          |
-| Mantello stellato                                                       | Un posto nella Top 100          |
 | Cornice dell’emblema dorata                                             | Un posto nella Top 100          |
 | Fiamma della serie                                                      | 3 vittorie classificate di fila |
 
@@ -39,9 +35,9 @@ hai scelto resta scelto.
 
 Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia piccole particelle dove cammini, che svaniscono in un attimo. Entrambe sono disegnate sotto ogni anello, segno e avviso, e non usano mai un colore di squadra. Se il tuo sistema chiede movimenti ridotti, l’aura resta ferma e nessuna scia viene disegnata.
 
-## Sull’arma e sul mantello
+## Sull’arma
 
-Una scia dell’arma è un nastro dietro la tua arma quando un attacco in mischia colpisce, e svanisce entro un quinto di secondo dal colpo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Un motivo del mantello mette strisce, scaglioni, quarti o stelle sul tuo mantello gilda nel suo colore di bordo, e il tuo emblema resta sempre sopra, nitido come su un mantello semplice. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
+Una scia dell’arma è un nastro dietro la tua arma quando un attacco in mischia colpisce, e svanisce entro un quinto di secondo dal colpo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
 
 ## Tornare e cadere
 
@@ -59,7 +55,7 @@ anello blu. La riga accanto alla fila (sotto, su un telefono) nomina il campione
 il focus, e ciò che lo fa ottenere. Un campione bloccato è attenuato, con un piccolo lucchetto. La
 tua scelta vale subito. Gli altri giocatori la vedono dalla prossima lobby in cui entri.
 
-Sopra le righe, il tuo personaggio indossa il tuo aspetto e sta fermo, cammina e colpisce, così aura, scia e scia dell'arma si vedono in movimento. Tieni premuto un campione per provarlo, anche bloccato: la riga dice cosa stai visualizzando in anteprima e, finché è bloccato, cosa lo sblocca. Rilascia su un oggetto ottenuto per indossarlo. Rilascia su uno bloccato, o scivola fuori dal campione, e non cambia nulla. Con la tastiera, tieni premuto Spazio su un campione.
+Accanto alle righe (sopra, su un telefono), il tuo personaggio indossa il tuo aspetto e si aggira: cammina, sta fermo, colpisce e lancia incantesimi, così aura, scia e scia dell'arma si vedono in movimento. Resta visibile mentre scorri. I selettori Primaria e Secondaria sotto di esso mostrano l'aspetto su qualsiasi coppia di professioni; cambiano solo l'anteprima, mai il tuo personaggio. Tieni premuto un campione per provarlo, anche bloccato: la riga dice cosa stai visualizzando in anteprima e, finché è bloccato, cosa lo sblocca. Rilascia su un oggetto ottenuto per indossarlo. Rilascia su uno bloccato, o scivola fuori dal campione, e non cambia nulla. Con la tastiera, tieni premuto Spazio su un campione.
 
 ## Vedere i cosmetici degli altri giocatori
 

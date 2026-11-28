@@ -115,7 +115,7 @@ as if it had been used, as in GW1. Before, it could be cast again at once.
 - An attack skill now does weapon damage plus its old number: at rank 12
   against reference armor, Swift Chop goes from 16 to 22 to 44, Backbreaker
   from 16 to 35 to 51, Opening Cut from 20 to 35 to 42 (and the bleed),
-  Barrage from 12 to 27 to 40 per foe, and Broad Head Arrow from 0 to 15
+  Barrage from 17 to 32 to 45 per foe, and Broad Head Arrow from 0 to 15
   to 28. None kills a 500-health character in one hit, and each beats a
   plain swing of its weapon.
 - Every attack skill takes time and stops a held walk, as a cast does.

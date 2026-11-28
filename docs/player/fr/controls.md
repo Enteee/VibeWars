@@ -6,6 +6,13 @@ Choisis-y un **Profil**, ou clique sur une case de touche et appuie sur la
 touche voulue ; une touche déjà prise passe à la nouvelle action, et l'écran
 dit laquelle l'a perdue. Les changements sont enregistrés tout de suite.
 
+Une touche peut aussi être une combinaison : maintiens Shift, Ctrl ou Alt et
+appuie sur la touche, par exemple **Shift + X**. Déplacement et Noms ne
+prennent qu'une seule touche, et le navigateur garde quelques combinaisons
+pour lui, comme Ctrl + W. Maintenir Shift pour afficher les noms laisse tes
+touches simples fonctionner, sauf si cette combinaison avec Shift est
+elle-même attribuée à quelque chose.
+
 ## Touches
 
 Le profil par défaut est **Classique**, fait pour les mains habituées à GW1.
@@ -96,7 +103,7 @@ sauf Salon, sont dans **☰** en haut à droite de l'écran, avec **Quitter** ;
 icônes et les autres boutons de l'écran se replient dans **☰** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
-[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.
+[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec ses pages listées sur la gauche ; un match continue derrière.
 L'Aide se ferme avec son ×, Esc, un clic à l'extérieur, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis

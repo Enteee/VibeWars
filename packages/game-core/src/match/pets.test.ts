@@ -272,6 +272,7 @@ describe("a dead wolf (#1046)", () => {
       skillId: FIREBALL,
       key,
       remainingSeconds: 20,
+      totalSeconds: 20,
       restores: { skillId: ARCANE_ECHO, rechargeSeconds: 30 },
     });
     kill(sim, wolf(sim));
@@ -309,13 +310,13 @@ describe("a dead wolf (#1046)", () => {
 });
 
 describe("Comfort Animal (#1046)", () => {
-  it("heals a living wolf for 87 at Beast Mastery 12, whatever is selected", () => {
+  it("heals a living wolf for 104 at Beast Mastery 12, whatever is selected", () => {
     const sim = match([ranger(), spec("x", 1, vec2(300, 0))]);
     const pet = wolf(sim);
     pet.combatant.health = 200;
     sim.setTarget("r", "x");
     expect(sim.requestSkill("r", 1)?.check).toEqual({ ok: true });
-    expect(healed(stepFor(sim, COMFORT_SECONDS), pet.id)).toEqual([87]);
+    expect(healed(stepFor(sim, COMFORT_SECONDS), pet.id)).toEqual([104]);
     expect(get(sim, "r").targetId).toBe("x");
   });
 

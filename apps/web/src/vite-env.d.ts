@@ -42,6 +42,8 @@ interface ImportMetaEnv {
   readonly VITE_VIBEWARS_TUTORIAL_STATION?: string;
   /** `short` counts a hosted match's start down in 1 s (#3855) unless the URL has `?pre-match=real`: e2e only. */
   readonly VITE_VIBEWARS_PRE_MATCH?: string;
+  /** `hold` makes a hosted match's bots stand still when the URL has `?bots=hold` (#4146): e2e only. */
+  readonly VITE_VIBEWARS_BOTS?: string;
   /** `on` shows the HUD's end of a match from a fixed summary at the URL's `?summary-fixture` (#3563): e2e only. */
   readonly VITE_VIBEWARS_SUMMARY_FIXTURE?: string;
 }

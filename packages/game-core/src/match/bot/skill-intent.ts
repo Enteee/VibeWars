@@ -7,7 +7,7 @@ import {
   sacrificedHealth,
   stateHolds,
 } from "../../skills/effects.js";
-import { skillRoles, strikesFoesOnly } from "../../skills/roles.js";
+import { skillRoles, statusRoles, strikesFoesOnly } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
 import { statAtTwelve } from "../../skills/scaling.js";
 import {
@@ -495,6 +495,74 @@ export function summonAura(skill: Skill): Aura | undefined {
   return undefined;
 }
 
+/** What a defence skill stops (#4214): `attacks`, `spells`, or both when it is general. */
+export interface DefenceAgainst {
+  readonly attacks: boolean;
+  readonly spells: boolean;
+}
+
+/**
+ * What the defensive statuses `skill` lays stop (#4214): a block, a miss or
+ * a cut to attack damage stops attacks; spells failing, untargetability or
+ * a cut to spell damage stops spells. Any other defence, armor or a damage
+ * cap among them, is general, and so is a skill with no defensive status.
+ * Protector's Defense counts as the block it projects.
+ */
+export function defenceAgainst(skill: Skill): DefenceAgainst {
+  const laid: StatusId[] = [];
+  const visit = (effects: readonly SkillEffect[]): void => {
+    for (const effect of effects) {
+      switch (effect.kind) {
+        case "apply-status":
+        case "maintain-status":
+        case "caster-gains-status":
+          laid.push(effect.statusId);
+          break;
+        case "apply-random-status":
+          for (const { statusId } of effect.choices) laid.push(statusId);
+          break;
+        case "if":
+        case "splash":
+          visit(effect.effects);
+          break;
+      }
+    }
+  };
+  visit(skill.effects);
+  const aura = summonAura(skill);
+  if (aura !== undefined) {
+    laid.push(aura.statusId);
+  }
+  let attacks = false;
+  let spells = false;
+  let general = false;
+  for (const statusId of laid) {
+    const status = getStatusDefinition(statusId);
+    const projected =
+      status.projectsAura === undefined
+        ? status
+        : getStatusDefinition(status.projectsAura.statusId);
+    if (!statusRoles(projected).includes("defence")) {
+      continue;
+    }
+    const stopsAttacks =
+      projected.block !== undefined ||
+      projected.attacksAgainstMiss ||
+      projected.attackDamageTakenMultiplier < 1 ||
+      projected.attackDamageCapFraction !== undefined ||
+      projected.reflectsAttackDamage !== undefined;
+    const stopsSpells =
+      projected.foeSpellsFail ||
+      projected.untargetableByFoeSpells ||
+      statAtTwelve(projected.spellDamageTakenMultiplier) < 1 ||
+      projected.incomingHexCastTimeMultiplier > 1;
+    attacks ||= stopsAttacks;
+    spells ||= stopsSpells;
+    general ||= !stopsAttacks && !stopsSpells;
+  }
+  return general || (!attacks && !spells) ? { attacks: true, spells: true } : { attacks, spells };
+}
+
 /**
  * The radius of the aura of the spirit `skill` summons, if it is one that
  * runs allies' conditions out faster (#2491): Recovery's.
@@ -751,6 +819,23 @@ export function energyAtFoes(skill: Skill): boolean {
       status.renewsOn.includes("bearer-casts-spell-at-foe") && statAtTwelve(status.energyPips) > 0
     );
   });
+}
+
+/**
+ * Whether `skill` takes Energy off the foe it is cast at (#4281): Energy
+ * Burn, Signet of Weariness, Debilitating Shot. Only a top-level loss or
+ * steal counts, not one inside an `if` (Power Leak's on interrupt, Drain
+ * Delusions' on removal), and not one its user pays.
+ */
+export function deniesEnergy(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    skill.effects.some(
+      (effect) =>
+        (effect.kind === "energy-loss" && effect.on === undefined) ||
+        effect.kind === "energy-steal",
+    )
+  );
 }
 
 /**

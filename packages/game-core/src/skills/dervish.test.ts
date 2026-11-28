@@ -193,12 +193,12 @@ describe("Pious Restoration (#845)", () => {
     return caster;
   }
 
-  it("with a Dervish enchantment: heals 136, loses it, and up to 3 hexes", () => {
+  it("with a Dervish enchantment: heals 136, loses it, and one hex", () => {
     const caster = hexed();
     cast(caster, "dervish.fleeting-stability");
     cast(caster, "dervish.pious-restoration");
     expect(caster.health).toBe(236);
-    expect(statusesOf(caster)).toEqual([]);
+    expect(statusesOf(caster)).toEqual(["faintheartedness"]);
   });
 
   it("without: heals, and the hexes stay", () => {
@@ -222,7 +222,7 @@ describe("Fleeting Stability (#845)", () => {
   it("you move 25% faster; the first knockdown does nothing and ends it, the next lands", () => {
     const caster = dervish();
     cast(caster, "dervish.fleeting-stability");
-    expect(caster.statuses.get("fleeting-stability")?.remainingSeconds).toBe(9);
+    expect(caster.statuses.get("fleeting-stability")?.remainingSeconds).toBe(7);
     expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.25);
 
     const warrior = holding("w", 1, WEAPONS.hammer, "warrior.hammer-mastery");
@@ -330,6 +330,48 @@ describe("Signet of Pious Light (#845)", () => {
     cast(caster, "dervish.signet-of-pious-light");
     expect(caster.health).toBe(226);
     expect(statusesOf(caster)).toEqual([]);
+  });
+});
+
+describe("Dervish PvP recharges (#4264)", () => {
+  const DT = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+
+  it.each([
+    ["dervish.mystic-regeneration", 15],
+    ["dervish.fleeting-stability", 10],
+    ["dervish.pious-restoration", 15],
+  ])("%s is usable again %i s after it resolves, and not before", (id, seconds) => {
+    const match = new MatchSimulation({
+      seed: "recharge",
+      participants: [
+        {
+          id: "d",
+          team: 0,
+          skillBar: [id],
+          attributeRanks: new Map(),
+          equipment: unarmedResolvedEquipment(RULES.armorReferenceLevel),
+          spawn: vec2(0, 0),
+          facing: 0,
+          maxEnergy: 60,
+        },
+      ],
+    });
+    const self = match.get("d")?.combatant;
+    if (self === undefined) {
+      throw new Error("no dervish");
+    }
+    expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
+    while (!self.cast.rechargeRemaining.has(id)) {
+      match.step(DT);
+    }
+    for (let i = 0; i < Math.round((seconds - 0.1) / DT); i += 1) {
+      match.step(DT);
+    }
+    expect(match.requestSkill("d", 0)?.check).not.toEqual({ ok: true });
+    for (let i = 0; i < Math.round(0.2 / DT); i += 1) {
+      match.step(DT);
+    }
+    expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
   });
 });
 

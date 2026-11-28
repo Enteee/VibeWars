@@ -1,4 +1,4 @@
-import type { CapePattern, CosmeticLook } from "../cosmetics/catalog.js";
+import type { CosmeticLook } from "../cosmetics/catalog.js";
 
 import type { AttackFrame } from "./attack-clock.js";
 import {
@@ -15,10 +15,10 @@ import {
   type CapeMotion,
   type CapeShape,
 } from "./cape-motion.js";
-import { capePatternShapes } from "./cape-pattern.js";
 import { emblemFrameShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
 import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
 import { multiplyColour } from "./lighting-model.js";
+import { STACK_SEGMENTS, STACK_SHADOW_ALPHA } from "./sprite-stack.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -74,8 +74,6 @@ export interface StandingBody {
 export interface WornCape {
   readonly look: CapeLook;
   readonly motion: CapeMotion;
-  /** The cape pattern cosmetic on it (#3579); `undefined` for a plain cape. */
-  readonly pattern: CapePattern | undefined;
   /** The emblem frame cosmetic round its emblem (#3581); `undefined` for none. */
   readonly emblemFrame: EmblemFrameLook | undefined;
 }
@@ -107,7 +105,7 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const shape =
     cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
   if (cape !== undefined && shape !== undefined) {
-    paintCape(painter, shape, cape.look, cape.pattern, cape.emblemFrame);
+    paintCape(painter, shape, cape.look, cape.emblemFrame);
   }
   const team = teamColour(body.team);
   painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
@@ -131,12 +129,26 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   }
 }
 
+/** A figure's shadow for a body of radius 1, from its centre: worked out once. */
+const SHADOW_UNIT: readonly { readonly x: number; readonly y: number }[] = Array.from(
+  { length: STACK_SEGMENTS },
+  (_, i) => {
+    const a = (i / STACK_SEGMENTS) * Math.PI * 2;
+    return { x: 0.24 + 0.95 * Math.cos(a), y: 0.21 + 0.7 * Math.sin(a) };
+  },
+);
+
 /**
- * What a stacked figure (ADR-0057) leaves on the ground under it: the self
- * rim on your own, and a swing's ribbon (#3579). The figure itself, its
- * cape included, is an atlas image the scene draws over these.
+ * What a stacked figure (ADR-0057) leaves on the ground under it: its
+ * shadow, off towards the lower right (#4060: on the ground, so a figure
+ * drawn mirrored keeps it there), the self rim on your own, and a swing's
+ * ribbon (#3579). The figure itself, its cape included, is an atlas image
+ * the scene draws over these.
  */
 export function paintFigureGround(painter: Painter, body: StandingBody): void {
+  const { x, y, r } = body;
+  painter.fillStyle(0x000000, STACK_SHADOW_ALPHA);
+  painter.fillPoints(SHADOW_UNIT.map((point) => ({ x: x + r * point.x, y: y + r * point.y })));
   if (body.team === "self") {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(body.x, body.y, body.r - 2);
@@ -147,8 +159,7 @@ export function paintFigureGround(painter: Painter, body: StandingBody): void {
 }
 
 /**
- * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
- * pattern in the trim's colour and the emblem's field over it (#3579), an
+ * The cape (#1422, #1699) under the disc, which covers its root: the cloth, an
  * emblem frame round the emblem's grid (#3581), its `edge` outline, the trim
  * along the hem, then the emblem grid in its own colours. Folded, all of it
  * hides under the disc but the emblem's edge.
@@ -157,21 +168,10 @@ function paintCape(
   painter: Painter,
   shape: CapeShape,
   cape: CapeLook,
-  pattern: CapePattern | undefined,
   frame: EmblemFrameLook | undefined,
 ): void {
   painter.fillStyle(cape.main, 1);
   painter.fillPoints(shape.cloth);
-  if (pattern !== undefined) {
-    painter.fillStyle(cape.trim, 1);
-    for (const piece of capePatternShapes(pattern, shape.tab)) {
-      painter.fillPoints(piece);
-    }
-    if (shape.emblemField.length > 0) {
-      painter.fillStyle(cape.main, 1);
-      painter.fillPoints(shape.emblemField);
-    }
-  }
   if (frame !== undefined && shape.emblemGrid !== undefined) {
     painter.fillStyle(frame.colour === "trim" ? cape.trim : frame.colour, 1);
     for (const quad of emblemFrameShape(shape.emblemGrid, frame.studs)) {

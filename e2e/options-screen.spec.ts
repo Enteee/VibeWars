@@ -8,7 +8,12 @@ import {
 } from "../apps/web/src/input/keymap.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
-import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
+import {
+  OVERLAY_VIEWPORTS,
+  clickTopbarIcon,
+  expectCloseAtTopRight,
+  optionsEntry,
+} from "./helpers/overlay.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { key } from "./keys.js";
 
@@ -30,8 +35,12 @@ async function openKeys(page: Page): Promise<void> {
   await page.locator(".topbar-options").click();
   await expect(page.locator(".options-screen")).toBeVisible();
   // Options opens on its first section, Player (#1513).
-  await page.locator('.options-entry[data-section="controls"]').click();
-  await expect(page.locator('.options-entry[data-section="controls"]')).toHaveClass(/is-selected/);
+  await optionsEntry(page, "controls").click();
+  // Narrow, the list is hidden once a section is drilled into (#4216).
+  await expect(page.locator('.flyout-rail-entry[data-id="controls"]')).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.locator(".keys-screen")).toBeVisible();
 }
 
@@ -78,6 +87,43 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not its default key, and su
   await page.reload();
   await openKeys(page);
   await expect(cell(page, "skill-1")).toHaveText("Z");
+});
+
+test("(1b) Skill 1 bound to Shift+X in Controls casts on Shift+X, and plain X casts nothing (#4183)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openKeys(page);
+  await cell(page, "skill-1").click();
+  await page.keyboard.down("Shift");
+  await expect(cell(page, "skill-1")).toHaveText("Shift + …");
+  await page.keyboard.press("KeyX");
+  await page.keyboard.up("Shift");
+  await expect(cell(page, "skill-1")).toHaveText("Shift + X");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".options-screen")).toHaveCount(0);
+
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "elementalist");
+  await openLibraryGroup(page, "Fire Magic");
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
+  // The slot's badge is the compact label, as the HUD's.
+  await expect(page.locator(".training-skill").first()).toHaveText("⇧X");
+  await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  // Fireball is a 1 s cast; were X Skill 1, its hit would be in the log
+  // well inside this wait.
+  await page.keyboard.press("KeyX");
+  await page.waitForTimeout(2500);
+  await expect(page.locator(".training-log-row", { hasText: "Fireball" })).toHaveCount(0);
+
+  await page.keyboard.press("Shift+KeyX");
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    "Fireball",
+  );
 });
 
 test("(2) taking a key from another action empties its cell and says so", async ({ page }) => {
@@ -148,7 +194,7 @@ test("Previous target sits under Next target as Shift + its key, in Next target'
   expect(previousBox?.height ?? 0).toBeLessThanOrEqual((nextBox?.height ?? 0) + 1);
 });
 
-test("(4) Back leaves Options for the menu; on a narrow screen the sections sit above", async ({
+test("(4) Back leaves Options for the menu; on a narrow screen a section is drilled into from the list (#4216)", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
@@ -156,13 +202,13 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
   // On a phone the menu's join controls and the global icons fold into ⋯ (#1272, #2053).
   await page.locator("#topbar .topbar-more").click();
   await openKeys(page);
-  const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
-  const pane = await page.locator(".options-pane").boundingBox();
-  expect(entry).not.toBeNull();
-  expect(pane).not.toBeNull();
-  if (entry !== null && pane !== null) {
-    expect(entry.y + entry.height).toBeLessThanOrEqual(pane.y);
-  }
+  // Drilled in: the list gives way to the section, under a back arrow and its title.
+  await expect(optionsEntry(page, "controls")).toBeHidden();
+  await expect(page.locator(".flyout-rail-title")).toHaveText("controls");
+  await expect(page.locator(".flyout-rail-title")).toBeFocused();
+  await page.getByRole("button", { name: "Back to the list", exact: true }).click();
+  await expect(page.locator(".keys-screen")).toBeHidden();
+  await expect(optionsEntry(page, "controls")).toBeFocused();
 
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.locator(".options-screen")).toHaveCount(0);
@@ -255,7 +301,7 @@ test("⚙ toggles Options; Esc, × and a press outside give the focus back to �
   await gear.click();
   await expect(options).toBeVisible();
   await expect(gear).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator('.options-entry[data-section="player"]')).toBeFocused();
+  await expect(optionsEntry(page, "player")).toBeFocused();
   await gear.click();
   await expect(options).toHaveCount(0);
   await expect(gear).toBeFocused();
@@ -347,10 +393,16 @@ for (const width of [320, 360]) {
     await page.locator("#topbar .topbar-more").click();
     await page.locator("#topbar .topbar-options").click();
     await expect(page.locator(".options-screen")).toBeVisible();
+    // Narrow, Options opens on its list (#4216).
+    await optionsEntry(page, "player").click();
     // The cape designer, its emblem editor always open (#3628), shows once there is a guild tag.
     await page.getByRole("textbox", { name: "Guild tag", exact: true }).fill("VW");
     const pane = page.locator(".options-pane");
     await expect(page.locator(".emblem-editor-grid")).toBeVisible();
+    // Measured once the drill-down's slide (#4216) has settled.
+    await expect
+      .poll(() => pane.evaluate((element) => element.parentElement?.getAnimations().length ?? 0))
+      .toBe(0);
 
     const overflow = await pane.evaluate((element) => element.scrollWidth - element.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);

@@ -142,7 +142,8 @@ describe("the rule (#1761)", () => {
     landed(GUARDIAN, plain);
     landed(GUARDIAN, aura);
     expect(plain.statuses.get("guardian")?.remainingSeconds).toBe(6);
-    expect(aura.statuses.get("guardian")?.remainingSeconds).toBeCloseTo(7.8);
+    // 6 s × 1.3, rounded (#4165).
+    expect(aura.statuses.get("guardian")?.remainingSeconds).toBe(8);
 
     const full = healed(landed(ORISON, bearer()));
     const covenant = healed(landed(ORISON, bearer("healers-covenant")));
@@ -381,7 +382,7 @@ describe("in flight, and on its caster (#1761)", () => {
 
   it.each([
     ["a spell", "elementalist.shard-storm", "elementalist", "shard-storm", 5],
-    ["an attack skill", "ranger.crippling-shot", "ranger", "crippled", 10],
+    ["an attack skill", "ranger.crippling-shot", "ranger", "crippled", 12],
   ] as const)(
     "%s that flies lands with the boost it was cast with",
     (_, id, profession, status, base) => {
@@ -395,7 +396,7 @@ describe("in flight, and on its caster (#1761)", () => {
     const lasts = (durationMultiplier: number): number | undefined => {
       const caster = makeCombatant({ id: "m", team: 0 });
       resolveSkillEffects({
-        skill: skill("assassin.siphon-speed"),
+        skill: skill("mesmer.signet-of-midnight"),
         caster,
         targets: [makeCombatant({ id: "w", team: 1 })],
         rng: createRng(1),
@@ -403,10 +404,10 @@ describe("in flight, and on its caster (#1761)", () => {
         surroundings: new Map(),
         own: { ...NO_OWN_SKILL_BOOST, durationMultiplier },
       });
-      return caster.statuses.get("siphon-speed-haste")?.remainingSeconds;
+      return caster.statuses.get("blind")?.remainingSeconds;
     };
-    expect(lasts(1)).toBe(13);
-    expect(lasts(2)).toBe(26);
+    expect(lasts(1)).toBe(15);
+    expect(lasts(2)).toBe(30);
   });
 });
 
@@ -441,5 +442,18 @@ describe("scales with its caster's rank (#2158)", () => {
       .effects.map((line) => line.text)
       .join(" | ");
     expect(lines).toContain(text);
+  });
+});
+
+describe("Orison of Healing (#4168)", () => {
+  it("heals 70 at Healing Prayers 12: 'Heal target ally for 30...70...80 Health'", () => {
+    const caster = makeCombatant({
+      id: "m",
+      team: 0,
+      health: 200,
+      maxHealth: 500,
+      attributeRanks: new Map([["monk.healing-prayers", 12]]),
+    });
+    expect(healed(landed(ORISON, caster))).toEqual([70]);
   });
 });

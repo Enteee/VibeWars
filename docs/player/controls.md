@@ -6,6 +6,12 @@ Every key in the table below can be changed in **Options**, under
 already in use moves to the new action, and the screen says which one
 lost it. Changes save at once.
 
+A key can also be a combination: hold Shift, Ctrl or Alt and press the
+key, such as **Shift + X**. Movement and Show names take a single key,
+and the browser keeps a few combinations, such as Ctrl + W. Holding
+Shift to show names still lets your plain keys work, unless that Shift
+combination is bound to something itself.
+
 ## Keys
 
 The default preset is **Classic**, for GW1 hands. **VibeWars** casts with
@@ -90,7 +96,7 @@ but Lobby, are in **☰** at the top right of the screen, together with **Leave*
 **M** still mutes and **F10** still leaves without it. In a narrow window, these icons and
 the screen's other buttons fold into **☰**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
-[?] opens Help the same way, as a window under it with a page picker on top; a match keeps running behind it.
+[?] opens Help the same way, as a window under it with its pages listed down the left; a match keeps running behind it.
 Help closes with its ×, Esc, a click outside, or another press of [?].
 
 **Share a beat with your lobby.** In the beat editor (♪, then **Edit**),

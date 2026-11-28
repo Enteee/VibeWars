@@ -11,6 +11,7 @@ import { elevationOf } from "./render-order.js";
 import {
   MatchClock,
   SHOT_FADE_SECONDS,
+  SHOT_GLOW,
   shotFadeAlpha,
   projectileHeading,
   projectileLayer,
@@ -67,13 +68,13 @@ describe("projectileSprite", () => {
     }
   });
 
-  it("has a file for every sprite", () => {
-    const dir = path.resolve(
-      path.dirname(fileURLToPath(import.meta.url)),
-      "../../public/icons/projectile",
-    );
+  it("has a file and a team part's file for every sprite (#4055)", () => {
+    const icons = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public/icons");
     for (const sprite of PROJECTILE_SPRITES) {
-      expect(fs.existsSync(path.join(dir, `${sprite}.svg`)), sprite).toBe(true);
+      expect(fs.existsSync(path.join(icons, "projectile", `${sprite}.svg`)), sprite).toBe(true);
+      expect(fs.existsSync(path.join(icons, "projectile-team", `${sprite}.svg`)), sprite).toBe(
+        true,
+      );
     }
   });
 });
@@ -224,12 +225,34 @@ describe("projectileTrail (#3292)", () => {
     });
   });
 
-  it("fades warm from gold at the sprite to ember at the tail, whatever the sprite", () => {
-    const trail = projectileTrail("stone", 0, 1);
-    expect(trail[0]?.colour).toBe(0xffd23d);
-    expect(trail.at(-1)?.colour).toBe(0xff8a3d);
-    const alphas = trail.map((dot) => dot.alpha);
-    expect([...alphas].sort((a, b) => b - a)).toEqual(alphas);
+  it.each(["stone", "fireball"] as const)(
+    "fades warm from gold at the sprite to ember at the tail behind a %s",
+    (sprite) => {
+      const trail = projectileTrail(sprite, 0, 1);
+      expect(trail[0]?.colour).toBe(0xffd23d);
+      expect(trail.at(-1)?.colour).toBe(0xff8a3d);
+      const alphas = trail.map((dot) => dot.alpha);
+      expect([...alphas].sort((a, b) => b - a)).toEqual(alphas);
+    },
+  );
+
+  it("takes a glowing spell's own colour, so a lightning orb trails blue (#4055)", () => {
+    for (const dot of projectileTrail("lightning-orb", 0, 1)) {
+      expect(dot.colour).toBe(SHOT_GLOW["lightning-orb"]);
+    }
+  });
+});
+
+describe("SHOT_GLOW (#4055)", () => {
+  it("lights every spell in its own colour, and no physical shot", () => {
+    for (const sprite of ["arrow", "spear", "stone", "thrown-dagger"] as const) {
+      expect(SHOT_GLOW[sprite], sprite).toBeUndefined();
+    }
+    const spells = [...new Set(PROJECTILE_SPRITES)].filter(
+      (sprite) => SHOT_GLOW[sprite] !== undefined,
+    );
+    expect(new Set(spells.map((sprite) => SHOT_GLOW[sprite])).size).toBe(spells.length);
+    expect(spells).toContain("fireball");
   });
 });
 

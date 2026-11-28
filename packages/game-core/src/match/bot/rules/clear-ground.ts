@@ -4,7 +4,8 @@ import { zoneExit } from "./leave-zone.js";
 import type { BotRule } from "./types.js";
 
 /**
- * Harmful ground in a fight (#3026): a bot in it with a foe in reach
+ * Harmful ground in a fight (#3026), the map's or a foe's well, ward or
+ * storm (#4193): a bot in it with a foe in reach
  * steps out to the nearest spot outside and fights from there, rather
  * than burn where it stands: a spot no farther from its foe than it is
  * now, or that its weapon still reaches from. With none, as a melee bot

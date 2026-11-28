@@ -11,23 +11,19 @@ Kozmetikumokat ellenőrzött rangsorolt győzelmekkel szerzel, ahogy a nyilváno
 | -------------------------------------------------------- | --------------------------------------- |
 | Jádekeret és a Kihívó cím                                | 5 rangsorolt győzelemmel                |
 | Moha aura, Moha nyom, Moha suhintás                      | 5 rangsorolt győzelemmel                |
-| Csíkos köpeny                                            | 5 rangsorolt győzelemmel                |
 | Címerkeret a szegély színében                            | 5 rangsorolt győzelemmel                |
 | Rózsakeret és a Veterán cím                              | 25 rangsorolt győzelemmel               |
 | Parázs aura, Parázs nyom, Parázs suhintás                | 25 rangsorolt győzelemmel               |
-| Szarufás köpeny                                          | 25 rangsorolt győzelemmel               |
 | Felszálló fény, Hamuvá foszlás                           | 25 rangsorolt győzelemmel               |
 | Dér aura, Dér nyom, Dér suhintás                         | 75 rangsorolt győzelemmel               |
 | Levélörvény, Köddé foszlás                               | 75 rangsorolt győzelemmel               |
 | Vas címerkeret                                           | 75 rangsorolt győzelemmel               |
 | Kékeszöld keret és a Hadúr cím                           | 200 rangsorolt győzelemmel              |
-| Negyedelt köpeny                                         | 200 rangsorolt győzelemmel              |
 | Szirmok hullása, Szilánkokra hullás                      | 200 rangsorolt győzelemmel              |
 | Ezüst címerkeret                                         | 200 rangsorolt győzelemmel              |
 | Csillagfény aura, Csillagfény nyom, Csillagfény suhintás | 500 rangsorolt győzelemmel              |
 | Csillaghullás, Csillagporrá foszlás                      | 500 rangsorolt győzelemmel              |
 | Orchideakeret és a Bajnok cím                            | Egy hellyel a Top 100-ban               |
-| Csillagos köpeny                                         | Egy hellyel a Top 100-ban               |
 | Aranyozott címerkeret                                    | Egy hellyel a Top 100-ban               |
 | Győzelmi sorozat lángja                                  | 3 egymást követő rangsorolt győzelemmel |
 
@@ -39,9 +35,9 @@ szerzed őket. Amit kiválasztottál, kiválasztva marad.
 
 A talajaura halvány gyűrű a lábad körül. A lábnyomok apró szemcséket hagynak ott, ahol jársz, és ezek egy pillanat alatt elhalványulnak. Mindkettő minden gyűrű, jel és figyelmeztetés alá kerül, és soha nem csapatszínű. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, az aura mozdulatlan marad, és nem rajzolódik nyom.
 
-## A fegyvereden és a köpenyeden
+## A fegyvereden
 
-A fegyvernyom szalag a fegyvered mögött, amikor egy közelharci támadás betalál, és a találattól számított ötöd másodpercen belül elhalványul. Az íjak, lándzsák, pálcák és botok nem kapnak ilyet, és egyetlen varázslat vagy varázslás sem mutat soha ilyet. A köpenyminta csíkokat, szarufákat, negyedeket vagy csillagokat tesz a céhköpenyedre a köpeny saját szegélyszínében, és a címered mindig felül marad, ugyanolyan tisztán, mint egy sima köpenyen. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, nem rajzolódik fegyvernyom.
+A fegyvernyom szalag a fegyvered mögött, amikor egy közelharci támadás betalál, és a találattól számított ötöd másodpercen belül elhalványul. Az íjak, lándzsák, pálcák és botok nem kapnak ilyet, és egyetlen varázslat vagy varázslás sem mutat soha ilyet. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, nem rajzolódik fegyvernyom.
 
 ## Visszatérés és elesés
 
@@ -60,7 +56,7 @@ amelyre mutatsz vagy amelyen a fókusz van, és hogy mivel szerezhető meg. A z�
 rajta egy kis lakattal. A választásod azonnal érvényes. Más játékosok a következő lobbitól kezdve
 látják, amelyhez csatlakozol.
 
-A sorok fölött a karaktered a kinézetedet viseli, áll, sétál és suhint, így az aura, a nyom és a fegyvernyom mozgás közben látszik. Tarts lenyomva egy mintát, hogy felpróbáld, akár zároltat is: a sor megmondja, mit nézel előnézetben, és amíg zárolt, mivel szerezhető meg. Engedd el egy megszerzett tárgyon, hogy viseld. Engedd el egy zároltan, vagy csússz le a mintáról, és semmi sem változik. Billentyűzettel tartsd lenyomva a szóközt egy mintán.
+A sorok mellett (telefonon fölöttük) a karaktered a kinézetedet viseli és fel-alá járkál: sétál, áll, suhint és varázsol, így az aura, a nyom és a fegyvernyom mozgás közben látszik. Görgetés közben is látható marad. Az alatta lévő Elsődleges és Másodlagos választó bármely hivatáspáron megmutatja a kinézetet; csak az előnézetet változtatják meg, a karakteredet soha. Tarts lenyomva egy mintát, hogy felpróbáld, akár zároltat is: a sor megmondja, mit nézel előnézetben, és amíg zárolt, mivel szerezhető meg. Engedd el egy megszerzett tárgyon, hogy viseld. Engedd el egy zároltan, vagy csússz le a mintáról, és semmi sem változik. Billentyűzettel tartsd lenyomva a szóközt egy mintán.
 
 ## Más játékosok kozmetikumainak megtekintése
 

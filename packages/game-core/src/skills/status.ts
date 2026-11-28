@@ -654,6 +654,24 @@ export interface StatusDefinition {
    */
   readonly killsSourceOnDeath: boolean;
   /**
+   * It ends on every bearer the moment its source dies (#4165): the hexes
+   * the GW1 `Death` page lists, "automatically removed when the caster
+   * dies", such as Life Siphon. Never on a caster-side status.
+   */
+  readonly endsOnSourceDeath: boolean;
+  /**
+   * A hex's caster half (#4167): its source holds this `linked` status
+   * while any of its hexes of this id lives on a foe, Life Siphon's "you
+   * gain +1...3 Health regeneration", its health pips once for each.
+   * `undefined`: none.
+   */
+  readonly casterStatus: StatusId | undefined;
+  /**
+   * A hex's `casterStatus` (#4167): it has no timer of its own, and the
+   * simulation holds it while its hexes live, stacked once for each.
+   */
+  readonly linked: boolean;
+  /**
    * Percentage points of maximum Health and Energy added to what each
    * resurrection the bearer's skill brings back, each capped at 100 (#2479):
    * "We Shall Return!"'s "their fallen allies return with 10...75% more
@@ -1480,7 +1498,8 @@ export interface StatusDefinition {
   /**
    * Where `adrenalineGainFaster` reaches (#2180): `all` of it, or only
    * what the bearer's own blows earn, `attacks`, as Battle Rage's "gain
-   * double adrenaline from attacks".
+   * double adrenaline from attacks". GW1's multipliers are `attacks`
+   * unless stated (#4163): only Focused Anger's reaches `all`.
    */
   readonly adrenalineGainFasterFrom: "all" | "attacks";
   /**
@@ -3020,9 +3039,10 @@ export interface ActiveStatus {
   /** Whether `nextIncomingHexDurationMultiplier` is still to lengthen a hex (#2311). */
   hexLengtheningLeft: boolean;
   /**
-   * How many times over its `armorModifier` counts (#2189): Convert Hexes'
-   * +10 for each Necromancer hex removed (`ApplyStatusEffect.stacksPerRemovedOfProfession`).
-   * 1 for every other.
+   * How many times over its `armorModifier` and `healthPips` count (#2189):
+   * Convert Hexes' +10 for each Necromancer hex removed
+   * (`ApplyStatusEffect.stacksPerRemovedOfProfession`), a `linked` status's
+   * pips for each of its hexes alive (#4167). 1 for every other.
    */
   stacks: number;
   /** Who applied it — needed so a future "when this ends, heal the caster"
@@ -3991,6 +4011,60 @@ export class StatusSet {
   }
 
   /**
+   * Hold `id`, a `linked` caster status (#4167), for `stacks` of the
+   * bearer's hexes alive on foes, the longest of them `remainingSeconds`
+   * of `durationSeconds` from its end: `advance` never expires it, and the
+   * simulation removes it with its last hex. Already held: its stacks and
+   * clock follow, its ranks the ones it landed with. Returns whether it is
+   * newly on the bearer.
+   */
+  public link(
+    id: StatusId,
+    sourceId: string,
+    ranks: ReadonlyMap<string, number>,
+    stacks: number,
+    remainingSeconds: number,
+    durationSeconds: number,
+  ): boolean {
+    const held = this.#statuses.get(id);
+    if (held !== undefined) {
+      held.stacks = stacks;
+      held.remainingSeconds = remainingSeconds;
+      held.durationSeconds = durationSeconds;
+      return false;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds,
+      durationSeconds,
+      attacksLeft: undefined,
+      hitsLeft: undefined,
+      hitsTaken: 0,
+      struck: false,
+      unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
+      spellsLeft: undefined,
+      castsLeft: undefined,
+      skillsLeft: undefined,
+      ownSkillsLeft: undefined,
+      triggersLeft: undefined,
+      reflectionsLeft: undefined,
+      touchFailsLeft: undefined,
+      hexLengtheningLeft: false,
+      stacks,
+      sourceId,
+      sourceSkillId: undefined,
+      ranks,
+      outbreak: null,
+      maintained: null,
+      projected: null,
+      returnPoint: null,
+      stepTargetId: null,
+    });
+    return true;
+  }
+
+  /**
    * Wear `id` from a spirit, `sourceId` (#1064), for as long as the
    * simulation keeps projecting it: `advance` never expires it, and it is
    * removed when its bearer leaves every such spirit's range. Already
@@ -4189,6 +4263,21 @@ export class StatusSet {
   public endAll(): void {
     // The dead lose no enchantment to answer (#1437).
     this.#end([...this.#statuses.keys()], false, true);
+  }
+
+  /**
+   * End every `endsOnSourceDeath` status `sourceId` put on, each recorded
+   * as ended (#4165): what its caster's death does to Life Siphon.
+   */
+  public endFromDeadSource(sourceId: string): void {
+    this.#end(
+      [...this.#statuses.values()]
+        .filter(
+          (status) =>
+            status.sourceId === sourceId && getStatusDefinition(status.id).endsOnSourceDeath,
+        )
+        .map(({ id }) => id),
+    );
   }
 
   /** End one status by id, recorded as ended (#1022): a trigger that spends it. */
@@ -4971,6 +5060,10 @@ export class StatusSet {
     // a tick allocates nothing for it (#2520).
     const hexesAtStart = this.countByCategory("hex");
     for (const status of this.#statuses.values()) {
+      // A linked one keeps its hexes' clock, set by the simulation (#4167).
+      if (getStatusDefinition(status.id).linked) {
+        continue;
+      }
       const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
       this.#pulse(status, dt, rate);
       status.remainingSeconds -= dt * rate;
@@ -5201,6 +5294,21 @@ export function scaledStatusDuration(
   const reductions = target.equipment.statusDurationReductions.get(statusId) ?? [];
   const removed = reductions.reduce((sum, r) => sum + Math.round(r * durationSeconds), 0);
   return Math.max(0, durationSeconds - removed);
+}
+
+/**
+ * `base` seconds of a status after its modifiers, `scaled`, rounded to a
+ * whole second (#4165), as the GW1 `Duration` page has it: "Increased or
+ * decreased durations are rounded to a whole number of seconds". Of
+ * Enchanting's ×1.2 makes an 11 s enchantment 13 s. An unmodified
+ * duration keeps its fraction, and one that would round to nothing still
+ * lands for 1 s. A duration reduced to exactly 0 stays 0.
+ */
+export function wholeSeconds(base: number, scaled: number): number {
+  if (scaled === base || scaled <= 0) {
+    return scaled;
+  }
+  return Math.max(1, Math.round(scaled));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -5560,7 +5668,7 @@ export function aggregateModifiers(
     }
     const { ranks } = status;
     ownSlow = 1;
-    healthPips += Math.round(statAt(def.healthPips, ranks));
+    healthPips += Math.round(statAt(def.healthPips, ranks)) * (status.stacks ?? 1);
     if (def.healthPipsPerEnchantment !== undefined) {
       const { pips, max } = def.healthPipsPerEnchantment;
       healthPips += pips * Math.min(enchantments, max);
@@ -5635,18 +5743,19 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
+    const adrenalineBoosts =
+      def.adrenalineGainFasterFrom === "attacks"
+        ? adrenalineGainFasterFromAttacks
+        : adrenalineGainFaster;
     const adrenalineBoost = statAt(def.adrenalineGainFaster, ranks);
     if (adrenalineBoost !== 0) {
-      (def.adrenalineGainFasterFrom === "attacks"
-        ? adrenalineGainFasterFromAttacks
-        : adrenalineGainFaster
-      ).push(adrenalineBoost);
+      adrenalineBoosts.push(adrenalineBoost);
     }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster *= Math.min(1, def.whileUnder.attackDurationMultiplier);
       attackSlower *= Math.max(1, def.whileUnder.attackDurationMultiplier);
       if (def.whileUnder.adrenalineGainFaster !== 0) {
-        adrenalineGainFaster.push(def.whileUnder.adrenalineGainFaster);
+        adrenalineBoosts.push(def.whileUnder.adrenalineGainFaster);
       }
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);

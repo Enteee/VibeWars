@@ -1,11 +1,18 @@
 import Phaser from "phaser";
 
-import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
+import type {
+  MapAtmosphere,
+  MapBounds,
+  MapData,
+  MapLighting,
+  MapPaving,
+} from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
   GATE_PLATE_REACH_UNITS,
+  getSkill,
   isStatusId,
   isWeaponId,
   ZONE_RULES,
@@ -45,6 +52,8 @@ import {
   spiritRingAlpha,
   nameplateLayout,
   isStackedFigure,
+  wearsFigureBadge,
+  figureTall,
   overheadRise,
   placeFloatingText,
   signetTextureKey,
@@ -77,18 +86,19 @@ import {
   STACK_BADGE_FILL,
   STACK_BADGE_RIM,
   stackBadge,
+  headingBucket,
   stackOverheadRise,
   stackPose,
+  stepTurn,
+  type StackPose,
+  type StackTurn,
 } from "./sprite-stack.js";
 import {
   STACK_BAKE_RADIUS,
   STACK_BAKE_SCALE,
-  STACK_FRAME_FEET_X,
-  STACK_FRAME_FEET_Y,
-  STACK_FRAME_HEIGHT,
-  STACK_FRAME_WIDTH,
   StackAtlas,
   type BakeContext,
+  type StackFrame,
   type StackLook,
 } from "./stack-atlas.js";
 import {
@@ -157,6 +167,8 @@ import {
   groundFrame,
   professionFrame,
   projectileFrame,
+  projectileTeamFrame,
+  SHOT_GLOW_FRAME,
   skillTypeFrame,
   statusFrame,
   type AtlasMap,
@@ -169,7 +181,12 @@ import {
   projectilePosition,
   projectileCore,
   projectileTrail,
+  LINE_SHADOW,
+  LINE_SHADOW_SPRITES,
   SHOT_CORE_COLOUR,
+  SHOT_GLOW,
+  SHOT_GLOW_ALPHA,
+  SHOT_GLOW_RADIUS,
   SHOT_SHADOW,
   type ShotDot,
   type TrailDot,
@@ -286,11 +303,15 @@ import {
   type SpawnBubble,
 } from "./spawn-bubble.js";
 import {
-  GROUND_COLOUR,
+  GROUND_ART_LOOK,
   GROUND_DASH,
   GROUND_GAP,
   GROUND_STROKES,
   GROUND_STROKE_WIDTH,
+  WARD_DOME_COLOUR,
+  WARD_HIGHLIGHT_ALPHA,
+  artEdgeAlpha,
+  groundArt,
   groundLook,
   groundMotion,
   overlapsOf,
@@ -301,6 +322,20 @@ import {
   type Swirl,
   type Wisp,
 } from "./ground-effect-look.js";
+import {
+  DOME_LAYERS,
+  FIRE_GLOW_RINGS,
+  FLAME_LAYERS,
+  domeHighlight,
+  domeLayer,
+  flameDisc,
+  fireGlowRing,
+  flameTongues,
+  type DomeLayer,
+  type FlameDisc,
+  type FlameTongue,
+  type GlowRing,
+} from "./ground-effect-art.js";
 import {
   DEATH_SECONDS,
   DUST_SECONDS as DEATH_DUST_SECONDS,
@@ -334,6 +369,7 @@ import {
 } from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { layerZoom, mapLayerChanged, type MapLayer } from "./map-layer.js";
+import { matchCreatureLooks } from "./match-creature-looks.js";
 import {
   LightingPass,
   litOverhangColours,
@@ -421,6 +457,7 @@ import {
 import type { DrawnClickable } from "./pick.js";
 import {
   BODY_LIGHT_FLOOR,
+  FIRE_LIGHT_COLOUR,
   bodyTintOf,
   lightAt,
   multiplyColour,
@@ -513,6 +550,7 @@ import {
   type WornCape,
 } from "./body-painter.js";
 import type { Point } from "./weapon-mark-geometry.js";
+import { uploadCanvasRect } from "./canvas-rect-upload.js";
 import type {
   ArenaSnapshot,
   FloatingText,
@@ -624,13 +662,18 @@ const TARGET_RING_OFFSET = 9;
 /** A body that moved this recently still streaks in its stance (#3226): snapshots do not move it every frame. */
 const MOVING_SECONDS = 0.15;
 
-/** Where a body stood last frame, the way it last moved, and when (#3226). */
+/**
+ * Where a body stood last frame, the way it last moved, and when (#3226);
+ * how far it has walked, all told, and the turn its figure is in (#4060).
+ */
 interface BodyMotion {
   x: number;
   y: number;
   ux: number;
   uy: number;
   movedAt: number;
+  walked: number;
+  turn: StackTurn | undefined;
 }
 /** A flag's pole, world units up from its foot (#1225): stand-in shapes until its asset. */
 const FLAG_POLE = 26;
@@ -738,6 +781,7 @@ const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
+const SHOT_GLOW_DEPTH = renderOrder({ kind: "shot-glow" });
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = renderOrder({ kind: "edge-marker" });
 /** How far apart the floor's grid lines are, world units. */
@@ -1106,12 +1150,17 @@ export class ArenaScene extends Phaser.Scene {
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
-   * at its end point since `endedAt` (scene seconds).
+   * at its end point since `endedAt` (scene seconds). Its baked-colour
+   * `image` lies over `team`, the part tinted to its side (#4055), and a
+   * glowing spell's `glow` lies under both, offset to its head.
    */
   private projectileImages = new Map<
     number,
     {
       image: Phaser.GameObjects.Image;
+      readonly team: Phaser.GameObjects.Image;
+      readonly glow:
+        { readonly image: Phaser.GameObjects.Image; readonly offset: Vec2 } | undefined;
       to: { x: number; y: number };
       /** Where it lands on water, unlifted, to splash there (#4061); `undefined` on dry ground. */
       readonly splash:
@@ -1164,13 +1213,17 @@ export class ArenaScene extends Phaser.Scene {
   private stackTextures = 0;
   /** Whether the roster's looks are baked: at the first snapshot with bodies in it. */
   private rosterBaked = false;
+  /** The map the match is played on, whose creatures match start bakes too (#4172). */
+  private matchMap: MapData | undefined;
   /** One image per standing body drawn as a figure, by actor id. */
   private bodyFigures = new Map<string, Phaser.GameObjects.Image>();
   /** The figures this frame draws, gathered as their bodies are drawn. */
   private figures: {
     readonly actor: RenderableActor;
-    readonly frame: string;
+    readonly frame: StackFrame;
     readonly band: number;
+    /** How far over its feet it is drawn, world units: a spirit's bob (#4171). */
+    readonly rise: number;
   }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
   private castBadges = new Map<string, Phaser.GameObjects.Image>();
@@ -1205,6 +1258,11 @@ export class ArenaScene extends Phaser.Scene {
   private readonly streak: Streak = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 };
   private readonly swirl: Swirl = { radius: 0, from: 0, to: 0, alpha: 0 };
   private readonly wisp: Wisp = { x: 0, y1: 0, y2: 0, alpha: 0 };
+  private readonly flameDisc: FlameDisc = { x: 0, y: 0, radius: 0, colour: 0, alpha: 0 };
+  private readonly glowRing: GlowRing = { radius: 0, alpha: 0 };
+  /** Each fire area's tongues, by its id: they depend on nothing that changes (#4054). */
+  private readonly flameTongues = new Map<number, readonly FlameTongue[]>();
+  private readonly domeLayer: DomeLayer = { x: 0, y: 0, radius: 0, alpha: 0 };
   private readonly corner = { x: 0, y: 0 };
   private readonly nextCorner = { x: 0, y: 0 };
 
@@ -1236,6 +1294,14 @@ export class ArenaScene extends Phaser.Scene {
     this.bodyFlashes.length = 0;
     this.bodyDeaths.length = 0;
     this.bodyRespawns.length = 0;
+  }
+
+  /**
+   * The map the match is played on (#4172): set before its first
+   * snapshot, so match start bakes the creatures the map places too.
+   */
+  public setMatchMap(map: MapData | undefined): void {
+    this.matchMap = map;
   }
 
   /**
@@ -1273,18 +1339,41 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
+    // The creatures on the field too (#4171), in the same build and
+    // upload. Every other look the seats' professions and the map can
+    // bring on then bakes alone, one per task, off the frame path, so it
+    // is ready before its summon (#4172): all at once held match start up
+    // by half a second. A look that misses both bakes when it appears.
+    const { actors } = this.snapshot;
+    const creatures = (looks: Iterable<CreatureLook>): StackLook[] =>
+      [...looks].map((look) => ({ kind: "creature", look }));
+    atlas.bake([
+      ...actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
+      ...creatures(new Set(actors.flatMap((actor) => actor.creatureLook ?? []))),
+    ]);
+    atlas.bakeLater(
+      creatures(
+        matchCreatureLooks(
+          actors.flatMap((actor) =>
+            actor.creatureLook === undefined ? [actor.profession, actor.secondaryProfession] : [],
+          ),
+          this.matchMap,
+        ),
+      ),
+    );
   }
 
-  /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
+  /**
+   * What `actor`'s figure is painted in: its team's colour, its cape
+   * (ADR-0056), and its professions' outfit and accent (#4175).
+   */
   private stackLook(actor: RenderableActor): StackLook {
-    const look = actor.cosmetics.cape?.look;
     return {
+      kind: "body",
       body: teamColour(actor.team),
-      cape:
-        actor.cape === undefined
-          ? undefined
-          : { look: actor.cape, pattern: look?.kind === "cape" ? look.pattern : undefined },
+      cape: actor.cape,
+      primary: actor.profession,
+      secondary: actor.secondaryProfession,
     };
   }
 
@@ -1305,6 +1394,11 @@ export class ArenaScene extends Phaser.Scene {
       },
       refresh: () => {
         texture.refresh();
+      },
+      refreshRect: (x: number, y: number, w: number, h: number) => {
+        if (!uploadCanvasRect(this.renderer, texture, x, y, w, h)) {
+          texture.refresh();
+        }
       },
       destroy: () => {
         this.textures.remove(key);
@@ -1702,12 +1796,10 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.cape === undefined || motion === undefined) {
       return undefined;
     }
-    const look = actor.cosmetics.cape?.look;
     const frame = actor.cosmetics.emblemFrame?.look;
     return {
       look: actor.cape,
       motion,
-      pattern: look?.kind === "cape" ? look.pattern : undefined,
       emblemFrame: frame?.kind === "emblemFrame" && !actor.formed ? frame : undefined,
     };
   }
@@ -2813,13 +2905,30 @@ export class ArenaScene extends Phaser.Scene {
       }
       flying.add(shot.id);
       if (shown === undefined) {
+        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
+        const glowColour = shot.spell ? SHOT_GLOW[shot.sprite] : undefined;
+        const glow =
+          glowColour === undefined
+            ? undefined
+            : this.add
+                .image(position.x, position.y, ATLAS, SHOT_GLOW_FRAME)
+                .setDepth(SHOT_GLOW_DEPTH)
+                .setBlendMode(Phaser.BlendModes.ADD)
+                .setTint(glowColour)
+                .setAlpha(SHOT_GLOW_ALPHA);
+        const team = this.add
+          .image(position.x, position.y, ATLAS, projectileTeamFrame(shot.sprite))
+          .setDepth(OVERLAY_DEPTH)
+          .setRotation(heading)
+          .setTint(shot.colour);
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
-          .setDepth(OVERLAY_DEPTH);
-        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
-        image.setRotation(heading);
-        image.setTint(shot.colour);
+          .setDepth(OVERLAY_DEPTH)
+          .setRotation(heading);
         const scale = image.scaleX;
+        const core = projectileCore(shot.sprite, heading, scale);
+        glow?.setDisplaySize(SHOT_GLOW_RADIUS * 2 * scale, SHOT_GLOW_RADIUS * 2 * scale);
+        glow?.setPosition(position.x + core.offset.x, position.y + core.offset.y);
         const from = projectilePosition(
           shot,
           shot.launchedAt,
@@ -2828,6 +2937,8 @@ export class ArenaScene extends Phaser.Scene {
         );
         this.projectileImages.set(shot.id, {
           image,
+          team,
+          glow: glow === undefined ? undefined : { image: glow, offset: core.offset },
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           splash:
             this.waterAt(shot.to, shot.toLayer) === undefined
@@ -2839,12 +2950,12 @@ export class ArenaScene extends Phaser.Scene {
               ? {
                   from,
                   trail: projectileTrail(shot.sprite, heading, scale),
-                  core: projectileCore(shot.sprite, heading, scale),
+                  core,
                 }
               : undefined,
         });
       } else {
-        shown.image.setPosition(position.x, position.y);
+        placeShot(shown, position);
       }
       const spell = this.projectileImages.get(shot.id)?.spell;
       if (spell !== undefined && trails !== undefined && !this.reducedMotion) {
@@ -2873,14 +2984,18 @@ export class ArenaScene extends Phaser.Scene {
       }
       if (shown.endedAt === undefined && fade) {
         shown.endedAt = now;
-        shown.image.setPosition(shown.to.x, shown.to.y);
+        placeShot(shown, shown.to);
       }
       const alpha = shown.endedAt === undefined ? undefined : shotFadeAlpha(shown.endedAt, now);
       if (alpha === undefined) {
         shown.image.destroy();
+        shown.team.destroy();
+        shown.glow?.image.destroy();
         this.projectileImages.delete(id);
       } else {
         shown.image.setAlpha(alpha);
+        shown.team.setAlpha(alpha);
+        shown.glow?.image.setAlpha(SHOT_GLOW_ALPHA * alpha);
       }
     }
     for (const { image, spell } of this.projectileImages.values()) {
@@ -2896,27 +3011,34 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Each flying spell's shadow (#3292): on the ground under it, in the
-   * band of the layer it flies over, so it takes that band's tone and
-   * lies under the bodies there. Gone once the shot lands.
+   * Each shot's shadow (#3292, #4055): on the ground under it, in the band
+   * of the layer it flies over, so it takes that band's tone and lies
+   * under the bodies there. An arrow, spear or dagger casts a line along
+   * its flight, anything else a blob. Gone once the shot lands.
    */
   private drawShotShadows(now: number): void {
     const clock = this.clock.read(now);
     const { structure, lifts } = this.snapshot;
     for (const shot of this.snapshot.projectiles) {
-      if (!shot.spell || this.endedShots.has(shot.id)) {
+      if (this.endedShots.has(shot.id)) {
         continue;
       }
       const position = projectilePosition(shot, clock, structure, lifts);
       const band = this.bandOf(projectileLayer(shot, clock));
-      if (position !== undefined && band !== undefined) {
+      if (position === undefined || band === undefined) {
+        continue;
+      }
+      const x = position.x + SHOT_SHADOW.offset.x;
+      const y = position.y + SHOT_SHADOW.offset.y;
+      if (LINE_SHADOW_SPRITES.has(shot.sprite)) {
+        const heading = projectileHeading(shot, structure, lifts);
+        const dx = Math.cos(heading) * LINE_SHADOW.half;
+        const dy = Math.sin(heading) * LINE_SHADOW.half;
+        band.body.lineStyle(LINE_SHADOW.width, SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
+        band.body.lineBetween(x - dx, y - dy, x + dx, y + dy);
+      } else {
         band.body.fillStyle(SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
-        band.body.fillEllipse(
-          position.x + SHOT_SHADOW.offset.x,
-          position.y + SHOT_SHADOW.offset.y,
-          SHOT_SHADOW.width,
-          SHOT_SHADOW.height,
-        );
+        band.body.fillEllipse(x, y, SHOT_SHADOW.width, SHOT_SHADOW.height);
       }
     }
   }
@@ -3068,7 +3190,7 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (actor.creatureLook !== undefined) {
-      this.drawCreature(g, marks, actor, actor.creatureLook);
+      this.drawCreature(band, actor, actor.creatureLook);
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
@@ -3088,13 +3210,8 @@ export class ArenaScene extends Phaser.Scene {
       };
       const figure = this.stackAtlas?.frame(
         this.stackLook(actor),
-        actor.facing,
-        stackPose(
-          this.trackMotion(actor) !== undefined,
-          actor.castProgress !== undefined,
-          this.now,
-          this.reducedMotion,
-        ),
+        this.figureHeading(actor),
+        this.figurePose(actor),
       );
       if (figure === undefined) {
         // Its look is still baking: the flat disc until it is (ADR-0057).
@@ -3107,6 +3224,7 @@ export class ArenaScene extends Phaser.Scene {
           actor,
           frame: figure,
           band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+          rise: 0,
         });
       }
       this.drawCastGlow(marks, actor, frame);
@@ -3137,11 +3255,11 @@ export class ArenaScene extends Phaser.Scene {
    * lies, or else a facing tick.
    */
   private drawCreature(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
+    band: (typeof this.bands)[number],
     actor: RenderableActor,
     look: CreatureLook,
   ): void {
+    const { body: g, marks } = band;
     const { x, y } = actor.position;
     const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
@@ -3176,6 +3294,33 @@ export class ArenaScene extends Phaser.Scene {
 
     // A spirit's plate is a wisp (#3306), bobbing, inside a team rim.
     const bob = look === "spirit" ? spiritBob(this.now, cuePhase(actor.id), this.reducedMotion) : 0;
+    // Standing, a stacked creature (#4171) is its figure on the team's
+    // plate, the figure bobbing as a whole; until its look is baked, the disc.
+    const figure =
+      actor.knockedDown || !this.creatureFigures
+        ? undefined
+        : this.stackAtlas?.frame(
+            { kind: "creature", look },
+            this.figureHeading(actor),
+            this.figurePose(actor),
+          );
+    if (figure !== undefined) {
+      tracePath(g, creatureOutline(x, y, actor.radius));
+      g.fillStyle(team, 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+      if (wearsFigureBadge(actor)) {
+        this.drawFigureBadge(band.badge, actor);
+      }
+      this.figures.push({
+        actor,
+        frame: figure,
+        band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        rise: -bob,
+      });
+      return;
+    }
     if (look === "spirit") {
       this.drawSpiritWisp(g, actor, y + bob, team);
     } else {
@@ -3310,6 +3455,35 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The pose `actor`'s figure stands in (#4060): its stride follows how far
+   * it has walked, its cape settles once it stops, and it breathes on its
+   * own beat.
+   */
+  private figurePose(actor: RenderableActor): StackPose {
+    this.trackMotion(actor);
+    const motion = this.bodyMotion.get(actor.id);
+    return stackPose({
+      casting: actor.castProgress !== undefined,
+      walked: motion?.walked ?? 0,
+      stoppedFor: this.now - (motion?.movedAt ?? -Infinity) - MOVING_SECONDS,
+      now: this.now,
+      phase: cuePhase(actor.id),
+      reducedMotion: this.reducedMotion,
+    });
+  }
+
+  /** The heading bucket `actor`'s figure is drawn at this frame, easing into its facing (#4060). */
+  private figureHeading(actor: RenderableActor): number {
+    const target = headingBucket(actor.facing);
+    const motion = this.bodyMotion.get(actor.id);
+    if (motion === undefined) {
+      return target;
+    }
+    motion.turn = stepTurn(motion.turn, target, this.now);
+    return motion.turn.drawn;
+  }
+
+  /**
    * Whether `actor` moved within `MOVING_SECONDS`, and which way: the
    * snapshot does not move a body every frame, so a frame standing still
    * between two steps is still moving.
@@ -3318,7 +3492,15 @@ export class ArenaScene extends Phaser.Scene {
     const { x, y } = actor.position;
     const known = this.bodyMotion.get(actor.id);
     if (known === undefined) {
-      this.bodyMotion.set(actor.id, { x, y, ux: 0, uy: 0, movedAt: -Infinity });
+      this.bodyMotion.set(actor.id, {
+        x,
+        y,
+        ux: 0,
+        uy: 0,
+        movedAt: -Infinity,
+        walked: 0,
+        turn: undefined,
+      });
       return undefined;
     }
     const dx = x - known.x;
@@ -3330,6 +3512,7 @@ export class ArenaScene extends Phaser.Scene {
       known.ux = dx / step;
       known.uy = dy / step;
       known.movedAt = this.now;
+      known.walked += step;
     }
     return this.now - known.movedAt <= MOVING_SECONDS ? known : undefined;
   }
@@ -3838,6 +4021,11 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+    for (const id of this.flameTongues.keys()) {
+      if (!seen.has(id)) {
+        this.flameTongues.delete(id);
+      }
+    }
     this.drawShoutRings(g);
     this.drawSpiritRings(g);
   }
@@ -3889,9 +4077,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * One skill area (#3283) at (`x`, `y`): a violet pool, under an edge
-   * dashed where it can hurt your side and solid where it cannot, wide
-   * as it lands and thin as it ends; a storm's swirls or a well's wisps
+   * One skill area (#3283) at (`x`, `y`): a pool in its art's colour
+   * (#4054), under an edge dashed where it can hurt your side and solid
+   * where it cannot, wide as it lands and thin as it ends; a fire area's
+   * flames, a ward's dome, or a plain storm's swirls or a well's wisps
    * inside; the owner's pip at the icon's corner.
    */
   private drawGroundEffect(
@@ -3908,11 +4097,18 @@ export class ArenaScene extends Phaser.Scene {
       age: effect.durationSeconds - remaining,
       remaining,
     });
+    const art = groundArt(getSkill(effect.skillId));
+    const colours = GROUND_ART_LOOK[art];
     const phase = cuePhase(String(effect.id));
     const breath = poolBreath(this.now, phase, this.reducedMotion);
-    g.fillStyle(GROUND_COLOUR, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
+    // What stands over the pool fades with its edge as the area ends.
+    const fade = look.edgeAlpha / GROUND_ART_LOOK.plain.edgeAlpha;
+    if (art === "fire") {
+      this.drawFireGlow(g, effect, x, y, fade);
+    }
+    g.fillStyle(colours.pool, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
     g.fillCircle(x, y, effect.radius);
-    g.lineStyle(look.edgeWidth, GROUND_COLOUR, look.edgeAlpha);
+    g.lineStyle(look.edgeWidth, colours.edge, artEdgeAlpha(art, look));
     if (look.dashed) {
       for (const arc of dashedCircle(effect.radius, GROUND_DASH, GROUND_GAP)) {
         g.beginPath();
@@ -3922,22 +4118,90 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       g.strokeCircle(x, y, effect.radius);
     }
-    const motion = groundMotion(effect.skillId);
+    if (art === "fire") {
+      this.drawFlames(g, effect, x, y, fade);
+    } else if (art === "ward") {
+      this.drawDome(g, effect.radius, x, y, fade);
+    }
+    const motion = art === "plain" ? groundMotion(effect.skillId) : undefined;
     for (let index = 0; motion !== undefined && index < GROUND_STROKES; index += 1) {
       if (motion === "swirl") {
         const s = swirl(effect.radius, index, this.now, phase, this.reducedMotion, this.swirl);
-        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, s.alpha);
+        g.lineStyle(GROUND_STROKE_WIDTH, colours.edge, s.alpha);
         g.beginPath();
         g.arc(x, y, s.radius, s.from, s.to);
         g.strokePath();
       } else {
         const w = wisp(effect.radius, index, this.now, phase, this.reducedMotion, this.wisp);
-        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, w.alpha);
+        g.lineStyle(GROUND_STROKE_WIDTH, colours.edge, w.alpha);
         g.lineBetween(x + w.x, y + w.y1, x + w.x, y + w.y2);
       }
     }
     g.fillStyle(teamColour(effect.owner), 1);
     g.fillCircle(x + GROUND_ICON_SIZE / 2, y - GROUND_ICON_SIZE / 2, OWNER_PIP_RADIUS);
+  }
+
+  /**
+   * A fire area's warm light (#4054): rings drawn under its pool every
+   * frame, not a map light, which would rebuild every light map each time
+   * a fire lands or ends. Still under reduced motion.
+   */
+  private drawFireGlow(
+    g: Phaser.GameObjects.Graphics,
+    effect: RenderableGroundEffect,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    for (let ring = 0; ring < FIRE_GLOW_RINGS; ring += 1) {
+      const glow = fireGlowRing(effect, ring, this.now, this.reducedMotion, this.glowRing);
+      g.fillStyle(FIRE_LIGHT_COLOUR, glow.alpha * fade);
+      g.fillCircle(x, y, glow.radius);
+    }
+  }
+
+  /** A fire area's tongues (#4054), each a stack of discs, farthest first; still under reduced motion. */
+  private drawFlames(
+    g: Phaser.GameObjects.Graphics,
+    effect: RenderableGroundEffect,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    let tongues = this.flameTongues.get(effect.id);
+    if (tongues === undefined) {
+      tongues = flameTongues(effect.id, effect.radius);
+      this.flameTongues.set(effect.id, tongues);
+    }
+    for (const tongue of tongues) {
+      for (let layer = 0; layer < FLAME_LAYERS; layer += 1) {
+        const disc = flameDisc(tongue, layer, this.now, this.reducedMotion, this.flameDisc);
+        g.fillStyle(disc.colour, disc.alpha * fade);
+        g.fillCircle(x + disc.x, y + disc.y, disc.radius);
+      }
+    }
+  }
+
+  /**
+   * A ward's dome (#4054): stacked circles rising over it, then a white
+   * highlight on its upper left. It is on the ground's graphics, so it
+   * stands behind whoever is inside it.
+   */
+  private drawDome(
+    g: Phaser.GameObjects.Graphics,
+    radius: number,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    for (let index = 0; index < DOME_LAYERS; index += 1) {
+      const layer = domeLayer(radius, index, this.domeLayer);
+      g.fillStyle(WARD_DOME_COLOUR, layer.alpha * fade);
+      g.fillCircle(x + layer.x, y + layer.y, layer.radius);
+    }
+    const highlight = domeHighlight(radius);
+    g.fillStyle(0xffffff, WARD_HIGHLIGHT_ALPHA * fade);
+    g.fillEllipse(x + highlight.x, y + highlight.y, highlight.width, highlight.height);
   }
 
   /** The graphics the wards on `layer`'s decks draw to, made the first time one does. */
@@ -3960,29 +4224,27 @@ export class ArenaScene extends Phaser.Scene {
     const shown = new Set<string>();
     const scale = 1 / STACK_BAKE_SCALE;
     const depthPerY = this.arena.height > 0 ? FIGURE_DEPTH_SPAN / this.arena.height : 0;
-    for (const { actor, frame, band } of this.figures) {
+    for (const { actor, frame, band, rise } of this.figures) {
       shown.add(actor.id);
       let image = this.bodyFigures.get(actor.id);
       if (image === undefined) {
-        image = this.add
-          .image(0, 0, this.stackTexture, frame)
-          .setOrigin(
-            STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
-            STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
-          );
+        image = this.add.image(0, 0, this.stackTexture, frame.name);
         this.bodyFigures.set(actor.id, image);
       }
       if (image.texture.key !== this.stackTexture) {
-        image.setTexture(this.stackTexture, frame);
-      } else if (image.frame.name !== frame) {
-        image.setFrame(frame);
+        image.setTexture(this.stackTexture, frame.name);
+      } else if (image.frame.name !== frame.name) {
+        image.setFrame(frame.name);
       }
-      const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
+      // A heading the atlas holds only as its mirror image (#4060); the feet are the frame's middle.
+      image.setFlipX(frame.flipped);
+      const size = (scale * actor.radius) / frame.radius;
       const { x, y } = actor.position;
       const depth = renderOrder({ kind: "character", band, part: "figure" });
       image
-        .setDisplaySize(STACK_FRAME_WIDTH * size, STACK_FRAME_HEIGHT * size)
-        .setPosition(x, y)
+        .setOrigin(frame.feetX / frame.width, frame.feetY / frame.height)
+        .setDisplaySize(frame.width * size, frame.height * size)
+        .setPosition(x, y - rise)
         .setDepth(depth + Math.min(Math.max(y * depthPerY, 0), FIGURE_DEPTH_SPAN * 0.99))
         .setTint(this.bodyTint(actor) ?? 0xffffff)
         .setVisible(true);
@@ -4002,11 +4264,11 @@ export class ArenaScene extends Phaser.Scene {
 
   /** The dark disc the glyph rides on, on top of `actor`'s figure (ADR-0057). */
   private drawFigureBadge(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    if (actor.profession === undefined) {
+    if (actor.profession === undefined && actor.creatureLook === undefined) {
       return;
     }
     const { x, y } = actor.position;
-    const badge = stackBadge(actor.radius);
+    const badge = stackBadge(actor.radius, figureTall(actor));
     g.fillStyle(STACK_BADGE_RIM, 1);
     g.fillCircle(x, y - badge.rise, badge.radius + 1);
     g.fillStyle(STACK_BADGE_FILL, 1);
@@ -4878,6 +5140,14 @@ export class ArenaScene extends Phaser.Scene {
   /** Draws `markers` with the hover ring's own drawing, instead of waiting on a pointer. */
   setFixedMarkers(markers: readonly SceneMarker[]): void {
     this.fixedMarkers = markers;
+  }
+
+  /** Whether creatures stand as figures (#4171): off, the render bench's disc yardstick. */
+  private creatureFigures = true;
+
+  /** Draws creatures as figures, or keeps every one its disc. */
+  setCreatureFigures(on: boolean): void {
+    this.creatureFigures = on;
   }
 
   /** What the hover ring asks of a finger held still (#3878): below, once a release would long-press. */
@@ -7004,4 +7274,18 @@ function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElemen
   context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
   context.fillRect(0, 0, canvas.width, canvas.height);
   return canvas;
+}
+
+/** Move a shot's sprite, its team part and its glow to `at`. */
+function placeShot(
+  shown: {
+    readonly image: Phaser.GameObjects.Image;
+    readonly team: Phaser.GameObjects.Image;
+    readonly glow: { readonly image: Phaser.GameObjects.Image; readonly offset: Vec2 } | undefined;
+  },
+  at: Vec2,
+): void {
+  shown.image.setPosition(at.x, at.y);
+  shown.team.setPosition(at.x, at.y);
+  shown.glow?.image.setPosition(at.x + shown.glow.offset.x, at.y + shown.glow.offset.y);
 }

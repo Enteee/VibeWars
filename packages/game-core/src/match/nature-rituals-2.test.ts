@@ -242,7 +242,13 @@ describe("nature rituals 2 (#1873)", () => {
     const events = stepFor(sim, DT);
     expect(bodies.map((body) => body.statuses.has("bleeding"))).toEqual([true, true, false]);
     for (const id of ["f", "a"]) {
-      expect(events).toContainEqual({ kind: "damage", targetId: id, amount: 5, critical: false });
+      expect(events).toContainEqual({
+        kind: "damage",
+        targetId: id,
+        amount: 5,
+        unreduced: 5,
+        critical: false,
+      });
     }
     expect(bodies[2]?.health).toBeCloseTo(before[2] ?? 0, 5);
   });

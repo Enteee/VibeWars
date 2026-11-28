@@ -149,11 +149,11 @@ const RISING_BILE_DAMAGE: DamageEffect = {
 };
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
-  // Faintheartedness (GW1 PvP): attacks 50% slower, −0...2 pips at the
-  // caster's Curses (#1976).
+  // Faintheartedness: attacks 50% slower, −1...3 pips at the caster's
+  // Curses (#1976), −2.6 at rank 12 rounded to −3.
   faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
     profession: "necromancer",
-    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: 0, atTwelve: -2 } },
+    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: -1, atTwelve: -3 } },
     attackDurationMultiplier: 1.5,
   }),
   malaise: define("malaise", "Malaise", "hex", {
@@ -164,6 +164,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   // caster is healed for 30...102...120 when Parasitic Bond ends": 102,
   // its rank-12 value.
   "parasitic-bond": define("parasitic-bond", "Parasitic Bond", "hex", {
+    endsOnSourceDeath: true,
     profession: "necromancer",
     healthPips: -1,
     triggers: [
@@ -221,6 +222,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   // "Whenever target foe hits with an attack, you steal 15...39...45
   // health from that foe" (#935): 39, its rank-12 value.
   "insidious-parasite": define("insidious-parasite", "Insidious Parasite", "hex", {
+    endsOnSourceDeath: true,
     profession: "necromancer",
     triggers: [
       {
@@ -448,13 +450,17 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // "...target foe suffers -1...3 Health degeneration, and you gain
-  // +1...3 Health regeneration": 3 each, the caster's its own status, so
-  // it lasts its time when the hex is removed early.
+  // +1...3 Health regeneration": 3 each. The caster's half is linked: it
+  // lasts while the hex does and ends with it (#4167).
   "life-siphon": define("life-siphon", "Life Siphon", "hex", {
+    endsOnSourceDeath: true,
+    casterStatus: "life-siphon-regen",
     profession: "necromancer",
     healthPips: -3,
   }),
+  // Its caster's half (#4167): +3 for each of the caster's Life Siphons alive.
   "life-siphon-regen": define("life-siphon-regen", "Life Siphon", "skill-effect", {
+    linked: true,
     profession: "necromancer",
     healthPips: 3,
   }),
@@ -643,6 +649,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   // 8...4...3 Energy or Spinal Shivers ends": 4, at rank 12. Several cold
   // packets in one tick answer once.
   "spinal-shivers": define("spinal-shivers", "Spinal Shivers", "hex", {
+    endsOnSourceDeath: true,
     profession: "necromancer",
     triggers: [shivers("necromancer.spinal-shivers")],
   }),
@@ -1013,12 +1020,15 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   }),
   // "...target foe and adjacent foes suffer -3...8 Health degeneration,
   // which you gain as Health regeneration": 7 at Blood Magic 12, the
-  // caster's once, however many foes it hexed.
+  // caster's once for each foe it hexed (#4167), up to the regeneration cap.
   "life-transfer": define("life-transfer", "Life Transfer", "hex", {
+    endsOnSourceDeath: true,
+    casterStatus: "life-transfer-regen",
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: -3, atTwelve: -7 } },
   }),
   "life-transfer-regen": define("life-transfer-regen", "Life Transfer", "skill-effect", {
+    linked: true,
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 7 } },
   }),

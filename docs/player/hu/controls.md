@@ -7,6 +7,13 @@ billentyűcellára, és nyomd meg a kívánt billentyűt; a már használt
 billentyű átkerül az új művelethez, és a képernyő kiírja, melyiktől
 vette el. A módosítások azonnal mentődnek.
 
+Egy billentyű kombináció is lehet: tartsd nyomva a Shiftet, a Ctrl-t vagy az
+Altot, és nyomd meg a billentyűt, például **Shift + X**. A Mozgás és a Nevek
+mutatása csak egyetlen billentyűt fogad el, és a böngésző néhány kombinációt
+megtart magának, például a Ctrl + W-t. Ha a nevek mutatásához nyomva tartod
+a Shiftet, a sima billentyűid továbbra is működnek, kivéve, ha maga az a
+Shift-kombináció valamihez hozzá van rendelve.
+
 ## Billentyűk
 
 Az alapértelmezett előbeállítás a **Klasszikus**, a GW1-hez szokott kezeknek. A
@@ -96,7 +103,7 @@ a Lobbi kivételével, a képernyő jobb felső sarkában a **☰** mögött van
 az **M** továbbra is némít, az **F10** pedig továbbra is kilép nélküle. Keskeny ablakban ezek az ikonok és
 a képernyő többi gombja a **☰** mögé csukódik; csak a fő gomb marad kint.
 A ⚙ az Opciókat ablakként nyitja meg a sáv alatt, a képernyővel mögötte; az Esc, a × vagy egy kívülre kattintás bezárja.
-A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, felül oldalválasztóval; a meccs mögötte tovább fut.
+A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, bal oldalon felsorolt oldalaival; a meccs mögötte tovább fut.
 A Súgó a saját ×-ével, az Esc-kel, egy kívülre kattintással vagy a [?] újabb megnyomásával zárul be.
 
 **Ossz meg egy ütemet a lobbiddal.** Az ütemszerkesztőben (♪, majd **Szerk.**)

@@ -15,7 +15,8 @@ import {
   type DamagePacket,
   type DamageSource,
   hitLocationOf,
-  mitigate,
+  type MitigatedDamage,
+  mitigateHit,
   skillDamage,
   withSkillArmorPenetration,
 } from "./damage.js";
@@ -30,6 +31,7 @@ import {
   damageTypeTaken,
   getStatusDefinition,
   scaledStatusDuration,
+  wholeSeconds,
   type ActiveStatus,
   type OwnSkillBoost,
   type StatusCategory,
@@ -115,6 +117,11 @@ export type CombatEvent =
       readonly kind: "damage";
       readonly targetId: string;
       readonly amount: number;
+      /**
+       * `amount` and what the flat per-hit cuts took off it first
+       * (#4163): what adrenaline charges from, as in GW1.
+       */
+      readonly unreduced: number;
       /** A weapon blow that crit (#533); `false` for everything else. */
       readonly critical: boolean;
     }
@@ -388,19 +395,31 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, "skill");
+  applyHit(target, { amount, reduced: 0 }, type, critical, events, dealer);
 }
 
-/** As `applyDamage`, for a weapon blow (#2291): what Life Bond answers. */
-export function applyAttackDamage(
+/** As `applyDamage`, for a hit with what its flat cuts took off (#4163). */
+export function applyHit(
   target: Combatant,
-  amount: number,
+  hit: MitigatedDamage,
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
-  landDamage(target, amount, type, critical, events, dealer, "weapon");
+  landDamage(target, hit, type, critical, events, dealer, "skill");
+}
+
+/** As `applyHit`, for a weapon blow (#2291): what Life Bond answers. */
+export function applyAttackDamage(
+  target: Combatant,
+  hit: MitigatedDamage,
+  type: DamageType,
+  critical: boolean,
+  events: CombatEvent[],
+  dealer: Combatant | undefined,
+): void {
+  landDamage(target, hit, type, critical, events, dealer, "weapon");
 }
 
 /**
@@ -412,12 +431,12 @@ export function applyRedirectedDamage(
   amount: number,
   events: CombatEvent[],
 ): void {
-  landDamage(target, amount, "typeless", false, events, undefined, undefined);
+  landDamage(target, { amount, reduced: 0 }, "typeless", false, events, undefined, undefined);
 }
 
 function landDamage(
   target: Combatant,
-  amount: number,
+  { amount, reduced }: MitigatedDamage,
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
@@ -425,11 +444,17 @@ function landDamage(
   // `undefined`: a bond's share, never redirected again.
   source: DamageSource | undefined,
 ): void {
-  if (amount <= 0 || target.dead) {
+  if (target.dead || amount + reduced <= 0) {
     return;
   }
   if (isInvulnerable(target)) {
     events.push({ kind: "invulnerable", targetId: target.id });
+    return;
+  }
+  // A hit the flat cuts took to 0 still landed (#4163): it charges the
+  // struck from what it would have dealt, and touches no health.
+  if (amount <= 0) {
+    events.push({ kind: "damage", targetId: target.id, amount: 0, unreduced: reduced, critical });
     return;
   }
   // Mist Form's (#1951), Intimidating Aura's (#2207) and Armor of
@@ -465,7 +490,13 @@ function landDamage(
   }
   const before = target.health;
   target.health -= applied;
-  events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
+  events.push({
+    kind: "damage",
+    targetId: target.id,
+    amount: applied,
+    unreduced: applied + reduced,
+    critical,
+  });
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   } else if (isElementalDamage(type)) {
@@ -1471,7 +1502,16 @@ export function landCaughtCondition(
   events: CombatEvent[],
   surroundings: Surroundings,
 ): void {
-  landOnTaker(target, id, remainingSeconds, sourceId, ranks, events, surroundings, null);
+  landOnTaker(
+    target,
+    id,
+    { base: remainingSeconds, scaled: remainingSeconds },
+    sourceId,
+    ranks,
+    events,
+    surroundings,
+    null,
+  );
 }
 
 /**
@@ -1513,7 +1553,17 @@ function conditionDurationScale(statusId: StatusId, caster: Combatant): number {
 }
 
 /**
- * `statusId` aimed at `target`, for `durationSeconds` before its taker's
+ * A status's seconds as aimed (#4165): `base`, its own, and `scaled`,
+ * after every multiplier the applying side puts on it. `landOnTaker`
+ * rounds once, after the taker's own shortening.
+ */
+interface AimedSeconds {
+  readonly base: number;
+  readonly scaled: number;
+}
+
+/**
+ * `statusId` aimed at `target`, for `seconds` before its taker's
  * own lengthening, landed on whoever takes it (#1915): every status a
  * skill aims at a combatant comes through here, so Infuse Condition sends
  * each condition to a minion however it arrives.
@@ -1521,7 +1571,7 @@ function conditionDurationScale(statusId: StatusId, caster: Combatant): number {
 function landOnTaker(
   target: Combatant,
   statusId: StatusId,
-  durationSeconds: number,
+  { base, scaled }: AimedSeconds,
   sourceId: string,
   ranks: ReadonlyMap<string, number>,
   events: CombatEvent[],
@@ -1533,7 +1583,7 @@ function landOnTaker(
   landStatus(
     taker,
     statusId,
-    scaledStatusDuration(taker, statusId, durationSeconds),
+    wholeSeconds(base, scaledStatusDuration(taker, statusId, scaled)),
     sourceId,
     ranks,
     events,
@@ -1803,7 +1853,7 @@ function gatherConditions(
       landOnTaker(
         target,
         id,
-        remainingSeconds * effect.durationMultiplier,
+        { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
         caster.id,
         ranks,
         events,
@@ -2093,9 +2143,9 @@ export function applyEffect(
       );
       const packet: DamagePacket =
         landing !== undefined && isSpell(landing.type) ? { ...dealt, spell: true } : dealt;
-      applyDamage(
+      applyHit(
         target,
-        mitigate(
+        mitigateHit(
           packet,
           target,
           context.rules,
@@ -2427,18 +2477,22 @@ export function applyEffect(
       landOnTaker(
         bearer,
         effect.statusId,
-        base *
-          (context.own?.durationMultiplier ?? 1) *
-          inflictedScale(effect.statusId, bearer, context) *
-          conditionDurationScale(effect.statusId, caster) *
-          // Chilling Winds' (#2311): the next hex of its attribute on the bearer.
-          (getStatusDefinition(effect.statusId).category === "hex"
-            ? bearer.statuses.lengthenIncomingHex(getStatusDefinition(effect.statusId).attribute)
-            : 1) *
-          // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
-          (getStatusDefinition(effect.statusId).category === "enchantment"
-            ? caster.equipment.spellMods.enchantmentDurationScale
-            : 1),
+        {
+          base,
+          scaled:
+            base *
+            (context.own?.durationMultiplier ?? 1) *
+            inflictedScale(effect.statusId, bearer, context) *
+            conditionDurationScale(effect.statusId, caster) *
+            // Chilling Winds' (#2311): the next hex of its attribute on the bearer.
+            (getStatusDefinition(effect.statusId).category === "hex"
+              ? bearer.statuses.lengthenIncomingHex(getStatusDefinition(effect.statusId).attribute)
+              : 1) *
+            // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
+            (getStatusDefinition(effect.statusId).category === "enchantment"
+              ? caster.equipment.spellMods.enchantmentDurationScale
+              : 1),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2508,7 +2562,7 @@ export function applyEffect(
         landOnTaker(
           taker,
           id,
-          remainingSeconds * effect.durationMultiplier,
+          { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
           caster.id,
           ranks,
           events,
@@ -2519,7 +2573,7 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            remainingSeconds * effect.durationMultiplier,
+            { base: remainingSeconds, scaled: remainingSeconds * effect.durationMultiplier },
             caster.id,
             ranks,
             events,
@@ -2567,7 +2621,7 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            remainingSeconds,
+            { base: remainingSeconds, scaled: remainingSeconds },
             caster.id,
             ranks,
             events,
@@ -2604,7 +2658,13 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
+            {
+              base: remainingSeconds,
+              scaled: Math.min(
+                remainingSeconds * extend,
+                effect.maxSeconds ?? Number.POSITIVE_INFINITY,
+              ),
+            },
             caster.id,
             ranks,
             events,
@@ -2848,7 +2908,10 @@ export function applyEffect(
       landOnTaker(
         caster,
         effect.statusId,
-        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        {
+          base: effect.durationSeconds,
+          scaled: effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2876,8 +2939,12 @@ export function applyEffect(
       landOnTaker(
         pet,
         effect.statusId,
-        resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
-          (context.own?.durationMultiplier ?? 1),
+        {
+          base: resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
+          scaled:
+            resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
+            (context.own?.durationMultiplier ?? 1),
+        },
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,

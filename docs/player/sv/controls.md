@@ -6,6 +6,13 @@ Varje tangent i tabellen nedan kan ändras under **Alternativ**, under
 vill ha; en tangent som redan används flyttas till den nya handlingen,
 och skärmen säger vilken som förlorade den. Ändringar sparas direkt.
 
+En tangent kan också vara en kombination: håll in Shift, Ctrl eller Alt och
+tryck på tangenten, till exempel **Shift + X**. Gå och Visa namn tar bara en
+enda tangent, och webbläsaren behåller några kombinationer själv, till
+exempel Ctrl + W. När du håller in Shift för att visa namn fungerar dina
+vanliga tangenter ändå, om inte den Shift-kombinationen själv är kopplad
+till något.
+
 ## Tangenter
 
 Standardförvalet är **Klassisk**, för GW1-händer. **VibeWars** kastar med vänster hand och rör sig med piltangenterna.
@@ -91,7 +98,7 @@ utom Lobby, i **☰** uppe till höger på skärmen, tillsammans med **Lämna**;
 **M** stänger fortfarande av ljudet och **F10** lämnar fortfarande utan den. I ett smalt fönster viks de här ikonerna och
 skärmens andra knappar in i **☰**; bara dess huvudknapp står kvar utanför.
 ⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det.
-[?] öppnar Hjälp på samma sätt, som ett fönster under den med en sidväljare överst; en match fortsätter bakom.
+[?] öppnar Hjälp på samma sätt, som ett fönster under den med sina sidor listade längs vänsterkanten; en match fortsätter bakom.
 Hjälp stängs med fönstrets ×, Esc, ett klick utanför, eller ett nytt tryck på [?].
 
 **Dela en beat med din lobby.** I beat-redigeraren (♪, sedan **Ändra**)

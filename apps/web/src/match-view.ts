@@ -30,7 +30,7 @@ import { attackKeyIntents, escapeIntent } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
-import { WEAPON_SET_ACTIONS, actionForCode, isShortcut } from "./input/keymap.js";
+import { WEAPON_SET_ACTIONS, actionForEvent, isShiftedPlain } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
   calledTargetIntent,
@@ -112,7 +112,14 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapFlagField, mapMode, mapRelicField, mapShrines, mapStructure } from "./net/maps.js";
+import {
+  fileMap,
+  mapFlagField,
+  mapMode,
+  mapRelicField,
+  mapShrines,
+  mapStructure,
+} from "./net/maps.js";
 import {
   renderableCapturePoints,
   renderableGates,
@@ -528,6 +535,7 @@ export function toArenaSnapshot(
             ? player.offhandId
             : CREATURE_ARMS[player.creature.look]?.offHand,
         profession: player.primaryProfession,
+        secondaryProfession: player.secondaryProfession,
         creatureLook: player.creature?.look,
         auraRadius: player.creature?.auraRadius ?? undefined,
         // A form draws the body bigger (#3229), not what it collides as.
@@ -686,6 +694,7 @@ export async function startMatchView(
   const standing = switchedStructure(structure);
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
+  viewport?.scene.setMatchMap(fileMap(viewed.map.id));
   const flagField = mapFlagField(viewed.map.id);
   const relicField = mapRelicField(viewed.map.id, viewed.map.teamCount);
   const camera =
@@ -904,7 +913,7 @@ export async function startMatchView(
     if (isTyping(event.target)) {
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     if (action === undefined) {
       return;
     }
@@ -916,7 +925,8 @@ export async function startMatchView(
     }
     if (action === "target-next") {
       const players = viewed.getSnapshot()?.players ?? [];
-      followedId = nextFollowed(players, followedId, event.shiftKey ? -1 : 1) ?? followedId;
+      followedId =
+        nextFollowed(players, followedId, isShiftedPlain(keymap, event) ? -1 : 1) ?? followedId;
     } else if (action === "mute") {
       toggleMute();
     }
@@ -924,8 +934,11 @@ export async function startMatchView(
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     // Ctrl, Alt and Meta are the browser's: Ctrl+R, Ctrl+W and the rest
-    // do what they always do, and no game key fires with them (#302).
-    if (isShortcut(event)) {
+    // do what they always do (#302), unless a binding holds them (#4183).
+    if (
+      (event.ctrlKey || event.altKey || event.metaKey) &&
+      actionForEvent(keymap, event) === undefined
+    ) {
       return;
     }
     // F10, GW1's menu key, asks to leave (#221): the way out without a mouse.
@@ -1001,7 +1014,7 @@ export async function startMatchView(
     if (isTyping(event.target)) {
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     if (action === undefined) {
       return;
     }
@@ -1023,7 +1036,7 @@ export async function startMatchView(
         match.players,
         seat.selfSessionId,
         current,
-        event.shiftKey ? -1 : 1,
+        isShiftedPlain(keymap, event) ? -1 : 1,
       );
       if (next !== undefined && next !== current) {
         seat.sendIntent({ kind: "target", targetSessionId: next });

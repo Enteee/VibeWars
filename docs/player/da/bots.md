@@ -26,7 +26,12 @@ er **frontlinje**: den rykker tæt på og angriber sit mål. En med to eller
 flere helbredelser eller beskyttelser, den kan kaste på en allieret, er
 **healer**: den står bag den allierede, der er hårdest ramt, væk fra
 fjenderne. Når to eller flere fjender går efter én allieret, lægger en
-healer sin beskyttelse på den allierede, før slaget lander. Hver anden bot
+healer sin beskyttelse på den allierede, før slaget lander. En healer
+holder nok energi tilbage til sin billigste helbredelse eller beskyttelse
+og bruger kun under det på en allieret i reel fare. En bot med to forbandelser
+lægger sin billige forbandelse oven på sin vigtige, så en fjendes fjernelse af
+forbandelser tager den billige først. En bot med energidræn brænder fjendens
+healers energi af, ikke Warriorens. Hver anden bot
 er **afstandskæmper**: den holder sig der, hvor hvert af dens angreb
 rækker, og står og kæmper mod en fjende, der kommer for tæt på.
 Afstandsbots og healere træder hen, hvor færre fjender kan nå dem, og
@@ -46,7 +51,9 @@ En bot med en lammende eller sænkende evne bruger den på en fjende ved sin sid
 
 Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, så én eksplosion ikke rammer to af dem. De opgiver aldrig dækning for at gøre det.
 
-En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der.
+En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der. En nærkæmper, der er sænket, for eksempel lemlæstet, kan ikke følge med, så over for den trækker botten sig i stedet tilbage mellem skuddene.
+
+En bot under en forbandelse, der straffer angreb eller besværgelser, såsom Empathy eller Backfire, holder op med det, indtil forbandelsen slutter.
 
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.
@@ -62,7 +69,9 @@ på sine holdkammerater og venter slet ikke med at gøre det af med en
 fjende under 30 % liv. Når målet er under en beskyttende fortryllelse
 såsom Protective Spirit eller Aegis, fjerner en bot med en
 fortryllelsesfjerner, som Strip Enchantment, den først, og de andre
-holder deres slag tilbage imens.
+holder deres slag tilbage imens. Har holdet ingen fortryllelsesfjerner,
+lader botterne en beskyttet fjende være og går efter en anden, indtil
+fortryllelsen slutter.
 
 En hårdt såret bot, der er ved at tabe sin kamp, trækker sig tilbage bag
 sin healer eller til sin base og hviler uden for rækkevidde, indtil den
@@ -78,6 +87,7 @@ vende virker på dem, som det gør på dig.
 
 Bots går uden om brændende jord og andre skadelige områder, når vejen udenom
 ikke er meget længere, og træder ud af et, de står i.
+De træder også ud af en fjendes skadelige område, som en brønd, et værn mod dem eller en storm, og kæmper fra kanten af det.
 
 En bot med en afbrydelse gemmer den til de kast, der betyder noget: en
 genoplivning eller en Spøgelseshelt, der tager alteret, først, derefter
@@ -89,6 +99,14 @@ omkring et ud af fire af de kast.
 En bot bruger et menneskeligt øjeblik, en brøkdel af et sekund, på at
 reagere på det, der sker, så en hurtig afbrydelse eller en sen undvigelse
 kan slå den.
+
+Når ingen på dit hold har udpeget et mål, udpeger en af dine bots den
+fjende, dine bots går efter, ligesom du ville: du ser markøren og
+bottens navn, så du kan være med. Et mål, en bot udpeger, viser kun,
+hvor bots er på vej hen; de beskytter stadig en holdkammerat og gør det
+af med en døende fjende. Et mål, du udpeger, vinder altid: alle bots på
+holdet går efter dit mål, ingen bot erstatter det, og bots udpeger først
+igen, når målet er dødt eller væk.
 
 I en kamp mellem tre hold kæmper bots mod ét fjendehold ad gangen: det
 hold, der angriber dem, eller, mens ingen gør det, det hårdest ramte hold

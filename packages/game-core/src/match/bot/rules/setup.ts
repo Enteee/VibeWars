@@ -2,9 +2,10 @@ import { energyCostOf } from "../../../skills/activation.js";
 import { isAttacking } from "../../../skills/attacking.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { getStatusDefinition, type StatusId } from "../../../skills/status.js";
-import { isSpell, type Combatant, type Skill } from "../../../skills/types.js";
+import { isSpell, type Skill, type Surroundings } from "../../../skills/types.js";
+import { blockChanceAgainst } from "../block-swap.js";
 import { setupOf, type Setup } from "../skill-intent.js";
-import { healthFraction } from "./shared.js";
+import { healthFraction, keepsReserve } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 import { retreatsFrom } from "./way-out.js";
 
@@ -37,14 +38,6 @@ const HASTE_SKILLS = 2;
 
 /** Above this much Energy, Marksman's Wager is worth its price on a miss (#2159). */
 const WAGER_ENERGY = 10;
-
-/** Whether `combatant` stands in a stance that blocks (#2159), as Marksman's Wager's misses. */
-function inBlockStance(combatant: Combatant): boolean {
-  return combatant.statuses.active.some(({ id }) => {
-    const status = getStatusDefinition(id);
-    return status.category === "stance" && status.block !== undefined;
-  });
-}
 
 /** The setups on its bar (#1975), each with what it sets up. */
 function setupsOf(bar: readonly Skill[]) {
@@ -97,14 +90,14 @@ function applies(skill: Skill, statusId: StatusId): boolean {
  * with Health for its end; Ether Renewal under two enchantments with a
  * spell ready; Elemental Attunement kept up. The Ranger's (#2159):
  * Disrupting Accuracy kept up while it attacks; Marksman's Wager kept up
- * above 10 Energy, never at a foe in a block stance nor while Blinded;
+ * above 10 Energy, never at a foe that blocks its arrows nor while Blinded;
  * Storm Chaser on retreat, or while a foe casts an Elementalist skill at
  * it.
  */
 const setup: BotRule = {
   order: 95,
   name: "setup",
-  decide: ({ self, bar, foes, allies, targetId, mayUse, use }) => {
+  decide: ({ context, self, bar, foes, allies, targetId, mayUse, use }) => {
     if (targetId === undefined) {
       return undefined;
     }
@@ -127,6 +120,7 @@ const setup: BotRule = {
       );
     const hitters = allies.filter((member) => enchanted(member.combatant.attack?.targetId)).length;
     const { combatant } = self;
+    const surroundings: Surroundings = new Map(context.participants.map((body) => [body.id, body]));
     const wanted = (setup: Setup, statusId: StatusId, skill: Skill): boolean => {
       switch (setup) {
         case "cheaper-enchantments":
@@ -167,7 +161,7 @@ const setup: BotRule = {
             combatant.energy > WAGER_ENERGY &&
             !combatant.statuses.has("blind") &&
             target !== undefined &&
-            !inBlockStance(target)
+            blockChanceAgainst(combatant, target, undefined, surroundings) === 0
           );
         case "elemental-energy":
           return (
@@ -185,7 +179,8 @@ const setup: BotRule = {
       ({ skill, setup, statusId }) =>
         !combatant.statuses.has(statusId) &&
         wanted(setup, statusId, skill) &&
-        mayUse(skill, self.id),
+        mayUse(skill, self.id) &&
+        !keepsReserve(self, skill),
     );
     return found === undefined ? undefined : use(found.skill, self.id);
   },

@@ -129,10 +129,10 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   }),
 
   // "The next attack skill used by each party member within earshot also
-  // causes Burning for 1...3...3 seconds": 3 s, its rank-12 value.
+  // causes Burning for 1...4...5 seconds": 4 s, its rank-12 value.
   "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
     profession: "paragon",
-    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
+    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 4 } }],
   }),
   // "For 10 seconds, the next time each ally within earshot uses an attack
   // skill, that ally gains 1...8 Energy" (#1483): 7, its rank-12 value.
@@ -476,12 +476,14 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     moveSpeedMultiplier: 1.25,
   }),
-  // Focused Anger: "0...150% more adrenaline" (#2158).
+  // Focused Anger: "0...150% more adrenaline" (#2158), from every
+  // source, one of GW1's few that reach past attacks (#4163).
   "focused-anger": define("focused-anger", "Focused Anger", "skill-effect", {
     profession: "paragon",
     adrenalineGainFaster: {
       scaling: { attributeId: "paragon.leadership", atZero: 0, atTwelve: 1.2 },
     },
+    adrenalineGainFasterFrom: "all",
   }),
   // "You gain 33% more adrenaline while not under the effects of an
   // enchantment" (#1916).

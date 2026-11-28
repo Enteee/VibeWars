@@ -241,12 +241,12 @@ describe("status definitions", () => {
       burning: -7,
       poison: -4,
       disease: -4,
-      faintheartedness: -2,
+      faintheartedness: -3,
       "parasitic-bond": -1,
       fouled: -1,
       refreshed: 3,
       mending: 3,
-      regeneration: 4,
+      regeneration: 9,
       "weapon-of-warding": 4,
       "never-surrender": 4,
       "healing-breeze": 8,
@@ -1488,7 +1488,10 @@ describe("aggregateModifiers, health per enchantment (#845)", () => {
 describe("aggregateModifiers, while under another status (#1485)", () => {
   it("adds Soldier's Fury's speed and adrenaline only while a chant or a shout is up", () => {
     const alone = aggregateModifiers([{ id: "soldiers-fury", ranks: NO_RANKS }]);
-    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, []]);
+    expect([alone.attackDurationMultiplier, alone.adrenalineGainFasterFromAttacks]).toEqual([
+      1,
+      [],
+    ]);
     expect(alone.armorModifier).toBe(-20);
     for (const under of ["defensive-anthem", "fall-back"] as const) {
       const both = aggregateModifiers([
@@ -1496,7 +1499,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
         { id: under, ranks: NO_RANKS },
       ]);
       expect(both.attackDurationMultiplier, under).toBe(0.67);
-      expect(both.adrenalineGainFaster, under).toEqual([0.33]);
+      expect(both.adrenalineGainFasterFromAttacks, under).toEqual([0.33]);
       expect(both.armorModifier, under).toBe(-20);
     }
   });
@@ -1506,7 +1509,10 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
       { id: "soldiers-fury", ranks: NO_RANKS },
       { id: "mending-refrain", ranks: NO_RANKS },
     ]);
-    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, []]);
+    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFasterFromAttacks]).toEqual([
+      1,
+      [],
+    ]);
   });
 });
 

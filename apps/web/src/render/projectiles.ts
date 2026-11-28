@@ -198,18 +198,51 @@ export const SPRITE_HEAD: Readonly<Record<ProjectileSprite, SpriteHead>> = {
 /** How far behind the frame's centre every sprite's tail ends, px: each starts 2 px into its 32 px frame. */
 export const SPRITE_TAIL = 14;
 
-/** The core: near-white, this share of the head's radius, on the head. */
-export const SHOT_CORE_COLOUR = 0xfff4d0;
+/** The core: the fireball's hottest yellow (#4055), this share of the head's radius, on the head. */
+export const SHOT_CORE_COLOUR = 0xfff0a0;
 export const SHOT_CORE_SHARE = 0.6;
 
 /** The shadow: a soft dark ellipse this far under the sprite, on the deck below it. */
 export const SHOT_SHADOW = {
   offset: { x: -3, y: 12 },
   width: 12,
-  height: 5,
+  height: 8,
   colour: 0x000000,
-  alpha: 0.3,
+  alpha: 0.35,
 } as const;
+
+/**
+ * The shots whose shadow is a line along their flight (#4055), not a
+ * blob: a long thin shot casts a long thin shadow. `half` is half its
+ * length, px.
+ */
+export const LINE_SHADOW_SPRITES: ReadonlySet<ProjectileSprite> = new Set([
+  "arrow",
+  "spear",
+  "thrown-dagger",
+]);
+export const LINE_SHADOW = { half: 10, width: 2 } as const;
+
+/**
+ * Each flying spell's glow (#4055): one additive disc of this colour round
+ * its head, the element's own, as the fireball's is warm. Physical shots
+ * (arrow, spear, stone, dagger) have none, and a weapon's bolt is no spell.
+ */
+export const SHOT_GLOW: Readonly<Record<ProjectileSprite, number | undefined>> = {
+  arrow: undefined,
+  spear: undefined,
+  bolt: 0xb8a0ff,
+  fireball: 0xffb040,
+  "lightning-orb": 0x9cc4ff,
+  "ice-shard": 0xa8e0ff,
+  "water-trident": 0x60b0ff,
+  "ebon-hawk": 0xc8a060,
+  stone: undefined,
+  "thrown-dagger": undefined,
+  "deathly-swarm": 0xa8d070,
+};
+export const SHOT_GLOW_RADIUS = 16;
+export const SHOT_GLOW_ALPHA = 0.6;
 
 /** A dot drawn by a flying spell, where it sits from the sprite's centre. */
 export interface ShotDot {
@@ -238,7 +271,7 @@ export interface TrailDot extends ShotDot {
   readonly alpha: number;
 }
 
-/** Warm whatever the sprite: gold at the sprite, ember at the tail; `back` behind the tail and `share` big, in head radii. */
+/** Gold at the sprite, ember at the tail; `back` behind the tail and `share` big, in head radii. A glowing spell's trail takes its glow's colour. */
 const TRAIL = [
   { back: 1, share: 0.9, colour: 0xffd23d, alpha: 0.85 },
   { back: 2.7, share: 0.75, colour: 0xffb03d, alpha: 0.6 },
@@ -261,10 +294,11 @@ export function projectileTrail(
   const tail = SPRITE_TAIL * scale;
   const cos = Math.cos(heading);
   const sin = Math.sin(heading);
+  const glow = sprite === "fireball" ? undefined : SHOT_GLOW[sprite];
   return TRAIL.map(({ back, share, colour, alpha }) => ({
     offset: { x: -cos * (tail + back * head), y: -sin * (tail + back * head) },
     radius: share * head,
-    colour,
+    colour: glow ?? colour,
     alpha,
   }));
 }

@@ -29,7 +29,12 @@ megtámadja a célpontját. Amelyiknek két vagy több gyógyítása vagy
 védelme van, amelyet szövetségesre varázsolhat, az **gyógyító**: annak
 a szövetségesnek a háta mögé áll, amelyik a legjobban megsérült, távol
 az ellenségektől. Amikor két vagy több ellenség egy szövetségesre
-összpontosít, a gyógyító a találat előtt ráteszi a védelmét. Minden más
+összpontosít, a gyógyító a találat előtt ráteszi a védelmét. A gyógyító
+elég Energiát tart vissza a legolcsóbb gyógyítására vagy védelmére, és
+ez alá csak valódi veszélyben lévő szövetségesért megy. A két átokkal rendelkező
+bot az olcsó átkát a fontos fölé teszi, így az ellenség átokeltávolítása először
+az olcsót viszi le. Az Energia-megvonással rendelkező bot az ellenséges gyógyító
+Energiáját égeti el, nem a Warriorét. Minden más
 bot **távolsági**: ott marad, ahonnan minden támadása elér, és megáll
 harcolni azzal az ellenséggel, amely túl közel jön. A távolsági botok és
 a gyógyítók oda lépnek, ahol kevesebb ellenség érheti el őket, és az
@@ -50,7 +55,9 @@ Az a bot, amelynek nyomorító vagy lassító képessége van, a csapat célpont
 
 Területi képességekkel bíró csapat ellen a távolsági botok és a gyógyítók távol tartják magukat egymástól, hogy egy robbanás ne találjon el kettőt közülük. A fedezéket ezért soha nem adják fel.
 
-Ha egy ellenfél túl közel kerül egy távolsági bothoz vagy gyógyítóhoz, az előbb visszahúzódik a legközelebbi frontvonalbeli csapattársához, ha van elég közel, és ott harcol.
+Ha egy ellenfél túl közel kerül egy távolsági bothoz vagy gyógyítóhoz, az előbb visszahúzódik a legközelebbi frontvonalbeli csapattársához, ha van elég közel, és ott harcol. Egy lelassított közelharcos, például megnyomorított, nem tud lépést tartani, ezért vele szemben a bot inkább hátrál a lövések között.
+
+Az a bot, amelyen támadást vagy varázslást büntető átok van, például Empathy vagy Backfire, abbahagyja azt, amíg az átok le nem jár.
 
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.
@@ -67,6 +74,8 @@ vár, ha egy 30% életerő alatti ellenséget kell bevégeznie. Amikor a
 célpontot védő bűbáj védi, például a Protective Spirit vagy az Aegis,
 az a bot, amelyiknek bűbájeltávolítása van, mint a Strip Enchantment,
 először azt veszi le, a többiek pedig addig visszatartják az ütéseiket.
+Ha a csapatban nincs bűbájeltávolítás, a botok otthagyják a védett
+ellenséget, és egy másikra fordulnak, amíg a bűbáj le nem jár.
 
 A súlyosan megsebesült bot, amely veszíti a harcát, visszahúzódik a
 gyógyítója mögé vagy a bázisára, és elérhetetlen helyen pihen, amíg
@@ -83,6 +92,7 @@ fordulás náluk is ugyanúgy működik, mint nálad.
 
 A botok megkerülik az égő talajt és a többi ártalmas foltot, ha a kerülő nem
 sokkal hosszabb, és kilépnek abból, amelyikben állnak.
+Az ellenfél ártó területéből is kilépnek, például egy kútból, egy ellenük szóló védőkörből vagy egy viharból, és a széléről harcolnak.
 
 A megszakítással rendelkező bot a fontos varázslásokra tartogatja: elsőként
 egy feltámasztásra vagy egy oltárt elfoglaló Kísértethősre, aztán egy
@@ -94,6 +104,15 @@ minden negyedik ilyen varázslást elvéti.
 A bot emberszerű pillanatot, a másodperc törtrészét igényli, hogy
 reagáljon arra, ami történik, így egy gyors megszakítás vagy egy késői
 kitérés legyőzheti.
+
+Ha a csapatodban senki sem mondott be célpontot, az egyik botod
+bemondja az ellenséget, akire a botjaid összpontosítanak, ahogy te is
+tennéd: látod a jelölőt és a bot nevét, így csatlakozhatsz. Egy bot
+bemondása csak azt mutatja, merre tartanak a botok; továbbra is
+megvédik a csapattársat, és végeznek a haldokló ellenséggel. A te
+bemondásod mindig nyer: a csapat minden botja a te célpontodra
+összpontosít, egy bot sem írja felül a bemondásodat, és a botok csak
+akkor mondanak be újra, ha a bemondott célpont meghalt vagy eltűnt.
 
 Háromcsapatos harcban a botok egyszerre egy ellenséges csapattal
 harcolnak: azzal, amelyik őket támadja, vagy ha senki sem, az elérhető

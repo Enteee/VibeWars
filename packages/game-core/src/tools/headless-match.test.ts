@@ -152,6 +152,7 @@ describe("runHeadlessMatch", () => {
         kind: "damage",
         targetId,
         amount: 91,
+        unreduced: 91,
         critical: false,
       })),
     ]);

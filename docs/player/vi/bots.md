@@ -26,7 +26,13 @@ Bot đảm nhận vai trò mà build của nó giao. Bot cầm vũ khí cận ch
 máu hoặc bảo vệ trở lên có thể dùng lên đồng minh là **hồi máu**: nó đứng
 phía sau đồng minh nào đang bị thương nặng nhất, tránh xa địch. Khi hai địch
 trở lên tập trung vào một đồng minh, bot hồi máu đặt kỹ năng bảo vệ lên đồng
-minh đó trước khi đòn đánh tới. Mọi bot khác là **tầm xa**: nó giữ vị trí mà
+minh đó trước khi đòn đánh tới. Bot hồi máu giữ lại đủ Năng lượng cho kỹ
+năng hồi máu hoặc bảo vệ rẻ nhất của nó, và chỉ tiêu xuống dưới mức đó cho
+đồng minh đang thật sự gặp nguy. Bot có hai lời nguyền sẽ đặt lời nguyền rẻ đè
+lên lời nguyền quan trọng, để kỹ năng gỡ nguyền của địch gỡ cái rẻ trước. Bot có
+kỹ năng triệt Năng lượng đốt Năng lượng của bot hồi máu bên địch, không phải của
+Warrior. Mọi
+bot khác là **tầm xa**: nó giữ vị trí mà
 mọi đòn tấn công của nó đều với tới, và đứng lại đánh địch nào tiến quá gần.
 Bot tầm xa và bot hồi máu bước tới chỗ ít địch với tới được hơn, và dùng cột
 làm chỗ nấp. Cả đội quay sang bất kỳ địch nào trong tầm có máu dưới 60%, để
@@ -43,7 +49,9 @@ Bot có kỹ năng làm què hoặc làm chậm sẽ dùng nó lên kẻ địch
 
 Khi gặp đội có kỹ năng diện rộng, bot đánh xa và người hồi máu đứng tách nhau ra, để một vụ nổ không trúng hai người. Chúng không bao giờ bỏ chỗ nấp để làm vậy.
 
-Một bot tầm xa hoặc người hồi máu bị kẻ địch áp sát quá gần sẽ lùi về phía đồng đội tiền tuyến gần nhất trước, nếu có người đủ gần, rồi chiến đấu ở đó.
+Một bot tầm xa hoặc người hồi máu bị kẻ địch áp sát quá gần sẽ lùi về phía đồng đội tiền tuyến gần nhất trước, nếu có người đủ gần, rồi chiến đấu ở đó. Còn kẻ tấn công cận chiến bị làm chậm, ví dụ bị què, không theo kịp, nên trước kẻ đó bot sẽ lùi lại giữa các phát bắn.
+
+Bot bị trúng lời nguyền trừng phạt việc tấn công hoặc niệm phép, như Empathy hoặc Backfire, sẽ ngừng làm việc đó cho tới khi lời nguyền hết.
 
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.
@@ -57,7 +65,8 @@ vung vũ khí và thi triển Nguyền và Dị trạng. Bot chờ đồng độ
 giây, và không chờ chút nào để kết liễu địch dưới 30% máu. Khi mục tiêu đang
 được một Phù phép bảo vệ như Protective Spirit hay Aegis, bot có kỹ năng gỡ
 Phù phép, như Strip Enchantment, sẽ gỡ nó trước, và các bot khác giữ đòn chờ
-nó.
+nó. Nếu đội không có kỹ năng gỡ Phù phép, các bot bỏ qua kẻ địch đang được bảo
+vệ và chuyển sang mục tiêu khác cho đến khi Phù phép hết.
 
 Bot bị thương nặng đang thua thế sẽ lùi về sau bot hồi máu của nó, hoặc về
 căn cứ, và nghỉ ngoài tầm với cho đến khi hồi lại phần lớn máu.
@@ -72,6 +81,7 @@ chúng như với bạn.
 
 Bot đi vòng qua mặt đất đang cháy và các vùng có hại khác khi đường vòng
 không dài hơn nhiều, và bước ra khỏi vùng mà chúng đang đứng.
+Chúng cũng bước ra khỏi vùng gây hại của đối thủ, như một giếng, một lá chắn chống lại chúng hay một cơn bão, và chiến đấu từ mép của nó.
 
 Bot có kỹ năng ngắt sẽ dành nó cho những lần thi triển quan trọng: trước hết
 là hồi sinh hoặc Anh hùng Ma đang chiếm tế đàn, sau đó là hồi máu hoặc bảo
@@ -81,6 +91,14 @@ nó bỏ lỡ khoảng một trên bốn lần thi triển như vậy.
 
 Bot cần một khoảnh khắc giống con người, một phần của giây, để phản ứng với
 những gì xảy ra, nên một cú ngắt nhanh hay một cú né muộn có thể qua mặt nó.
+
+Khi không ai trong đội bạn gọi mục tiêu, một bot của bạn sẽ gọi kẻ địch mà các
+bot của bạn đang dồn vào, đúng như bạn sẽ làm: bạn thấy dấu đánh dấu và tên
+của bot, nên bạn có thể cùng tham gia. Lệnh gọi của bot chỉ cho thấy các bot
+đang hướng tới đâu; chúng vẫn bảo vệ đồng đội và kết liễu kẻ địch sắp chết.
+Lệnh gọi của bạn luôn được ưu tiên: mọi bot trong đội dồn vào mục tiêu của
+bạn, không bot nào thay thế lệnh gọi của bạn, và các bot chỉ gọi lại khi mục
+tiêu đó đã chết hoặc biến mất.
 
 Trong trận ba đội, bot đánh từng đội địch một: đội đang tấn công chúng,
 hoặc, khi không có ai, đội bị thương nặng nhất trong tầm. Chúng bám đội đó cho

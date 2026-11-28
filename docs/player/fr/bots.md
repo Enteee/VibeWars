@@ -27,7 +27,13 @@ mêlée est en **première ligne** : il s'approche et attaque sa cible. Celui
 qui a au moins deux soins ou protections à lancer sur un allié est un
 **soigneur** : il se place derrière l'allié le plus blessé, loin des
 ennemis. Quand au moins deux ennemis se concentrent sur un allié, un
-soigneur place sa protection sur cet allié avant que le coup ne tombe. Tous
+soigneur place sa protection sur cet allié avant que le coup ne tombe. Un
+soigneur garde assez d'énergie pour son soin ou sa protection le moins
+cher, et ne descend en dessous que pour un allié en réel danger. Un bot qui a
+deux maléfices pose son maléfice bon marché par-dessus son maléfice important,
+pour que le retrait de maléfice d'un ennemi emporte d'abord le moins cher. Un
+bot qui prive d'énergie brûle l'énergie du soigneur ennemi, pas celle du
+Guerrier. Tous
 les autres bots sont **à distance** : ils restent là où toutes leurs
 attaques portent, et tiennent tête à un ennemi qui s'approche trop. Les bots
 à distance et les soigneurs se déplacent là où moins d'ennemis peuvent les
@@ -47,7 +53,9 @@ Un bot doté d'une compétence qui estropie ou ralentit l'utilise sur un ennemi 
 
 Face à une équipe qui a des compétences de zone, les bots à distance et les soigneurs restent écartés, pour qu'une seule explosion n'en touche pas deux. Ils ne renoncent jamais à un abri pour cela.
 
-Un bot à distance ou un soigneur dont un ennemi s'approche trop se replie d'abord vers son bot de première ligne le plus proche, s'il y en a un assez près, et se bat là.
+Un bot à distance ou un soigneur dont un ennemi s'approche trop se replie d'abord vers son bot de première ligne le plus proche, s'il y en a un assez près, et se bat là. Un attaquant au corps à corps ralenti, estropié par exemple, ne peut pas suivre : face à lui, il recule plutôt entre deux tirs.
+
+Un bot sous un maléfice qui punit l'attaque ou l'incantation, comme Empathy ou Backfire, cesse de le faire jusqu'à la fin du maléfice.
 
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.
@@ -63,7 +71,9 @@ quatre secondes au plus, et n'attend pas du tout pour achever un ennemi sous
 30% de santé. Quand la cible est sous un enchantement protecteur comme
 Protective Spirit ou Aegis, un bot qui a un retrait d'enchantement, comme
 Strip Enchantment, l'enlève d'abord, et les autres retiennent leurs coups
-en attendant.
+en attendant. Sans retrait d'enchantement dans l'équipe, les bots laissent
+un ennemi protégé et se tournent vers un autre jusqu'à la fin de
+l'enchantement.
 
 Un bot gravement blessé qui perd son combat se replie derrière son soigneur,
 ou à sa base, et se repose hors de portée jusqu'à avoir récupéré l'essentiel
@@ -79,6 +89,7 @@ marche pour eux comme pour toi.
 
 Les bots contournent le sol en feu et les autres zones nocives quand le
 détour n'est pas beaucoup plus long, et sortent de celle où ils se trouvent.
+Ils sortent aussi d'une zone nuisible d'un adversaire, comme un puits, une protection contre eux ou une tempête, et combattent depuis son bord.
 
 Un bot avec une interruption la garde pour les incantations qui comptent :
 d'abord une résurrection ou un Héros fantomatique qui prend l'autel, puis un
@@ -89,6 +100,14 @@ incantations sur quatre.
 
 Un bot prend un temps de réaction humain, une fraction de seconde, face à ce
 qui se passe : une interruption rapide ou une esquive tardive peut le battre.
+
+Quand personne dans ton équipe n'a annoncé de cible, un de tes bots annonce
+l'ennemi sur lequel tes bots se concentrent, comme tu le ferais : tu vois le
+marqueur et le nom du bot, pour pouvoir te joindre à eux. L'annonce d'un bot
+montre seulement où vont les bots ; ils protègent quand même un coéquipier et
+achèvent un ennemi mourant. Ton annonce l'emporte toujours : tous les bots de
+l'équipe se concentrent sur ta cible, aucun bot ne remplace ton annonce, et
+les bots n'annoncent à nouveau qu'une fois sa cible morte ou partie.
 
 Dans un combat à trois équipes, les bots affrontent une équipe ennemie à la
 fois : celle qui les attaque, ou, si personne ne le fait, la plus blessée à

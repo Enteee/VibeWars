@@ -11,23 +11,19 @@ Bạn nhận trang trí bằng các trận thắng xếp hạng đã được x�
 | -------------------------------------------------------- | ------------------------------- |
 | Khung ngọc bích và danh hiệu Kẻ thách đấu                | 5 trận thắng xếp hạng           |
 | Hào quang rêu, Vệt rêu, Đường chém rêu                   | 5 trận thắng xếp hạng           |
-| Áo choàng sọc                                            | 5 trận thắng xếp hạng           |
 | Khung huy hiệu màu viền                                  | 5 trận thắng xếp hạng           |
 | Khung hồng và danh hiệu Lão binh                         | 25 trận thắng xếp hạng          |
 | Hào quang than hồng, Vệt than hồng, Đường chém than hồng | 25 trận thắng xếp hạng          |
-| Áo choàng chữ V                                          | 25 trận thắng xếp hạng          |
 | Ánh sáng dâng lên, Tan thành tro                         | 25 trận thắng xếp hạng          |
 | Hào quang sương giá, Vệt sương giá, Đường chém sương giá | 75 trận thắng xếp hạng          |
 | Lốc lá, Tan thành sương                                  | 75 trận thắng xếp hạng          |
 | Khung huy hiệu sắt                                       | 75 trận thắng xếp hạng          |
 | Khung xanh mòng két và danh hiệu Lãnh chúa               | 200 trận thắng xếp hạng         |
-| Áo choàng chia tư                                        | 200 trận thắng xếp hạng         |
 | Mưa cánh hoa, Tan thành mảnh vỡ                          | 200 trận thắng xếp hạng         |
 | Khung huy hiệu bạc                                       | 200 trận thắng xếp hạng         |
 | Hào quang ánh sao, Vệt ánh sao, Đường chém ánh sao       | 500 trận thắng xếp hạng         |
 | Mưa sao, Tan thành bụi sao                               | 500 trận thắng xếp hạng         |
 | Khung lan tím và danh hiệu Nhà vô địch                   | Một vị trí trong Top 100        |
-| Áo choàng sao                                            | Một vị trí trong Top 100        |
 | Khung huy hiệu mạ vàng                                   | Một vị trí trong Top 100        |
 | Ngọn lửa chuỗi thắng                                     | 3 trận thắng xếp hạng liên tiếp |
 
@@ -39,9 +35,9 @@ một trận xếp hạng, và chúng trở về giao diện mặc định cho �
 
 Hào quang mặt đất là một vòng mờ dưới chân bạn. Vệt bước chân để lại những hạt nhỏ nơi bạn đi qua, rồi mờ dần trong chốc lát. Cả hai được vẽ bên dưới mọi vòng, dấu và cảnh báo, và không bao giờ dùng màu của đội. Nếu hệ thống của bạn bật giảm chuyển động, hào quang đứng yên và không có vệt nào được vẽ.
 
-## Trên vũ khí và áo choàng
+## Trên vũ khí
 
-Vệt vũ khí là một dải lụa phía sau vũ khí của bạn khi một đòn cận chiến trúng đích, và mờ dần trong vòng một phần năm giây kể từ cú đánh. Cung, giáo, đũa phép và gậy phép không có vệt này, và không phép hay lần thi triển nào hiện ra vệt này. Họa tiết áo choàng đặt sọc, chữ V, ô chia tư hoặc ngôi sao lên áo choàng Bang của bạn bằng chính màu viền của nó, và huy hiệu của bạn luôn nằm trên cùng, rõ như trên một áo choàng trơn. Nếu hệ thống của bạn bật giảm chuyển động, không có vệt vũ khí nào được vẽ.
+Vệt vũ khí là một dải lụa phía sau vũ khí của bạn khi một đòn cận chiến trúng đích, và mờ dần trong vòng một phần năm giây kể từ cú đánh. Cung, giáo, đũa phép và gậy phép không có vệt này, và không phép hay lần thi triển nào hiện ra vệt này. Nếu hệ thống của bạn bật giảm chuyển động, không có vệt vũ khí nào được vẽ.
 
 ## Trở lại và gục ngã
 
@@ -59,7 +55,7 @@ lam. Dòng bên cạnh hàng (bên dưới trên điện thoại) cho biết tê
 điểm, kèm điều kiện để nhận. Mẫu bị khóa sẽ mờ đi, kèm một ổ khóa nhỏ. Lựa chọn của bạn có hiệu lực
 ngay. Người chơi khác thấy nó từ sảnh tiếp theo mà bạn tham gia.
 
-Phía trên các hàng, nhân vật của bạn mặc diện mạo của bạn, đứng, đi và vung vũ khí, để bạn thấy hào quang, dấu chân và vệt vũ khí khi chuyển động. Nhấn giữ một mẫu để thử, kể cả mẫu đang khóa: dòng chữ cho biết bạn đang xem trước gì và, khi còn khóa, cách để nhận được. Thả tay trên vật phẩm đã nhận để mặc. Thả trên vật phẩm đang khóa, hoặc trượt ra khỏi mẫu, thì không có gì thay đổi. Với bàn phím, giữ Space trên một mẫu.
+Bên cạnh các hàng (trên điện thoại thì ở phía trên), nhân vật của bạn mặc diện mạo của bạn và đi lại xung quanh: đi, đứng, vung vũ khí và thi triển phép, để bạn thấy hào quang, dấu chân và vệt vũ khí khi chuyển động. Nhân vật vẫn hiện trong khi bạn cuộn. Hai bộ chọn Chính và Phụ bên dưới cho thấy diện mạo trên bất kỳ cặp nghề nào; chúng chỉ thay đổi bản xem trước, không bao giờ thay đổi nhân vật của bạn. Nhấn giữ một mẫu để thử, kể cả mẫu đang khóa: dòng chữ cho biết bạn đang xem trước gì và, khi còn khóa, cách để nhận được. Thả tay trên vật phẩm đã nhận để mặc. Thả trên vật phẩm đang khóa, hoặc trượt ra khỏi mẫu, thì không có gì thay đổi. Với bàn phím, giữ Space trên một mẫu.
 
 ## Xem trang trí của người chơi khác
 

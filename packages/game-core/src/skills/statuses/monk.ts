@@ -178,11 +178,13 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
     ],
   }),
-  // "For 6...15 seconds, all party members within earshot have a 50%
-  // chance to block attacks" (#1511).
+  // PvP (#4169): "...cannot be the target of hostile spells, and attacks
+  // against this party member fail". Attacks fail as Shadow Form's miss:
+  // never blocked, so no block trigger fires.
   aegis: define("aegis", "Aegis", "enchantment", {
     profession: "monk",
-    block: { chance: 0.5, against: "all" },
+    untargetableByFoeSpells: true,
+    attacksAgainstMiss: true,
   }),
   // "For 3...10 seconds, target ally has a 75% chance to block attacks and
   // gains 15...30 armor" (#1511), at Protection Prayers (#1976).

@@ -2,15 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { SkillSlot } from "@vibewars/game-session";
 
-import {
-  ECHO_SECONDS,
-  echoSecondsLeft,
-  echoStripFraction,
-  echoStripHtml,
-  paintEchoStrip,
-} from "./echo-strip.js";
+import { echoSecondsLeft, echoStripFraction, echoStripHtml, paintEchoStrip } from "./echo-strip.js";
 
-function slot(copyEndsAt: number | null): SkillSlot {
+function slot(copyEndsAt: number | null, copySeconds: number | null = 20): SkillSlot {
   return {
     id: "elementalist.fireball",
     name: "Fireball",
@@ -19,6 +13,7 @@ function slot(copyEndsAt: number | null): SkillSlot {
     activationSeconds: 1,
     rechargeSeconds: 5,
     copyEndsAt,
+    copySeconds: copyEndsAt === null ? null : copySeconds,
   };
 }
 
@@ -38,8 +33,14 @@ function button(strip: boolean) {
 }
 
 describe("the echo strip (#1154)", () => {
-  it("lasts as long as an echo's copy: 20 s", () => {
-    expect(ECHO_SECONDS).toBe(20);
+  it("empties over each copy's own life: Echo's 30 s, Arcane Echo's 20 s (#4236)", () => {
+    expect(echoStripFraction(40, 30, 10, false)).toBe(1);
+    expect(echoStripFraction(30, 20, 10, false)).toBe(1);
+    expect(echoStripFraction(40, 30, 25, false)).toBe(0.5);
+    expect(echoStripFraction(30, 20, 20, false)).toBe(0.5);
+    const strip = button(true);
+    paintEchoStrip(strip.element, slot(40, 30), 25, false);
+    expect(strip.echo()).toBe("0.5");
   });
 
   it("is full with the copy fresh, half 10 s on, empty when due", () => {
@@ -48,12 +49,12 @@ describe("the echo strip (#1154)", () => {
     expect(strip.echo()).toBe("1");
     paintEchoStrip(strip.element, slot(30), 20, false);
     expect(strip.echo()).toBe("0.5");
-    expect(echoStripFraction(30, 31, false)).toBe(0);
+    expect(echoStripFraction(30, 20, 31, false)).toBe(0);
   });
 
   it("steps once a second under reduced motion", () => {
-    expect(echoStripFraction(30, 20.3, true)).toBe(0.5);
-    expect(echoStripFraction(30, 20.3, false)).toBeCloseTo(0.485, 5);
+    expect(echoStripFraction(30, 20, 20.3, true)).toBe(0.5);
+    expect(echoStripFraction(30, 20, 20.3, false)).toBeCloseTo(0.485, 5);
     expect(echoSecondsLeft(30, 20.3)).toBe(10);
   });
 

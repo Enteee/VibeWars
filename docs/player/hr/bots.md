@@ -27,7 +27,8 @@ Bot igra ulogu koju mu daje sastav. Onaj s oružjem za blisku borbu je
 vještina liječenja ili zaštite koje može baciti na saveznika je **iscjelitelj**: stoji
 iza saveznika koji je najteže ranjen, podalje od neprijatelja. Kad dva ili više
 neprijatelja napadnu istog saveznika, iscjelitelj stavlja svoju zaštitu na njega prije
-nego što udarac padne. Svaki drugi bot je **dalekometni**: drži se tamo gdje dosežu svi
+nego što udarac padne. Iscjelitelj čuva dovoljno energije za svoje najjeftinije liječenje
+ili zaštitu, a ispod toga troši samo na saveznika u stvarnoj opasnosti. Bot s dva uroka baca svoj jeftini urok preko važnoga, pa neprijateljevo uklanjanje uroka prvo skine jeftini. Bot s uskraćivanjem energije spaljuje energiju neprijateljskog iscjelitelja, a ne Ratnika. Svaki drugi bot je **dalekometni**: drži se tamo gdje dosežu svi
 njegovi napadi te staje i bori se s neprijateljem koji mu priđe preblizu. Dalekometni
 botovi i iscjelitelji pomiču se onamo gdje ih može dohvatiti manje neprijatelja i koriste stupove
 kao zaklon. Tim se okreće na svakog neprijatelja u dosegu koji padne ispod 60% zdravlja,
@@ -45,7 +46,9 @@ Bot s vještinom koja osakaćuje ili usporava koristi je na protivniku uz sebe i
 
 Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
 
-Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje.
+Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje. Usporeni napadač iz blizine, primjerice osakaćen, ne može ga sustići, pa se pred njim umjesto toga povlači između hitaca.
+
+Bot pod urokom koji kažnjava napadanje ili bacanje čarolija, poput Empathy ili Backfire, prestaje s tim dok urok ne završi.
 
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
@@ -60,6 +63,8 @@ sekunde, a uopće ne čeka da dokrajči neprijatelja ispod
 30% zdravlja. Kad je meta pod zaštitnim začaranjem poput
 Protective Spirit ili Aegis, bot s uklanjanjem začaranja, poput Strip
 Enchantment, najprije ga skine, a ostali zadržavaju udarce dok to ne učini.
+Ako tim nema uklanjanje začaranja, botovi ostave zaštićenog neprijatelja i
+okrenu se drugome dok začaranje ne istekne.
 
 Teško ranjen bot koji gubi borbu povlači se iza svog iscjelitelja ili
 u svoju bazu te se odmara izvan dosega dok ne povrati većinu zdravlja.
@@ -74,6 +79,7 @@ na njih kao i na tebe.
 
 Botovi zaobilaze zapaljeno tlo i druga štetna mjesta kad zaobilazak nije
 puno duži, i izlaze iz onog u kojem stoje.
+Izlaze i iz štetnog područja protivnika, poput zdenca, zaštite protiv njih ili oluje, i bore se s njegova ruba.
 
 Bot s prekidom čuva ga za bacanja koja su važna: najprije
 uskrsnuće ili Sablasnog heroja koji zauzima oltar, zatim liječenje ili
@@ -84,6 +90,14 @@ od četiri takva bacanja.
 
 Botu treba ljudski trenutak, djelić sekunde, da reagira na
 ono što se događa, pa ga brz prekid ili kasni izmak mogu nadmudriti.
+
+Kad nitko u tvom timu nema označenu metu, jedan od tvojih botova označi
+neprijatelja na kojeg se tvoji botovi usredotočuju, baš kao što bi ti: vidiš
+oznaku i ime bota, pa se možeš pridružiti. Oznaka bota samo pokazuje kamo
+botovi idu; oni i dalje štite suigrača i dokrajčuju neprijatelja na
+izdisaju. Tvoja oznaka uvijek pobjeđuje: svi botovi u timu usredotoče se na
+tvoju metu, nijedan bot ne zamjenjuje tvoju oznaku, a botovi ponovno
+označavaju tek kad označena meta umre ili nestane.
 
 U borbi tri tima botovi se bore protiv jednog neprijateljskog tima
 odjednom: tima koji ih napada ili, dok ih nitko ne napada, najranjenijeg tima

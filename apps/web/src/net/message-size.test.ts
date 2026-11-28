@@ -112,6 +112,7 @@ const GUILD_TAG = sanitizeGuildTag("WWWW");
 /** The most a selection carries (ADR-0056): every id the longest, signed. */
 const FULL_COSMETICS: WireCosmetics = {
   ids: Array.from({ length: MAX_COSMETIC_IDS }, () => "w".repeat(MAX_COSMETIC_ID_LENGTH)),
+  body: { height: "average", build: "average" },
   at: Number.MAX_SAFE_INTEGER,
   sig: "ab".repeat(64),
 };
@@ -500,6 +501,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         activationSeconds: FLOAT,
         rechargeSeconds: FLOAT,
         copyEndsAt: FLOAT,
+        copySeconds: FLOAT,
       })),
       // Two digits each, as runes and headgear can make them.
       ranks: Object.fromEntries(NECRO_ELE_ATTRIBUTES.map((attributeId) => [attributeId, 20])),

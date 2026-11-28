@@ -6,6 +6,12 @@ oder klicke auf ein Tastenfeld und drück die gewünschte Taste. Eine schon bele
 Taste wechselt zur neuen Aktion, und das Fenster sagt dir, welche sie verloren
 hat. Änderungen werden sofort gespeichert.
 
+Eine Taste kann auch eine Kombination sein: Halte Shift, Strg oder Alt und drück
+die Taste, etwa **Shift + X**. Laufen und Namen zeigen nehmen nur eine einzelne
+Taste, und der Browser behält ein paar Kombinationen für sich, etwa Strg + W.
+Hältst du Shift, um Namen zu zeigen, funktionieren deine einfachen Tasten weiter,
+außer diese Shift-Kombination ist selbst mit etwas belegt.
+
 ## Tasten
 
 Die Standardvorlage heißt **Klassisch**, für GW1-Hände. **VibeWars** wirkt Skills mit der linken Hand und läuft mit den Pfeiltasten.
@@ -90,7 +96,7 @@ außer Lobby, unter **☰** oben rechts am Bildschirm, zusammen mit **Verlassen*
 **M** schaltet weiter den Ton aus und **F10** verlässt das Match weiter auch ohne. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **☰** ein; nur sein Hauptknopf bleibt draußen.
 ⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es.
-[?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
+[?] öffnet die Hilfe genauso, als Fenster darunter mit seinen Seiten links aufgelistet; ein Match läuft dahinter weiter.
 Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].
 
 **Teile einen Beat mit deiner Lobby.** Im Beat-Editor (♪, dann **Ändern**) sendet

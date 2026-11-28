@@ -27,7 +27,13 @@ En bot spelar den roll dess build ger den. En som bär ett närstridsvapen
 fler helningar eller skydd som den kan kasta på en allierad är en
 **helare**: den står bakom den allierade som är mest skadad, borta från
 fienderna. När två eller fler fiender fokuserar på en allierad lägger en
-helare sitt skydd på den allierade innan träffen landar. Varje annan bot
+helare sitt skydd på den allierade innan träffen landar. En helare
+håller kvar tillräckligt med energi för sin billigaste helning eller sitt
+billigaste skydd, och går bara under det för en allierad i verklig fara. En bot
+med två förbannelser lägger sin billiga förbannelse ovanpå sin viktiga, så att
+en fiendes borttagning av förbannelser tar den billiga först. En bot med
+energidränering bränner fiendens helares energi, inte Warriorns.
+Varje annan bot
 är **avståndsstridande**: den håller sig där var och en av dess attacker
 når, och står kvar och slåss mot en fiende som kommer för nära.
 Avståndsstridande bottar och helare kliver dit där färre fiender kan nå
@@ -47,7 +53,9 @@ En bot med en förlamande eller saktande färdighet använder den på en fiende 
 
 Mot ett lag med områdesfärdigheter håller avståndsbottar och helare isär, så att en explosion inte träffar två av dem. De ger aldrig upp skydd för det.
 
-En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där.
+En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där. En nedsaktad närstridare, till exempel lemlästad, hinner inte med, så mot den backar botten i stället undan mellan skotten.
+
+En bot under en förbannelse som straffar anfall eller besvärjelser, som Empathy eller Backfire, slutar med det tills förbannelsen tar slut.
 
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.
@@ -63,7 +71,9 @@ fyra sekunder på sina lagkamrater, och väntar inte alls för att göra slut
 på en fiende under 30 % hälsa. När målet står under en skyddande
 förtrollning som Protective Spirit eller Aegis tar en bot med
 förtrollningsborttagning, som Strip Enchantment, bort den först, och de
-andra håller inne sina träffar för den.
+andra håller inne sina träffar för den. Har laget ingen
+förtrollningsborttagning lämnar botarna en skyddad fiende och vänder sig
+mot en annan tills förtrollningen tar slut.
 
 En svårt skadad bot som håller på att förlora sin strid drar sig tillbaka
 bakom sin helare, eller till sin bas, och vilar utom räckhåll tills den
@@ -79,6 +89,7 @@ fungerar för dem som för dig.
 
 Bottar går runt brinnande mark och andra skadliga områden när omvägen inte
 är mycket längre, och kliver ut ur ett de står i.
+De kliver också ut ur en motståndares skadliga område, som en brunn, ett skydd mot dem eller en storm, och slåss från dess kant.
 
 En bot med ett avbrott sparar det till de kastningar som spelar roll: en
 återupplivning eller en spökhjälte som tar altaret först, sedan en
@@ -90,6 +101,14 @@ ungefär en av fyra av de kastningarna.
 En bot tar ett mänskligt ögonblick, en bråkdel av en sekund, på sig att
 reagera på det som händer, så ett snabbt avbrott eller en sen undanmanöver
 kan slå den.
+
+När ingen i ditt lag har utpekat ett mål, pekar en av dina bottar ut
+fienden som dina bottar går på, precis som du skulle göra: du ser
+markören och bottens namn, så att du kan hänga på. Ett mål som en bott
+pekar ut visar bara vart bottarna är på väg; de skyddar ändå en
+lagkamrat och gör slut på en döende fiende. Ett mål du pekar ut vinner
+alltid: alla bottar i laget går på ditt mål, ingen bott ersätter det,
+och bottarna pekar ut igen först när målet är dött eller borta.
 
 I en strid mellan tre lag slåss bottar mot ett fiendelag i
 taget: laget som attackerar dem, eller, medan ingen gör det, det mest

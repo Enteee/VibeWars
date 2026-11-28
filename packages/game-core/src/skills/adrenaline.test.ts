@@ -16,7 +16,7 @@ import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
-/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Sever Artery 4, "Watch Yourself!" 4. */
+/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Sever Artery 3, "Watch Yourself!" 4. */
 
 const BACKBREAKER = "warrior.backbreaker";
 const SEVER_ARTERY = "warrior.sever-artery";
@@ -75,9 +75,9 @@ describe("gainStrikes", () => {
 
 describe("gainUnits", () => {
   it("adds units, not strikes, each capped at its own cost (#827)", () => {
-    const w = warrior(0, 4 * ADRENALINE_PER_STRIKE - 5, 0);
+    const w = warrior(0, 3 * ADRENALINE_PER_STRIKE - 5, 0);
     gainUnits(w, 24, 0);
-    expect([...w.adrenaline.values()]).toEqual([24, 4 * ADRENALINE_PER_STRIKE, 24]);
+    expect([...w.adrenaline.values()]).toEqual([24, 3 * ADRENALINE_PER_STRIKE, 24]);
   });
 
   it("skips a recharging skill (#827)", () => {
@@ -91,7 +91,7 @@ describe("gainUnits", () => {
     const w = warrior(0, 0, 0);
     w.statuses.apply("weapon-of-fury", 10, "r", NO_RANKS);
     w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
-    gainUnits(w, 10, 0);
+    gainUnits(w, 10, 0, true);
     // 10 × 2 × 1.33 would be 26.
     expect(w.adrenaline.get(BACKBREAKER)).toBe(20);
   });
@@ -99,8 +99,23 @@ describe("gainUnits", () => {
   it("keeps a single boost's own share (#4089)", () => {
     const w = warrior(0, 0, 0);
     w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
-    gainUnits(w, 10, 0);
+    gainUnits(w, 10, 0, true);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(13);
+  });
+
+  it("boosts only what attacks earn, unless the boost says all (#4163)", () => {
+    const onslaught = warrior(0, 0, 0);
+    onslaught.statuses.apply("onslaught", 10, "d", NO_RANKS);
+    gainUnits(onslaught, 20, 0);
+    expect(onslaught.adrenaline.get(BACKBREAKER)).toBe(20);
+    gainUnits(onslaught, 20, 0, true);
+    expect(onslaught.adrenaline.get(BACKBREAKER)).toBe(20 + 25);
+
+    // Focused Anger at Leadership 12, +120%, on what is not an attack too.
+    const focused = warrior(0, 0, 0);
+    focused.statuses.apply("focused-anger", 10, "p", new Map([["paragon.leadership", 12]]));
+    gainUnits(focused, 20, 0);
+    expect(focused.adrenaline.get(BACKBREAKER)).toBe(44);
   });
 });
 
@@ -114,14 +129,14 @@ describe("spendAdrenaline", () => {
   it("the only adrenaline skill on the bar just empties", () => {
     const w = makeCombatant({
       id: "w",
-      adrenaline: new Map([[SEVER_ARTERY, 4 * ADRENALINE_PER_STRIKE]]),
+      adrenaline: new Map([[SEVER_ARTERY, 3 * ADRENALINE_PER_STRIKE]]),
     });
     spendAdrenaline(w, skill(SEVER_ARTERY));
     expect([...w.adrenaline]).toEqual([[SEVER_ARTERY, 0]]);
   });
 
   it("draining a charged skill leaves it one strike short", () => {
-    const w = warrior(9 * ADRENALINE_PER_STRIKE, 4 * ADRENALINE_PER_STRIKE, 0);
+    const w = warrior(9 * ADRENALINE_PER_STRIKE, 3 * ADRENALINE_PER_STRIKE, 0);
     spendAdrenaline(w, skill(SEVER_ARTERY));
     expect(canAffordAdrenaline(w, skill(BACKBREAKER))).toBe(false);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(8 * ADRENALINE_PER_STRIKE);
@@ -143,7 +158,7 @@ describe("spendAdrenaline", () => {
 
 describe("emptyPool (#1097)", () => {
   it("empties only that skill's pool", () => {
-    const w = warrior(9 * ADRENALINE_PER_STRIKE, 4 * ADRENALINE_PER_STRIKE, 10);
+    const w = warrior(9 * ADRENALINE_PER_STRIKE, 3 * ADRENALINE_PER_STRIKE, 10);
     emptyPool(w, SEVER_ARTERY);
     expect([...w.adrenaline.values()]).toEqual([9 * ADRENALINE_PER_STRIKE, 0, 10]);
   });

@@ -47,12 +47,13 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // "Heal target ally for 30...70...80 Health".
     effects: [
       {
         kind: "heal",
         received: "heal",
         amount: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 70 },
         },
       },
     ],
@@ -234,17 +235,17 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Heal target other ally for 15...51...60 Health and an additional
-    // 10...30...35 Health for each enchantment or hex on that ally" (#920):
+    // "Heal target other ally for 20...56...65 Health and an additional
+    // 15...35...40 Health for each enchantment or hex on that ally" (#920):
     // one heal (#1760).
     effects: [
       {
         kind: "heal",
         received: "heal",
-        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment", "hex"] },
-          amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
+          amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 35 } },
           max: undefined,
         },
       },
@@ -1012,9 +1013,9 @@ export const MONK_SKILLS: readonly Skill[] = [
     attributeId: "monk.healing-prayers",
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
-    // The PvP page (167): 1 s, 20 s. The PvE split (1330) is not imported.
+    // The PvP split (3232): 1 s, 10 s. The PvE numbers (287: 2 s, 2 s) are not used.
     activationSeconds: 1,
-    rechargeSeconds: 20,
+    rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
     // "Heal entire party": the caster and every living team-mate, however
@@ -1136,31 +1137,27 @@ export const MONK_SKILLS: readonly Skill[] = [
     attributeId: "monk.protection-prayers",
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
-    activationSeconds: 2,
+    activationSeconds: 0.25,
     rechargeSeconds: 30,
     range: RANGE_SPELL,
-    target: "self",
-    area: {
-      radius: AREA_EARSHOT,
-      origin: "caster",
-      affects: "allies",
-      maxTargets: undefined,
-      includesCaster: true,
-    },
+    target: "single-other-ally",
+    area: undefined,
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 6...15 seconds, all party members within earshot have a 50%
-    // chance to block attacks": 13 seconds, its rank-12 value (#1511).
+    // The PvP page (#4169), the split of 257: "For 1...3 seconds,
+    // target other party member cannot be the target of hostile spells, and
+    // attacks against this party member fail": 1...3 is ranks 0...15, so
+    // 3 seconds at rank 12, 4 at 19.
     effects: [
       {
         kind: "apply-status",
         statusId: "aegis",
         durationSeconds: {
-          scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
+          scaling: { attributeId: "monk.protection-prayers", atZero: 1, atTwelve: 2.6 },
         },
       },
     ],

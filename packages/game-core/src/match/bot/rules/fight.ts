@@ -5,7 +5,9 @@ import { rankOf } from "../../../skills/tick.js";
 import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import { isGhostId } from "../../ghost.js";
+import { blindTarget } from "../blind.js";
 import { clumpTarget } from "../clump.js";
+import { knockdownTarget } from "../knockdown.js";
 import { snareStatus, snareTarget } from "../snare.js";
 import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import {
@@ -27,10 +29,13 @@ import {
   SPIKE_FINISH_FRACTION,
   SPIKE_HOLD_MAX_SECONDS,
   healthFraction,
+  keepsReserve,
   spikeLands,
   spikeSeconds,
   stripFirst,
 } from "./shared.js";
+import { coverHexOf, coverTarget } from "./cover-hex.js";
+import { denialTarget } from "./energy-denial.js";
 import type { BotRule } from "./types.js";
 
 /** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
@@ -58,7 +63,12 @@ const SPIKE_TOLERANCE = 1e-6;
  * clump (#4147, `clumpTarget`), unless the target is fixed. A snare at
  * a foe at its elbow, else at one diving its healer or casters (#4156,
  * `snareTarget`), unless the target is a ghost, and never held. Spiking
- * waits only for one cast at the team's target.
+ * waits only for one cast at the team's target. An unblockable knockdown
+ * at a foe whose block stance wastes an ally attacker's blows (#4228,
+ * `knockdownTarget`), unless the target is fixed: down, it blocks none.
+ * A blind at a foe that is attacking, not yet blind (#4239,
+ * `blindTarget`): the one diving its healer or casters, else one on an
+ * ally, else any; unless the target is fixed, and else as any skill.
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
@@ -66,7 +76,12 @@ const SPIKE_TOLERANCE = 1e-6;
  * fires so the hits land together: the slowest skill at once, a faster
  * one the difference later. Before it, a bot with a strip ready casts it
  * at the team's target while a defence enchantment is on it (#2634),
- * and its teammates hold for it.
+ * and its teammates hold for it. Its weapon and attack skills go to
+ * `attackTarget`, off a foe that blocks them (#4204); its spells stay.
+ * Ahead of bar order, a bot with two hexes lays its cheap one over its key
+ * hex on the nearest foe in range where that is newest (#4279,
+ * `coverTarget`). An energy-denial skill goes on a foe healer in range
+ * with Energy to lose (#4281, `denialTarget`), else as any skill.
  */
 const fight: BotRule = {
   order: 100,
@@ -81,6 +96,7 @@ const fight: BotRule = {
     spikeHold,
     targetId,
     targetFixed,
+    attackTarget,
     nearestFirst,
     mayUse,
     use,
@@ -164,20 +180,47 @@ const fight: BotRule = {
       targetFixed
         ? undefined
         : clumpTarget(held, self, foes, targetId, held.range, (id) => mayUse(held, id));
+    // A knockdown at a foe whose block stance wastes an ally's blows
+    // (#4228), unless the target is fixed; else as any skill.
+    const knockdown = (held: Skill): string | undefined =>
+      targetFixed
+        ? undefined
+        : knockdownTarget(
+            held,
+            self,
+            allies,
+            foes,
+            targetId,
+            held.range,
+            (id) => mayUse(held, id),
+            surroundings,
+          );
+    // A blind at a foe that is attacking (#4239), unless the target is
+    // fixed: blind does nothing to a caster.
+    const blind = (held: Skill): string | undefined =>
+      targetFixed
+        ? undefined
+        : blindTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));
     // A snare at a foe at the bot's elbow, else at one diving its healer or
     // casters (#4156), unless the target is a ghost on the altar. Never at
     // a clump.
     const aside = (held: Skill): string | undefined =>
       snareStatus(held) === undefined
-        ? clump(held)
+        ? (knockdown(held) ?? blind(held) ?? clump(held))
         : isGhostId(targetId)
           ? undefined
           : snareTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));
+    // Energy denial on a foe healer in range (#4281), not the team's target.
+    const denial = (held: Skill): string | undefined =>
+      denialTarget(self, foes, held, (id) => mayUse(held, id));
     const castOn = (held: Skill): string =>
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : (freshFoe(held) ?? aside(held) ?? targetId);
+        : (denial(held) ??
+          freshFoe(held) ??
+          aside(held) ??
+          (held.attack === undefined ? targetId : (attackTarget(held) ?? targetId)));
     // The team's target is `play-build`'s: a guard's own, or a ghost on
     // the altar (#2600), is fought as it comes.
     if (cursor.spikeTargetId !== targetId) {
@@ -226,6 +269,27 @@ const fight: BotRule = {
       }
       return holds;
     };
+    // A cheap hex over its own key hex (#4279), so hex removal takes it.
+    const cover = coverHexOf(self);
+    const covered =
+      cover === undefined
+        ? undefined
+        : coverTarget(
+            self,
+            cover,
+            foes,
+            (id) =>
+              mayUse(cover, id) &&
+              !keepsReserve(
+                self,
+                cover,
+                foes.find((foe) => foe.id === id),
+              ) &&
+              (!(holding || covering) || context.check(cover.id, id).ok),
+          );
+    if (cover !== undefined && covered !== undefined) {
+      return use(cover, covered.id);
+    }
     const skill = bar.find(
       (held) =>
         worthUsing(held) &&
@@ -236,6 +300,7 @@ const fight: BotRule = {
         (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
         mayUse(held, castOn(held)) &&
+        !keepsReserve(self, held, target) &&
         (!(holding || covering) || context.check(held.id, castOn(held)).ok) &&
         !holdsSpike(held),
     );
@@ -262,24 +327,27 @@ const fight: BotRule = {
     if (skill !== undefined) {
       return use(skill, castOn(skill));
     }
-    // The weapon, from where it stands while a step would end what it holds
-    // or take a healer off its post.
+    // The weapon, at a foe that does not block it (#4204), from where it
+    // stands while a step would end what it holds or take a healer off its
+    // post.
+    const swingId = attackTarget(undefined);
+    const swingAt = context.participants.find((other) => other.id === swingId);
     const { weapon } = self.combatant.equipment.mainHand;
     const reach = holding
       ? RANGE_MELEE
-      : target === undefined || !feelsHeight(weapon.id)
+      : swingAt === undefined || !feelsHeight(weapon.id)
         ? weapon.range
         : heightRange(
             weapon.range,
-            heightStep(self.floors, self.layer, target.floors, target.layer),
+            heightStep(self.floors, self.layer, swingAt.floors, swingAt.layer),
           );
     if (
       (holding || covering) &&
-      (target === undefined || distance(self.position, target.position) > reach)
+      (swingAt === undefined || distance(self.position, swingAt.position) > reach)
     ) {
       return { ...NOTHING, targetId };
     }
-    return { ...NOTHING, targetId, attackTargetId: targetId };
+    return { ...NOTHING, targetId: swingId, attackTargetId: swingId };
   },
 };
 

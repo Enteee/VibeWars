@@ -32,12 +32,69 @@ export const NOTHING: BehaviourIntent = {
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
+  stopAttack: false,
   applyStatuses: [],
   endUpkeep: undefined,
 };
 
 /** Below this share of its health, an ally is worth a heal. */
 export const HURT_FRACTION = 0.6;
+
+/**
+ * Below this share of its health, an ally is in real danger: a healer
+ * spends its Energy reserve on it (#4275, `keepsReserve`).
+ */
+export const EMERGENCY_FRACTION = 0.4;
+
+/** Each participant's Energy-paid heals and protections; bars are locked in a match. */
+const RESERVE_SKILLS = new WeakMap<Participant, readonly Skill[]>();
+
+/**
+ * The Energy a healer keeps back (#4275): the cheapest heal or protection
+ * on its bar, as it would cost now (`energyCostOf`), so Air of
+ * Enchantment's cut counts. 0 with none. Clamped to its maximum Energy
+ * less that cost, so a healer that could never meet it does not freeze.
+ */
+export function energyReserve(self: Participant): number {
+  let skills = RESERVE_SKILLS.get(self);
+  if (skills === undefined) {
+    skills = skillsOf(self).filter(
+      (skill) =>
+        skill.cost?.kind === "energy" &&
+        botUses(skill).some((use) => use === "healing" || use === "defence"),
+    );
+    RESERVE_SKILLS.set(self, skills);
+  }
+  if (skills.length === 0) {
+    return 0;
+  }
+  const cheapest = Math.min(
+    ...skills.map((skill) => energyCostOf(skill, self.combatant, self.combatant)),
+  );
+  return Math.max(0, Math.min(cheapest, self.combatant.maxEnergy - cheapest));
+}
+
+/**
+ * Whether a healer bot skips `skill` at `target` as discretionary
+ * (#4275): it costs Energy, and casting it would leave the healer below
+ * its `energyReserve`. Other roles keep no reserve.
+ */
+export function keepsReserve(self: Participant, skill: Skill, target?: Participant): boolean {
+  if (roleOf(self) !== "healer" || skill.cost?.kind !== "energy") {
+    return false;
+  }
+  const cost = energyCostOf(skill, self.combatant, (target ?? self).combatant);
+  return self.combatant.energy - cost < energyReserve(self);
+}
+
+/**
+ * Below this share of its health, an ally is worth a heal or protection
+ * a punishing hex makes the bot pay for (#4199)...
+ */
+export const PUNISH_SAVE_ALLY = 1 / 3;
+
+/** ...while the bot keeps more than this share of its own health after paying. */
+export const PUNISH_KEEP_SELF = 1 / 2;
 
 /** How many foes on one ally make it a spike to protect against (#2627). */
 export const SPIKE_FOES = 2;
@@ -345,6 +402,15 @@ export function onErrand(
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
 export const ELBOW_DISTANCE = 100;
 
+/** A dived ranged bot or healer kites a melee foe at most this share of its own speed (#4166). */
+export const KITE_SPEED_EDGE = 0.9;
+
+/** How far a kiting bot steps away from its slowed foe between shots (#4166). */
+export const KITE_STEP = 150;
+
+/** A kiting bot steps only within this share of a swing, the shot just gone off (#4166). */
+export const KITE_SWING_WINDOW = 0.25;
+
 /** A healer looks after another ally only once that one is this much more hurt than its own (#2615). */
 export const WARD_SWITCH = 0.15;
 
@@ -367,11 +433,16 @@ export const REGROUP_MAX_WAIT = 4;
  * is no threat to it, and a spirit never walks.
  */
 export function atElbow(self: Participant, foe: Participant): boolean {
+  return meleeOn(self, foe, ELBOW_DISTANCE);
+}
+
+/** A foe with a melee weapon within `reach` of `self`, on it, as `atElbow` asks (#4166). */
+export function meleeOn(self: Participant, foe: Participant, reach: number): boolean {
   return (
     foe.creature?.kind !== "spirit" &&
     (foe.targetId === self.id || foe.combatant.attack?.targetId === self.id) &&
     foe.combatant.equipment.mainHand.weapon.range <= RANGE_MELEE &&
-    distance(foe.position, self.position) <= ELBOW_DISTANCE
+    distance(foe.position, self.position) <= reach
   );
 }
 
@@ -584,17 +655,24 @@ function firesNow(mate: Participant, skill: Skill, target: Participant): boolean
 }
 
 /**
- * The strip skill `mate` casts at `target` before its spike (#2634): one
- * it could fire now, while `target` bears an enchantment a `defence`
- * skill put on it, Protective Spirit's or Aegis's. `undefined` with
- * nothing to strip, or no strip ready: a recharging one holds nobody up.
+ * Whether `target` bears an enchantment a `defence` skill put on it,
+ * Protective Spirit's or Aegis's (#2634, #4269).
  */
-export function stripFirst(mate: Participant, target: Participant): Skill | undefined {
-  const guarded = target.combatant.statuses.active.some(
+export function bearsDefence(target: Participant): boolean {
+  return target.combatant.statuses.active.some(
     (status) =>
       getStatusDefinition(status.id).category === "enchantment" && isDefenceStatus(status.id),
   );
-  if (!guarded) {
+}
+
+/**
+ * The strip skill `mate` casts at `target` before its spike (#2634): one
+ * it could fire now, while `target` bears a defence enchantment
+ * (`bearsDefence`). `undefined` with nothing to strip, or no strip
+ * ready: a recharging one holds nobody up.
+ */
+export function stripFirst(mate: Participant, target: Participant): Skill | undefined {
+  if (!bearsDefence(target)) {
     return undefined;
   }
   for (const id of mate.skillBar) {

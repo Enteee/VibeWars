@@ -1,501 +1,698 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars -- an untyped SVG generator: points and slices are plain arrays and numbers go into strings. */
-// Profession outfit study (#4175, #4179, #4180; epic #3974): the stacked figure's
-// outfit follows its primary profession and carries one accent of its secondary.
-// Ten primaries and three accents, ally and foe, at the four camera zooms (view
-// height 640 / 860 / 1100 / 1400 on a 1080 px canvas) and on the menu figure.
-// Units are sprite-stack.ts's: body radii, x forward, y right, one lift = 1/12.
-// Generic gothic fantasy, not any GW1 armour set.
-// Usage: node scripts/assets/profession-outfit-study.mjs   (writes docs/art/profession-outfit-study.svg, and the .png when inkscape is there)
-import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+// Draws a study of the stacked figure's outfit per primary profession and
+// its secondary accent (#4175). A design reference, not a game asset.
+//
+//   node scripts/assets/profession-outfit-study.mjs
+//
+// Writes docs/art/profession-outfit-study.svg and prints, per outfit, its
+// lift count against the warrior's and the share of the warrior's top-down
+// team-colour area it keeps (the test #4175 asks for: at least 80 %).
+//
+// The figure is drawn by the arena's own `stackLayers` and `stackTones`
+// (apps/web/src/render/sprite-stack.ts), so shading, lift, squash and the
+// pose maths are the game's. `outfitSlices` below is the proposal: the
+// warrior's slice list, rebuilt from parts, with torso, legs, shoulders,
+// head and back chosen by profession. The script checks that its warrior is
+// byte-for-byte the game's `stackSlices("stand")`. Outfits are generic
+// fantasy in our gothic style, not any GW1 armour set.
+//
+// Layout: the ten primary outfits as ally and foe at menu-figure size (a
+// body radius of 40 px), the same from the side, the four camera zooms at
+// true size (view height 640 / 860 / 1100 / 1400 world units on a 1080 px
+// canvas, body radius 14), and four secondary accents on the warrior.
 
-const STEP = 1 / 12;
-const OUTLINE = "#08080a";
-const el = (cx, cy, rx, ry, n = 14) =>
-  Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2;
-    return [+(cx + rx * Math.cos(a)).toFixed(3), +(cy + ry * Math.sin(a)).toFixed(3)];
-  });
-const S = (parts, tone, light = 1, same = false, alpha = 1) => ({
-  parts,
-  tone,
-  light,
-  same,
-  alpha,
-});
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import "./ts-resolve.mjs";
+
+const { STACK_OUTLINE, stackLayers, stackSlices, stackTones } =
+  await import("../../apps/web/src/render/sprite-stack.ts");
+const { WARRIOR_OUTFIT } = await import("../../apps/web/src/render/profession-outfits.ts");
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const outFile = join(root, "docs", "art", "profession-outfit-study.svg");
 
 const C = {
-  boot: "#1c1a1a",
-  skin: "#b89a84",
-  visor: "#101014",
-  steel: "#9aa0a8",
-  dark: "#2a2a30",
-  leather: "#5a4030",
-  rope: "#b8a070",
-  cloth: "#4a4658",
-  gold: "#c9a227",
-  bone: "#d8d0bc",
-  hair: "#4a3a2c",
-  paleHair: "#c8c0a8",
-  green: "#4a6a3a",
-  black: "#17171c",
-  wrap: "#8a7a5a",
+  bg: "#0e1116",
+  panel: "#141a22",
+  ink: "#d7dee8",
+  inkDim: "#7d8899",
+  friend: 0x59c2ff,
+  foe: 0xff7b72,
 };
-const TEAMS = { ally: "#59c2ff", foe: "#ff7b72" };
 
-// ---- outfits: torso, legs, shoulders, head, back ---------------------------
+/** A cape that is plain cloth and trim, as the study's neutral cape. */
+const CAPE = { main: 0x4a3f66, trim: 0xc9a24a, emblem: "", palette: [] };
+
+const hex = (/** @type {number} */ n) => `#${n.toString(16).padStart(6, "0")}`;
+const f = (/** @type {number} */ n) => String(Math.round(n * 100) / 100);
+
+// ---------------------------------------------------------------------------
+// The proposal: outfits as a data table (the shape of PROFESSION_OUTFITS).
+
+/** @typedef {{ x: number, y: number }} Point */
+/** @typedef {{ parts: Point[][], tone: string, light: number, same: boolean, rise: number }} Slice */
+/** @typedef {{ torso: string, legs: string, shoulders: string, head: string, back: string | undefined, cloth: number }} Outfit */
+/** @typedef {{ kind: string, tone: number }} Accent */
+/** @typedef {(parts: Point[][], tone: string, light: number, same?: boolean) => void} Push */
+
+/**
+ * `torso`: plate | robe | coat | wrap | tabard. `legs`: trousers | robe.
+ * `shoulders`: pauldrons | mantle | spikes | none. `head`: helm | hood |
+ * circlet | bare | turban | hat | cowl | headdress. `back`: quiver | blades
+ * | spears | undefined. `cloth` is the outfit's secondary fabric, a dark
+ * neutral, so the team colour stays the loudest.
+ */
+/** @type {Record<string, Outfit>} */
 const OUTFITS = {
   warrior: {
-    sleeve: "steel",
     torso: "plate",
     legs: "trousers",
-    shoulders: "pauldron",
+    shoulders: "pauldrons",
     head: "helm",
-    back: "cape",
+    back: undefined,
+    cloth: 0x4a4e58,
   },
   ranger: {
-    sleeve: "#5a4030",
     torso: "coat",
     legs: "trousers",
     shoulders: "none",
     head: "hood",
     back: "quiver",
+    cloth: 0x4c5a3a,
   },
   monk: {
-    sleeve: "#e0d8c4",
-    hem: "#e0d8c4",
     torso: "robe",
-    legs: "long",
+    legs: "robe",
     shoulders: "none",
-    head: "bare-pale",
-    back: "none",
-    belt: C.rope,
+    head: "bare",
+    back: undefined,
+    cloth: 0xd8cfb8,
   },
   elementalist: {
-    sleeve: "#3a3050",
-    hem: "#3a3050",
     torso: "robe",
-    legs: "long",
+    legs: "robe",
     shoulders: "collar",
     head: "circlet",
-    back: "none",
+    back: undefined,
+    cloth: 0x5a2a22,
   },
   necromancer: {
-    sleeve: "#1c1822",
-    hem: "#1c1822",
     torso: "robe",
-    legs: "long",
+    legs: "robe",
     shoulders: "spikes",
-    head: "deep-hood",
-    back: "none",
-    dark: true,
+    head: "cowl",
+    back: undefined,
+    cloth: 0x2e2a38,
   },
   mesmer: {
-    sleeve: "#3a2a4a",
     torso: "coat",
     legs: "trousers",
-    shoulders: "collar",
-    head: "mask",
-    back: "tails",
+    shoulders: "mantle",
+    head: "hat",
+    back: undefined,
+    cloth: 0x3a2a4a,
   },
   assassin: {
-    sleeve: "#17171c",
     torso: "wrap",
     legs: "trousers",
-    shoulders: "cloth",
-    head: "hood-mask",
-    back: "scarf",
+    shoulders: "none",
+    head: "cowl",
+    back: "blades",
+    cloth: 0x22242c,
   },
   ritualist: {
-    torso: "robe",
-    legs: "skirt",
-    shoulders: "none",
-    head: "headband",
-    back: "none",
-    bare: true,
+    torso: "wrap",
+    legs: "robe",
+    shoulders: "mantle",
+    head: "headdress",
+    back: undefined,
+    cloth: 0x2a5a52,
   },
   paragon: {
-    sleeve: "steel",
-    torso: "plate",
+    torso: "tabard",
     legs: "trousers",
-    shoulders: "small",
-    head: "winged",
-    back: "tabard",
+    shoulders: "pauldrons",
+    head: "helm",
+    back: "spears",
+    cloth: 0xb89a4a,
   },
   dervish: {
-    torso: "wrap",
-    legs: "long",
+    torso: "robe",
+    legs: "robe",
     shoulders: "none",
     head: "turban",
-    back: "none",
-    bare: true,
+    back: undefined,
+    cloth: 0x7a4a2a,
   },
 };
-// secondary accents: a sash, trim or belt in the secondary's tone.
+
+/** The secondary's accent: a kind and a tone (SECONDARY_ACCENTS). */
+/** @type {Record<string, Accent>} */
 const ACCENTS = {
-  monk: { kind: "sash", tone: "#e8e4d8" },
-  elementalist: { kind: "trim", tone: "#ff7a3a" },
-  ranger: { kind: "belt", tone: "#7aa04a" },
+  warrior: { kind: "belt", tone: 0xc8ccd4 },
+  ranger: { kind: "trim", tone: 0x6a9a48 },
+  monk: { kind: "sash", tone: 0xf2ecdc },
+  necromancer: { kind: "belt", tone: 0xd8d0b8 },
+  mesmer: { kind: "sash", tone: 0xb06ae0 },
+  elementalist: { kind: "trim", tone: 0xff9040 },
+  assassin: { kind: "belt", tone: 0xc03040 },
+  ritualist: { kind: "sash", tone: 0x40d0b8 },
+  paragon: { kind: "trim", tone: 0xf0c850 },
+  dervish: { kind: "sash", tone: 0xe0a040 },
 };
 
-function figure(pose, o, accent) {
-  const st = pose === "stride-a" ? 1 : pose === "stride-b" ? -1 : 0;
-  const f = 0.3 * st;
-  const s = [];
-  const push = (...a) => s.push(S(...a));
-  const cloth = o.dark ? "#2a2634" : null; // tone the non-team cloth of a dark outfit
-  // legs
-  if (o.legs === "trousers" || o.legs === "skirt") {
-    for (let i = 0; i < 2; i++)
+const ORDER = Object.keys(OUTFITS);
+
+// ---------------------------------------------------------------------------
+// Geometry, in body radii, `x` forward, `y` to the right.
+
+/** @returns {Point[]} */
+function ellipse(
+  /** @type {number} */ cx,
+  /** @type {number} */ cy,
+  /** @type {number} */ rx,
+  /** @type {number} */ ry,
+  n = 18,
+  turn = 0,
+) {
+  const c = Math.cos(turn);
+  const s = Math.sin(turn);
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    const px = rx * Math.cos(a);
+    const py = ry * Math.sin(a);
+    return { x: cx + px * c - py * s, y: cy + px * s + py * c };
+  });
+}
+
+/** The slices of an `outfit` standing, with an optional secondary `accent`. */
+/**
+ * @param {Outfit} outfit
+ * @param {Accent} [accent]
+ * @returns {Slice[]}
+ */
+function outfitSlices(outfit, accent) {
+  /** @type {Slice[]} */
+  const slices = [];
+  /** @type {Push} */
+  const push = (parts, tone, light, same = false) =>
+    slices.push({ parts, tone, light, same, rise: 0 });
+  const capeBack = (/** @type {number} */ x, /** @type {number} */ rx, /** @type {number} */ ry) =>
+    ellipse(x, 0, rx, ry, 14);
+  const robe = outfit.legs === "robe";
+  const torsoTone = "team";
+  const handTone = outfit.torso === "plate" || outfit.torso === "tabard" ? "metal" : "skin";
+
+  for (let i = 0; i < 2; i += 1) {
+    push(
+      [ellipse(0.05, -0.26, 0.26, 0.16, 10), ellipse(0.05, 0.26, 0.26, 0.16, 10)],
+      "boot",
+      0.5 + 0.2 * i,
+    );
+  }
+  for (let i = 0; i < 4; i += 1) {
+    if (robe) {
+      // A long skirt hides the legs: only a dark inner hem shows.
+      push([ellipse(0, 0, 0.4, 0.4, 12)], "boot", 0.55 + 0.08 * i);
+    } else {
       push(
-        [el(f + 0.05, -0.26, 0.26, 0.16, 10), el(-f + 0.05, 0.26, 0.26, 0.16, 10)],
-        C.boot,
-        0.5 + 0.2 * i,
-      );
-    for (let i = 0; i < 4; i++)
-      push(
-        [el(f * 0.7, -0.24, 0.18, 0.17, 10), el(-f * 0.7, 0.24, 0.18, 0.17, 10)],
-        o.legs === "skirt" && i > 1 ? C.wrap : C.dark,
+        [ellipse(0, -0.24, 0.18, 0.17, 10), ellipse(0, 0.24, 0.18, 0.17, 10)],
+        "trouser",
         0.55 + 0.08 * i,
       );
-  } else {
-    for (let i = 0; i < 2; i++)
-      push(
-        [el(f * 0.6 + 0.2, -0.22, 0.22, 0.14, 8), el(-f * 0.6 + 0.2, 0.22, 0.22, 0.14, 8)],
-        C.boot,
-        0.45 + 0.15 * i,
-      );
+    }
   }
-  // hem: skirt / long robe / short coat flare, team coloured
-  const hem = {
-    long: [0.74, 0.72, 0.7, 0.68, 0.66, 0.64, 0.62, 0.6],
-    skirt: [0.7, 0.66, 0.62, 0.6, 0.58],
-    trousers: [0.62, 0.6, 0.58, 0.56],
-  }[o.legs];
-  hem.forEach((r, i) => {
-    if (o.back === "cape") push([el(-0.3, 0, 0.32, 0.66)], "cape", 0.5 + 0.06 * i);
-    if (o.back === "tails" && i >= 1) push([el(-0.45, 0, 0.3, 0.3)], "team", 0.5 + 0.05 * i, true);
-    if (o.back === "tabard" && i < 3) push([el(0.1, 0, 0.5, 0.18)], C.gold, 0.5 + 0.05 * i);
-    push([el(0, 0, r * 0.72, r)], "team", 0.55 + 0.04 * i, o.back === "cape");
+  // The skirt, its cape behind it; a trim accent is the hem under it.
+  const skirt = robe
+    ? [0.92, 0.88, 0.82, 0.74]
+    : outfit.torso === "coat"
+      ? [0.7, 0.66, 0.62, 0.58]
+      : outfit.torso === "wrap"
+        ? [0.54, 0.54, 0.52, 0.52]
+        : [0.62, 0.6, 0.58, 0.56];
+  skirt.forEach((r, i) => {
+    if (i === 0 && robe) {
+      // A robe's hem: its own cloth, a ring wider than the team-coloured skirt.
+      push([ellipse(0, 0, r * 0.72 * 1.14, r * 1.14)], "cloth", 0.55, true);
+    }
+    if (i === 0 && accent?.kind === "trim") {
+      push(
+        [ellipse(0, 0, r * 0.72 * (robe ? 1.22 : 1.1), r * (robe ? 1.22 : 1.1))],
+        "accent",
+        0.5,
+        true,
+      );
+    }
+    push([capeBack(-0.3, 0.32, 0.66 - (robe ? -0.1 : 0) * (1 - i / 4))], "cape", 0.5 + 0.06 * i);
+    push([ellipse(0, 0, r * 0.72, r)], torsoTone, 0.6 + 0.07 * i, true);
   });
-  if (accent?.kind === "trim") push([el(0, 0, 0.5, 0.7)], accent.tone, 0.8, true, 0.9); // hem band
-  if (o.hem)
-    for (let i = 0; i < 2; i++)
-      push([el(0, 0, 0.74 * 0.72 - 0.02 * i, 0.76 - 0.02 * i)], o.hem, 0.5 + 0.1 * i); // a contrasting hem band, over the skirt
   push(
-    [el(0, 0, 0.4, 0.56)],
-    accent?.kind === "belt"
-      ? accent.tone
-      : (o.belt ?? (o.torso === "plate" ? "#3a2a20" : C.leather)),
+    [ellipse(0, 0, 0.4, 0.56)],
+    outfit.torso === "plate" || outfit.torso === "tabard" ? "belt" : "rope",
     0.9,
   );
-  // torso and arms
-  const sleeveTone = o.sleeve ?? (o.bare ? "skin" : o.torso === "plate" ? "steel" : "team");
-  for (let i = 0; i < 7; i++) {
-    if (o.back === "cape") push([el(-0.3, 0, 0.3, 0.6 + 0.02 * i)], "cape", 0.6 + 0.05 * i);
-    const tr =
-      o.torso === "wrap"
-        ? [0.5, 0.52, 0.54, 0.56, 0.56]
-        : o.torso === "robe"
-          ? [0.58, 0.62, 0.66, 0.68, 0.7]
-          : [0.56, 0.6, 0.64, 0.68, 0.7];
-    if (i >= 2)
-      push(
-        [el(0.06, 0, tr[Math.min(i - 2, 4)] * 0.66, tr[Math.min(i - 2, 4)])],
-        "team",
-        0.74 + 0.04 * i,
-        true,
-      );
-    if (o.back === "quiver" && i >= 2)
-      push([el(-0.38 - 0.02 * i, 0.22, 0.1, 0.1, 6)], C.leather, 0.6 + 0.05 * i);
-    if (o.back === "scarf" && i >= 3)
-      push([el(-0.45, -0.1 + 0.05 * i, 0.22, 0.07, 6)], C.black, 0.6 + 0.05 * i);
-    const sw = -0.22 * st * (1 - i / 7);
-    const arm = i < 2 && o.torso === "plate" ? C.steel : sleeveTone;
-    push([el(sw, -0.66, 0.15, 0.14, 10), el(-sw, 0.66, 0.15, 0.14, 10)], arm, 0.7 + 0.04 * i, true);
-    if (accent?.kind === "sash" && i >= 1 && i <= 5)
-      push([el(0.1 + 0.02 * i, -0.3 + 0.12 * i, 0.16, 0.12, 6)], accent.tone, 0.8 + 0.03 * i, true); // diagonal across the chest
+  if (accent?.kind === "belt") {
+    push([ellipse(0, 0, 0.44, 0.6)], "accent", 0.92, true);
   }
-  if (accent?.kind === "trim") push([el(0.06, 0, 0.5, 0.7)], accent.tone, 0.95, true, 0.55); // collar edge
-  // shoulders
-  const sh = o.shoulders;
-  if (sh === "pauldron" || sh === "small" || sh === "spikes") {
-    const big = sh === "pauldron" ? 1 : 0.7;
-    for (let i = 0; i < 2; i++)
-      push(
-        [el(0, -0.6, 0.3 * big, 0.26 * big, 12), el(0, 0.6, 0.3 * big, 0.26 * big, 12)],
-        sh === "spikes" ? C.bone : C.steel,
-        0.85 + 0.15 * i,
-      );
-    if (sh === "spikes")
-      push(
-        [
+  const arms = () => [ellipse(0, -0.66, 0.15, 0.14, 10), ellipse(0, 0.66, 0.15, 0.14, 10)];
+  const torso =
+    outfit.torso === "robe" ? [0.52, 0.54, 0.56, 0.58, 0.6] : [0.56, 0.6, 0.64, 0.68, 0.7];
+  for (let i = 0; i < 7; i += 1) {
+    push([capeBack(-0.3, 0.3, 0.6 + 0.02 * i)], "cape", 0.6 + 0.05 * i);
+    if (i >= 2) {
+      const r = torso[Math.min(i - 2, 4)];
+      push([ellipse(0.06, 0, r * 0.66, r)], torsoTone, 0.74 + 0.04 * i, true);
+      if (accent?.kind === "sash" && i >= 3 && i <= 6) {
+        // A sash runs from the right shoulder to the left hip.
+        push([ellipse(0.06, 0, 0.2, r * 1.12, 14, 0.5)], "accent", 0.82 + 0.04 * i, true);
+      }
+      if (outfit.back === "quiver" && i >= 2 && i <= 6) {
+        push([ellipse(-0.46, 0.24, 0.1, 0.1, 8)], "leather", 0.5 + 0.08 * i, true);
+        if (i === 6) {
+          push(
+            [ellipse(-0.46, 0.2, 0.05, 0.05, 6), ellipse(-0.46, 0.3, 0.05, 0.05, 6)],
+            "metal",
+            1,
+            true,
+          );
+        }
+      }
+      if (outfit.back === "blades" && i >= 3 && i <= 6) {
+        push(
           [
-            [-0.1, -0.7],
-            [0.15, -0.95],
-            [0.1, -0.6],
+            ellipse(-0.46, -0.2 + (i - 3) * 0.14, 0.05, 0.05, 6),
+            ellipse(-0.46, 0.2 - (i - 3) * 0.14, 0.05, 0.05, 6),
           ],
+          "metal",
+          0.8 + 0.05 * i,
+          true,
+        );
+      }
+      if (outfit.back === "spears" && i >= 2 && i <= 7) {
+        push(
           [
-            [-0.1, 0.7],
-            [0.15, 0.95],
-            [0.1, 0.6],
+            ellipse(-0.46, -0.16, 0.05, 0.05, 6),
+            ellipse(-0.46, 0.0, 0.05, 0.05, 6),
+            ellipse(-0.46, 0.16, 0.05, 0.05, 6),
           ],
-        ],
-        C.bone,
-        1.05,
-        true,
-      );
+          i === 6 ? "metal" : "leather",
+          0.6 + 0.06 * i,
+          true,
+        );
+      }
+    }
+    push(
+      arms(i),
+      i < 2 ? handTone : outfit.torso === "plate" || outfit.torso === "tabard" ? "team" : "cloth",
+      i < 2 ? 0.9 : 0.7 + 0.04 * i,
+      true,
+    );
   }
-  if (sh === "cloth") push([el(-0.05, -0.55, 0.3, 0.28, 10)], C.black, 0.9);
-  // neck, collar, head
-  push([el(0.06, 0, 0.16, 0.16, 10)], "skin", 0.8);
-  if (sh === "collar")
-    for (let i = 0; i < 2; i++)
-      push(
-        [el(0.05, 0, 0.3 - 0.04 * i, 0.38 - 0.06 * i)],
-        o.torso === "coat" ? C.cloth : "team",
-        0.9 + 0.05 * i,
-        true,
-      );
-  const head = o.head;
-  const hr = [0.3, 0.36, 0.38, 0.38, 0.34, 0.26];
-  hr.forEach((r, i) => {
-    const hx = 0.1;
-    if (head === "helm" || head === "winged")
-      push([el(hx, 0, r * 1.05, r)], C.steel, 0.7 + 0.07 * i);
-    else if (head === "hood" || head === "deep-hood" || head === "hood-mask")
-      push(
-        [el(hx - (head === "deep-hood" ? 0.04 : 0), 0, r * 1.1, r * 1.05)],
-        cloth ?? (head === "hood-mask" ? C.black : C.green),
-        0.6 + 0.07 * i,
-      );
-    else if (head === "turban")
-      push(
-        [el(hx, 0, r * 1.15 + (i === 3 ? 0.04 : 0), r * 1.1)],
-        i % 2 ? "#e8e0c8" : "#c8bea0",
-        0.7 + 0.07 * i,
-      );
-    else
-      push(
-        [el(hx, 0, r * 1.05, r)],
-        i < 2 ? "skin" : head === "bare-pale" ? C.paleHair : C.hair,
-        0.7 + 0.07 * i,
-      );
-    if ((i === 2 || i === 3) && (head === "helm" || head === "winged"))
-      push(
-        [
-          [
-            [hx + r * 0.55, -r * 0.7],
-            [hx + r * 1.1, -r * 0.35],
-            [hx + r * 1.1, r * 0.35],
-            [hx + r * 0.55, r * 0.7],
-          ],
-        ],
-        C.visor,
-        1,
-        true,
-      );
-    if ((i === 2 || i === 3) && (head === "hood" || head === "deep-hood"))
-      push(
-        [el(hx + r * 0.75, 0, r * 0.35, r * 0.5, 8)],
-        head === "deep-hood" ? C.visor : "skin",
-        0.9,
-        true,
-      );
-    if ((i === 2 || i === 3) && (head === "mask" || head === "hood-mask"))
-      push(
-        [el(hx + r * 0.75, 0, r * 0.3, r * 0.6, 8)],
-        head === "mask" ? "#e8e4d8" : C.visor,
-        1,
-        true,
-      );
-    if (i === 5 && head === "helm") push([el(0.05, 0, 0.32, 0.08, 8)], "#b03030", 1.05);
-    if (i === 4 && head === "circlet") push([el(hx, 0, r * 1.1, r * 1.08)], C.gold, 1.0, true, 0.9);
-    if (i === 3 && head === "headband") push([el(hx, 0, r * 1.1, r * 1.08)], "#b03030", 1.0, true);
-    if (i === 5 && head === "winged")
-      push(
-        [
-          [
-            [0, -0.28],
-            [-0.25, -0.85],
-            [0.2, -0.38],
-          ],
-          [
-            [0, 0.28],
-            [-0.25, 0.85],
-            [0.2, 0.38],
-          ],
-        ],
-        C.gold,
-        1.05,
-      );
-  });
-  return s;
+  // Shoulders.
+  for (let i = 0; i < 2; i += 1) {
+    const lift = 0.85 + 0.15 * i;
+    if (outfit.shoulders === "pauldrons") {
+      push([ellipse(0, -0.6, 0.3, 0.26, 12), ellipse(0, 0.6, 0.3, 0.26, 12)], "metal", lift);
+    } else if (outfit.shoulders === "mantle") {
+      push([ellipse(-0.04, 0, 0.34 - 0.04 * i, 0.82 - 0.06 * i, 16)], "cloth", lift);
+    } else if (outfit.shoulders === "spikes") {
+      push([ellipse(0, -0.6, 0.24, 0.2, 10), ellipse(0, 0.6, 0.24, 0.2, 10)], "bone", lift);
+      if (i === 1) {
+        push(
+          [ellipse(-0.04, -0.74, 0.07, 0.07, 6), ellipse(-0.04, 0.74, 0.07, 0.07, 6)],
+          "bone",
+          1.05,
+          true,
+        );
+      }
+    }
+  }
+  push([ellipse(0.06, 0, 0.16, 0.16, 10)], outfit.shoulders === "collar" ? "cloth" : "skin", 0.8);
+  if (outfit.shoulders === "collar") {
+    // A high collar: a flared cloth ring up round the neck.
+    push([ellipse(0.0, 0, 0.3, 0.38, 14)], "cloth", 0.95);
+    push([ellipse(0.0, 0, 0.26, 0.34, 14)], "cloth", 1);
+  }
+  head(push, outfit.head);
+  return slices;
 }
 
-// ---- rendering -----------------------------------------------------------------
-const hex = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
-const shade = (c, l) => {
-  const k = Math.min(1.1, 0.25 + 0.75 * l + 0.12);
-  return (
-    "#" +
-    hex(c)
-      .map((v) =>
-        Math.round(Math.min(255, v * k))
-          .toString(16)
-          .padStart(2, "0"),
-      )
-      .join("")
+/** The head's slices, `kind`, over the neck. */
+/**
+ * @param {Push} push
+ * @param {string} kind
+ */
+function head(push, kind) {
+  const cx = 0.1;
+  if (kind === "helm") {
+    [0.3, 0.36, 0.38, 0.38, 0.34, 0.26].forEach((r, i) => {
+      push([ellipse(cx, 0, r * 1.05, r)], "metal", 0.7 + 0.07 * i);
+      if (i === 2 || i === 3) {
+        push(
+          [
+            [
+              { x: cx + r * 0.55, y: -r * 0.7 },
+              { x: cx + r * 1.1, y: -r * 0.35 },
+              { x: cx + r * 1.1, y: r * 0.35 },
+              { x: cx + r * 0.55, y: r * 0.7 },
+            ],
+          ],
+          "visor",
+          1,
+          true,
+        );
+      }
+      if (i === 5) {
+        push([ellipse(cx - 0.05, 0, 0.32, 0.08, 8)], "crest", 1.05);
+      }
+    });
+    return;
+  }
+  /** @type {(radii: number[], tone: string, extra?: (r: number, i: number) => void) => void} */
+  const dome = (radii, tone, extra) => {
+    radii.forEach((r, i) => {
+      push([ellipse(cx, 0, r * 1.05, r)], tone, 0.7 + 0.07 * i);
+      extra?.(r, i);
+    });
+  };
+  const face = (r, i) => {
+    if (i === 2 || i === 3) {
+      push([ellipse(cx + r * 0.62, 0, 0.16, 0.2, 10)], "skin", 0.95, true);
+    }
+  };
+  const dark = (r, i) => {
+    if (i === 2 || i === 3) {
+      push([ellipse(cx + r * 0.62, 0, 0.14, 0.18, 10)], "visor", 1, true);
+    }
+  };
+  switch (kind) {
+    case "hood":
+      dome([0.3, 0.36, 0.4, 0.4, 0.36, 0.28], "cloth", face);
+      break;
+    case "cowl":
+      dome([0.32, 0.38, 0.42, 0.42, 0.38, 0.3], "cloth", dark);
+      break;
+    case "bare":
+      dome([0.26, 0.3, 0.32, 0.32, 0.28, 0.22], "skin");
+      push([ellipse(cx - 0.06, 0, 0.3, 0.3, 12)], "hair", 0.95);
+      break;
+    case "circlet":
+      dome([0.26, 0.3, 0.32, 0.32, 0.28, 0.22], "skin", (r, i) => {
+        if (i === 3) {
+          push([ellipse(cx, 0, r * 1.15, r * 1.1)], "gold", 0.95, true);
+        }
+      });
+      push([ellipse(cx - 0.06, 0, 0.28, 0.3, 12)], "hair", 0.95);
+      break;
+    case "turban":
+      dome([0.34, 0.42, 0.46, 0.46, 0.4, 0.3], "cloth", (r, i) => {
+        if (i === 3) {
+          push([ellipse(cx + 0.06, 0, r * 0.8, r * 0.7)], "skin", 0.95, true);
+        }
+      });
+      push([ellipse(cx, 0, 0.12, 0.12, 8)], "gold", 1.05);
+      break;
+    case "hat":
+      push([ellipse(cx, 0, 0.62, 0.62, 18)], "cloth", 0.8);
+      push([ellipse(cx, 0, 0.34, 0.34, 14)], "skin", 0.85, true);
+      dome([0.3, 0.3, 0.28, 0.26, 0.22], "cloth");
+      push([ellipse(cx - 0.12, 0.2, 0.22, 0.07, 8, 0.6)], "accent", 1.05);
+      break;
+    case "headdress":
+      dome([0.26, 0.3, 0.32, 0.32, 0.28], "skin");
+      push([ellipse(cx - 0.06, 0, 0.3, 0.3, 12)], "hair", 0.95);
+      // A fan of feathers up and back.
+      [-0.5, -0.25, 0, 0.25, 0.5].forEach((y) => {
+        push([ellipse(cx - 0.12, y * 0.7, 0.07, 0.15, 6)], "crest", 1.05, true);
+      });
+      push([ellipse(cx - 0.12, 0, 0.2, 0.3, 10)], "gold", 1.08);
+      break;
+    default:
+      throw new Error(kind);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Drawing.
+
+/**
+ * @param {number} body
+ * @param {Outfit} outfit
+ * @param {Accent} [accent]
+ */
+function tonesFor(body, outfit, accent) {
+  const base = stackTones(body, CAPE, outfit, accent);
+  return {
+    ...base,
+    cloth: outfit.cloth,
+    leather: 0x5a4030,
+    rope: 0xb8a070,
+    hair: 0x2a2018,
+    bone: 0xd8d0b8,
+    gold: 0xc9a24a,
+    accent: accent?.tone ?? 0xffffff,
+  };
+}
+
+/** Each distinct figure is drawn once, at body radius `DEF_R`, and placed with `use`. */
+const DEF_R = 40;
+const defs = new Map();
+
+/** A figure's SVG at `(x, y)` (its feet), body radius `r` px. */
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {number} r
+ * @param {number} facing
+ * @param {number} body
+ * @param {string} name
+ * @param {string} [accentName]
+ */
+function figureSvg(x, y, r, facing, body, name, accentName) {
+  const key = [name, accentName ?? "none", hex(body), Math.round(facing * 100)].join("-");
+  if (!defs.has(key)) {
+    const outfit = OUTFITS[name];
+    const accent = accentName === undefined ? undefined : ACCENTS[accentName];
+    /** @type {{ points: Point[], colour: number }[]} */
+    const layers = stackLayers(
+      gameShape(outfitSlices(outfit, accent)),
+      facing,
+      DEF_R,
+      tonesFor(body, outfit, accent),
+    );
+    const f1 = (/** @type {number} */ n) => String(Math.round(n * 10) / 10);
+    const d = (/** @type {{ points: Point[] }} */ l) =>
+      `M${l.points.map((p) => `${f1(p.x)} ${f1(p.y)}`).join("L")}Z`;
+    const shadow = `<ellipse rx="${f(DEF_R * 0.75)}" ry="${f(DEF_R * 0.5)}" fill="#000" opacity="0.35"/>`;
+    // A 1.6 px outline whatever the scale.
+    const outline = `<path d="${layers.map(d).join("")}" fill="${hex(STACK_OUTLINE)}" stroke="${hex(STACK_OUTLINE)}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+    // Neighbouring layers of one colour share a path.
+    /** @type {{ colour: number, d: string }[]} */
+    const runs = [];
+    for (const l of layers) {
+      const last = runs[runs.length - 1];
+      if (last?.colour === l.colour) {
+        last.d += d(l);
+      } else {
+        runs.push({ colour: l.colour, d: d(l) });
+      }
+    }
+    const fills = runs.map((r2) => `<path d="${r2.d}" fill="${hex(r2.colour)}"/>`).join("");
+    defs.set(key, `<g id="fig-${String(defs.size)}">${shadow}${outline}${fills}</g>`);
+  }
+  const id = [...defs.keys()].indexOf(key);
+  return `<use href="#fig-${String(id)}" transform="translate(${f(x)} ${f(y)}) scale(${f(r / DEF_R)})"/>`;
+}
+
+const out = [];
+/** @type {(x: number, y: number, s: string, size?: number, fill?: string, anchor?: string, weight?: string) => void} */
+const text = (x, y, s, size = 12, fill = C.ink, anchor = "middle", weight = "normal") => {
+  out.push(
+    `<text x="${f(x)}" y="${f(y)}" font-family="monospace" font-size="${f(size)}" fill="${fill}" text-anchor="${anchor}" font-weight="${weight}">${s}</text>`,
   );
 };
-const defs = [];
-const used = new Map();
-// One def per outfit, accent, team, heading and pose, in unit space (R = 1).
-function defId(id, accentId, team, heading, pose) {
-  const key = `${id}-${accentId}-${team}-${heading}-${pose}`;
-  if (used.has(key)) return key;
-  const accent = accentId ? ACCENTS[accentId] : undefined;
-  const slices = figure(pose, OUTFITS[id], accent);
-  const facing = (heading * Math.PI) / 4;
-  const ca = Math.cos(facing),
-    sa = Math.sin(facing);
-  let lift = 0;
-  const layers = slices.map((sl) => {
-    if (!sl.same) lift++;
-    const pts = sl.parts.map((part) =>
-      part
-        .map(
-          ([x, y]) =>
-            `${(x * ca - y * sa).toFixed(2)},${((x * sa + y * ca) * 0.9 - STEP * lift).toFixed(2)}`,
-        )
-        .join(" "),
-    );
-    const tone =
-      sl.tone === "team"
-        ? TEAMS[team]
-        : sl.tone === "cape"
-          ? "#8a2a2a"
-          : sl.tone === "skin"
-            ? C.skin
-            : sl.tone === "steel"
-              ? C.steel
-              : sl.tone;
-    return { sl, pts, tone };
-  });
-  const outline = layers
-    .map(({ pts }) => pts.map((p) => `<polygon points="${p}"/>`).join(""))
-    .join("");
-  const fills = layers
-    .map(({ sl, pts, tone }) =>
-      pts
-        .map(
-          (p) =>
-            `<polygon points="${p}" fill="${shade(tone, sl.light)}"${sl.alpha < 1 ? ` opacity="${sl.alpha}"` : ""}/>`,
-        )
-        .join(""),
-    )
-    .join("");
-  defs.push(
-    `<g id="${key}"><ellipse cx="0" cy="0.08" rx="0.95" ry="0.8" fill="#000" opacity="0.5"/><g fill="${OUTLINE}" stroke="${OUTLINE}" stroke-width="0.19" stroke-linejoin="round">${outline}</g>${fills}</g>`,
-  );
-  used.set(key, true);
-  return key;
-}
-const place = (id, accentId, team, x, y, px, heading = 0, pose = "stand") =>
-  `<use href="#${defId(id, accentId, team, heading, pose)}" transform="translate(${x} ${y}) scale(${px})"/>`;
-const plate = (x, y, px, c) =>
-  `<polygon points="${[0, 1, 2, 3, 4, 5].map((i) => `${(x + px * 0.95 * Math.cos((i * Math.PI) / 3)).toFixed(1)},${(y + px * 0.86 * Math.sin((i * Math.PI) / 3)).toFixed(1)}`).join(" ")}" fill="${c}" opacity="0.55" stroke="${c}" stroke-width="1"/>`;
-const txt = (x, y, t, s = 12, c = "#d7dee8", anchor = "start") =>
-  `<text x="${x}" y="${y}" font-size="${s}" fill="${c}" text-anchor="${anchor}">${t}</text>`;
 
-const IDS = Object.keys(OUTFITS);
-const ZOOMS = [
-  [640, 20.6],
-  [860, 15.3],
-  [1100, 12],
-  [1400, 9.4],
-];
-const COL = 148,
-  X0 = 70;
-const W = X0 + 20 + COL * 10,
-  H = 970;
-let body = "";
-body += txt(
+const COL = 150;
+const X0 = 90;
+const W = X0 + COL * 10 - 20;
+let y = 30;
+text(
   20,
-  28,
-  "Profession outfit study (#4175, #4179, #4180): the stacked figure's outfit follows its primary; a secondary adds one accent. Generic gothic, 1 px #08080a outline, team colour on the torso.",
-  14,
+  y,
+  "Profession outfit study (#4175): the stacked figure's outfit follows its primary profession",
+  15,
+  C.ink,
+  "start",
+  "bold",
 );
-IDS.forEach((id, c) => {
-  const cx = X0 + COL * c + COL / 2;
-  body += txt(cx, 56, id, 14, "#e8eef6", "middle");
-  // big ally and foe, heading SE and E
-  body += plate(cx - 34, 150, 38, TEAMS.ally) + place(id, null, "ally", cx - 34, 150, 38, 0);
-  body += plate(cx + 34, 150, 38, TEAMS.foe) + place(id, null, "foe", cx + 34, 150, 38, 1);
-  // the walk frames
-  ["stand", "stride-a", "stride-b"].forEach((p, j) => {
-    body +=
-      plate(cx - 44 + j * 44, 260, 17, TEAMS.ally) +
-      place(id, null, "ally", cx - 44 + j * 44, 260, 17, 0, p);
-  });
-  // four zooms, ally above foe
-  ZOOMS.forEach(([h, px], j) => {
-    const x = cx - 54 + j * 36;
-    body += plate(x, 330, px, TEAMS.ally) + place(id, null, "ally", x, 330, px, 1);
-    body += plate(x, 380, px, TEAMS.foe) + place(id, null, "foe", x, 380, px, 1);
-  });
-});
-body +=
-  txt(10, 130, "4x", 11, "#7d8794") +
-  txt(10, 244, "walk", 11, "#7d8794") +
-  txt(10, 312, "zooms", 11, "#7d8794");
-// secondary accents on a warrior-free choice: the monk, ranger and elementalist accents on three primaries
-body += txt(
+y += 20;
+text(
   20,
-  440,
-  "Secondary accents (one each, secondary's tone): none, monk sash, elementalist ember trim, ranger belt. Shown on the warrior, necromancer and mesmer.",
-  13,
+  y,
+  "Drawn by the arena's stackLayers/stackTones. Team colour (blue ally, red foe) stays the torso and skirt; cape, emblem and the flat weapon and off-hand marks are unchanged.",
+  11,
+  C.inkDim,
+  "start",
 );
-const accents = [null, "monk", "elementalist", "ranger"];
-["warrior", "necromancer", "mesmer"].forEach((id, r) => {
-  accents.forEach((a, j) => {
-    const x = 100 + r * 480 + j * 105;
-    body += plate(x, 560, 36, TEAMS.ally) + place(id, a, "ally", x, 560, 36, 1);
-    body += txt(x, 628, a ?? "none", 11, "#9aa4b2", "middle");
-  });
-  body += txt(60 + r * 480, 650, id, 12);
-});
-// the menu figure: front on (facing the viewer = south), large, with a secondary
-body += txt(
+y += 16;
+text(
   20,
-  690,
-  "Menu figure (facing the viewer, 2x of the 4x): monk / ranger, elementalist / monk, warrior / elementalist, necromancer / none, ranger / monk",
-  13,
+  y,
+  "Primary sets torso, legs, shoulders, head, back; secondary adds one accent (sash, trim or belt). Generic gothic fantasy, not any GW1 armour set.",
+  11,
+  C.inkDim,
+  "start",
 );
-[
-  ["monk", "ranger"],
-  ["elementalist", "monk"],
-  ["warrior", "elementalist"],
-  ["necromancer", null],
-  ["ranger", "monk"],
-].forEach(([id, a], j) => {
-  const x = 130 + j * 270;
-  body += plate(x, 890, 80, TEAMS.ally) + place(id, a, "ally", x, 890, 80, 2);
-});
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="sans-serif"><rect width="${W}" height="${H}" fill="#1b1d22"/><defs>${defs.join("")}</defs>${body}</svg>`;
-writeFileSync("docs/art/profession-outfit-study.svg", svg);
-try {
-  execFileSync(
-    "inkscape",
-    ["docs/art/profession-outfit-study.svg", "-o", "/tmp/profession-outfit-study.png"],
-    { stdio: "ignore" },
-  );
-} catch {
-  console.error("inkscape failed: the preview png was not written");
+
+/** @param {string} title @param {number} at */
+function labelRow(title, at) {
+  text(20, at, title, 12, C.ink, "start", "bold");
 }
-console.log(
-  `svg ${svg.length} bytes; lifts:`,
-  Object.fromEntries(
-    IDS.map((id) => [id, figure("stand", OUTFITS[id]).filter((s) => !s.same).length]),
-  ),
+
+/** @param {string} title @param {number} body @param {number} facing @param {number} r @param {number} at */
+function outfitRow(title, body, facing, r, at) {
+  labelRow(title, at - r * 3.1);
+  ORDER.forEach((name, i) => {
+    const cx = X0 + COL * i;
+    out.push(figureSvg(cx, at, r, facing, body, name));
+    text(cx, at + r + 18, name, 11, C.inkDim);
+  });
+}
+
+y += 150;
+outfitRow(
+  "Ally, menu figure (body radius 40 px), facing the camera",
+  C.friend,
+  Math.PI * 0.5 + 0.35,
+  40,
+  y,
 );
+y += 210;
+outfitRow("Foe, same", C.foe, Math.PI * 0.5 + 0.35, 40, y);
+y += 210;
+outfitRow(
+  "Ally from the side (facing right): the silhouette each outfit reads as",
+  C.friend,
+  0,
+  40,
+  y,
+);
+
+// True size at the four camera zooms.
+const ZOOMS = [
+  ["Close", 640],
+  ["Near", 860],
+  ["Default", 1100],
+  ["Wide", 1400],
+];
+y += 160;
+ZOOMS.forEach(([zoomName, height]) => {
+  const r = 14 * (1080 / height);
+  labelRow(
+    `True size, ${String(zoomName)} (view height ${String(height)}; body radius ${f(r)} px), ally and foe side by side`,
+    y - 82,
+  );
+  ORDER.forEach((name, i) => {
+    const cx = X0 + COL * i;
+    out.push(figureSvg(cx - 26, y, r, Math.PI * 0.5 + 0.35, C.friend, name));
+    out.push(figureSvg(cx + 26, y, r, Math.PI * 0.5 - 0.35, C.foe, name));
+  });
+  y += 120;
+});
+
+// Secondary accents on the warrior.
+y += 110;
+labelRow(
+  "Secondary accents, on the warrior outfit: none, monk (white sash), elementalist (ember trim), necromancer (bone belt), assassin (red belt)",
+  y - 130,
+);
+[undefined, "monk", "elementalist", "necromancer", "assassin"].forEach((sec, i) => {
+  const cx = X0 + COL * (i * 2);
+  out.push(figureSvg(cx, y, 40, Math.PI * 0.5 + 0.35, C.friend, "warrior", sec));
+  out.push(figureSvg(cx + 70, y, 14, Math.PI * 0.5 + 0.35, C.friend, "warrior", sec));
+  text(cx + 30, y + 58, sec ?? "no secondary", 11, C.inkDim);
+});
+y += 90;
+const table = Object.entries(ACCENTS).map(([k, a]) => `${k} ${a.kind} ${hex(a.tone)}`);
+labelRow("Accent table (secondary: kind, tone): " + table.slice(0, 5).join(" · "), y);
+labelRow(table.slice(5).join(" · "), y + 18);
+y += 110;
+
+const body = `<defs>${[...defs.values()].join("\n")}</defs>\n` + out.join("\n");
+writeFileSync(
+  outFile,
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(W)} ${f(y)}" width="${f(W)}" height="${f(y)}">\n<rect width="${f(W)}" height="${f(y)}" fill="${C.bg}"/>\n${body}\n</svg>\n`,
+);
+
+// ---------------------------------------------------------------------------
+// Checks: the warrior is the game's figure; lift counts; team colour share.
+
+const lifts = (/** @type {Slice[]} */ slices) => slices.filter((s) => !s.same).length;
+/** The study's slices in the game's shape: a lift count in place of `same`. */
+/** @param {Slice[]} slices */
+function gameShape(slices) {
+  let lift = -1;
+  return slices.map(({ parts, tone, light, same, rise }) => {
+    lift += same ? 0 : 1;
+    return { parts, tone, light, lift, rise, alpha: 1 };
+  });
+}
+const same =
+  JSON.stringify(gameShape(outfitSlices(OUTFITS.warrior))) ===
+  JSON.stringify(stackSlices("stand", WARRIOR_OUTFIT, undefined));
+console.log(`builder warrior equals stackSlices("stand"): ${String(same)}`);
+if (!same) {
+  throw new Error("the study's warrior is no longer the game's stackSlices(\"stand\")");
+}
+
+/** The share of a 0.04-radius grid inside any team polygon (top-down). */
+/** @param {Slice[]} slices */
+function teamArea(slices) {
+  let hit = 0;
+  const polys = slices.filter((s) => s.tone === "team").flatMap((s) => s.parts);
+  for (let px = -1.2; px <= 1.2; px += 0.04) {
+    for (let py = -1.2; py <= 1.2; py += 0.04) {
+      if (polys.some((p) => inside(p, px, py))) {
+        hit += 1;
+      }
+    }
+  }
+  return hit;
+}
+/** @param {Point[]} poly @param {number} px @param {number} py */
+function inside(poly, px, py) {
+  let on = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > py !== b.y > py && px < ((b.x - a.x) * (py - a.y)) / (b.y - a.y) + a.x) {
+      on = !on;
+    }
+  }
+  return on;
+}
+const warrior = outfitSlices(OUTFITS.warrior);
+const baseArea = teamArea(warrior);
+for (const name of ORDER) {
+  const s = outfitSlices(OUTFITS[name]);
+  const sx = outfitSlices(OUTFITS[name], ACCENTS[name === "warrior" ? "monk" : "warrior"]);
+  const extra = lifts(sx) - lifts(warrior);
+  const added = lifts(s) - lifts(warrior);
+  const share = Math.round((100 * teamArea(s)) / baseArea);
+  if (added > 4 || extra > 4) {
+    throw new Error(
+      `${name}: lifts ${String(added)} / ${String(extra)} over the warrior's, more than 4`,
+    );
+  }
+  if (share < 80) {
+    throw new Error(`${name}: team-colour area ${String(share)} % of the warrior's, under 80 %`);
+  }
+  console.log(
+    [
+      name.padEnd(13),
+      `lifts ${String(lifts(s))} (${String(added)} vs warrior), with accent ${String(extra)}; team area ${String(share)} %`,
+    ].join(" "),
+  );
+}

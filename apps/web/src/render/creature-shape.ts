@@ -155,15 +155,6 @@ function ngon(x: number, y: number, n: number, r: number, rotation: number): Poi
   });
 }
 
-/** A star of `n` teeth, tips at `outer` and notches at `inner`, the first tip along +x. */
-function star(x: number, y: number, n: number, outer: number, inner: number): Point[] {
-  return Array.from({ length: n * 2 }, (_, k) => {
-    const angle = (k * Math.PI) / n;
-    const r = k % 2 === 0 ? outer : inner;
-    return { x: x + Math.cos(angle) * r, y: y + Math.sin(angle) * r };
-  });
-}
-
 /** A ring of radius `radius` round (`x`, `y`). */
 function ring(
   x: number,
@@ -178,8 +169,8 @@ function ring(
 
 /**
  * What a creature of look `look`, drawn at radius `r` at (`x`, `y`),
- * wears round its plate (#2047, C of #2043): ears on a pet, a toothed rim
- * on a minion (more teeth on a horror), nothing on a spirit, an `ink`
+ * wears round its plate (#2047, C of #2043): ears on a pet, nothing on a
+ * minion or horror (#4172), whose figure says it, nor on a spirit, an `ink`
  * ring on a priest, a thick `ink` hexagon on a guard, gold gems on a Guild
  * Lord, a team halo on a Ghostly Hero; on a rat (#3315) two round ears
  * ahead and a thin tail behind, along `facing`, the one look that turns.
@@ -206,28 +197,14 @@ export function creatureOrnament(
         edge: RIM_EDGE,
       }));
     case "bone-minion":
-      return [
-        {
-          kind: "polygon",
-          points: star(x, y, 10, r * 1.34, r * HEXAGON_SCALE),
-          colour: "team",
-          edge: RIM_EDGE,
-        },
-      ];
     case "bone-horror":
     case "bone-fiend":
     case "vampiric-horror":
     case "shambling-horror":
     case "jagged-horror":
     case "flesh-golem":
-      return [
-        {
-          kind: "polygon",
-          points: star(x, y, 12, r * 1.34, r * HEXAGON_SCALE),
-          colour: "team",
-          edge: RIM_EDGE,
-        },
-      ];
+      // Its stacked figure is the cue the rim was (#4172).
+      return [];
     case "spirit":
       // Its wisp is the plate (#3306), and its range ring is on the ground.
       return [];

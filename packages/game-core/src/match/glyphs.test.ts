@@ -107,8 +107,8 @@ describe("Glyph of Lesser Energy (#526)", () => {
       expect(match.requestSkill("e", 1)?.check).toEqual({ ok: true });
       // Fireball costs 10: 16 less is 0, never a refund.
       expect(caster.energy).toBe(before);
-      // Past Fireball's cast and 7 s recharge, inside the glyph's 15 s.
-      stepFor(match, 8.5);
+      // Past Fireball's 1.5 s cast and 7 s recharge, inside the glyph's 15 s.
+      stepFor(match, 8.6);
     }
     expect(caster.statuses.has("glyph-of-lesser-energy")).toBe(false);
     const before = caster.energy;

@@ -2,7 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, dot, sub } from "../../../vec2.js";
 import type { BehaviourCursor, BehaviourIntent, HighGroundSpot } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { harmfulZonesHolding } from "../../zones.js";
+import { harmAround, harmHolding } from "../hostile-ground.js";
 import { botUses, type BotUse } from "../skill-intent.js";
 import { NOTHING, POSITION_SLACK, healthFraction, nearJammedGoal } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
@@ -192,6 +192,7 @@ function cover(
 ): { readonly spot: HighGroundSpot; readonly left: number } | undefined {
   const { context, self, foeCentroid } = rule;
   const toFoes = foeCentroid === undefined ? undefined : sub(foeCentroid, self.position);
+  const harm = harmAround(context.objectives, self.combatant.team);
   const near = [...context.highGround, ...context.cover]
     .filter(
       (spot) =>
@@ -199,7 +200,7 @@ function cover(
         distance(spot.point, self.position) <= DUCK_REACH &&
         (toFoes === undefined ||
           dot(sub(spot.point, self.position), toFoes) <= dot(toFoes, toFoes)) &&
-        harmfulZonesHolding(context.objectives.harmfulZones, spot.point, spot.layer).length === 0 &&
+        harmHolding(harm, spot.point, spot.layer).length === 0 &&
         !nearJammedGoal(context, spot.point, spot.layer),
     )
     .sort((a, b) => distance(a.point, self.position) - distance(b.point, self.position))

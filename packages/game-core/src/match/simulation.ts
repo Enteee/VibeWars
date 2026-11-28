@@ -171,6 +171,7 @@ import {
   preventsAttacks,
   reducedRecharge,
   scaledStatusDuration,
+  wholeSeconds,
   stackedRechargeFaster,
   STATUS_DEFINITIONS,
   StatusSet,
@@ -301,6 +302,7 @@ import {
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
+import { hostileGroundOf } from "./bot/hostile-ground.js";
 import { flankWaypoint, PLAN_SECONDS, planPhase, teamPlan } from "./bot/plan.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import { botRoll } from "./bot/rules/shared.js";
@@ -1791,6 +1793,11 @@ export class MatchSimulation {
    * pass has nothing to do.
    */
   #auras = false;
+  /**
+   * Whether the last caster-half pass found a linked hex (#4167): with none
+   * now and none then, nobody holds a linked status.
+   */
+  #links = false;
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -2008,6 +2015,12 @@ export class MatchSimulation {
     return this.#planOverrides.get(team);
   }
 
+  /** The team target bot `id` last chose (#4188), not a cast aimed aside: `undefined` for one that is not a bot, or has none. */
+  public botTargetOf(id: string): string | undefined {
+    const record = this.#participants.get(id);
+    return record?.behaviour?.kind === "play-build" ? record.cursor.focusId : undefined;
+  }
+
   public get score(): MatchScore {
     return this.#score;
   }
@@ -2145,6 +2158,12 @@ export class MatchSimulation {
 
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
+  }
+
+  /** `id`'s current movement-speed factor, 1 at base (#4166); an unknown id: 1. */
+  public moveSpeedFactorOf(id: string): number {
+    const record = this.#participants.get(id);
+    return record === undefined ? 1 : this.#speedOf(record);
   }
 
   /**
@@ -2825,6 +2844,20 @@ export class MatchSimulation {
         (effect.act.kind === "trap" && effect.act.trap.springsAtEnd) ||
         (effect.act.kind === "pulse" && effect.act.atEnd !== undefined),
     );
+  }
+
+  /**
+   * The ground effects bots step out of (#4193), each step while there is
+   * one or bots still read one: unlike the objectives above, they come,
+   * pulse and end all the time.
+   */
+  #refreshHostileGround(): void {
+    if (this.#groundEffects.length > 0 || this.#botObjectives.hostileGround.length > 0) {
+      this.#botObjectives = {
+        ...this.#botObjectives,
+        hostileGround: hostileGroundOf(this.#groundEffects),
+      };
+    }
   }
 
   /**
@@ -4515,6 +4548,7 @@ export class MatchSimulation {
     }
     this.#countControlled();
     this.#advanceGroundEffects(dt);
+    this.#refreshHostileGround();
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
@@ -4638,6 +4672,7 @@ export class MatchSimulation {
     this.#fireEnergyEmpty();
     this.#fireSourceApart();
     this.#spreadStatuses();
+    this.#linkCasterStatuses();
     this.#fireStatusChanges();
     this.#breakBonds();
     this.#awardKillMorale();
@@ -4771,6 +4806,76 @@ export class MatchSimulation {
   }
 
   /**
+   * Hold every hex's caster half (#4167), once everyone has acted: a
+   * living caster holds a hex's `casterStatus` once for each of its hexes
+   * of that id alive on a living bearer, at the longest one's clock, and
+   * loses it the step its last one ends, however that one ended. A recast
+   * on the same foe is one hex, so it counts once.
+   */
+  #linkCasterStatuses(): void {
+    let links:
+      | Map<
+          string,
+          Map<StatusId, { stacks: number; remainingSeconds: number; durationSeconds: number }>
+        >
+      | undefined;
+    for (const record of this.#participants.values()) {
+      if (record.combatant.dead) {
+        continue;
+      }
+      for (const status of record.combatant.statuses.active) {
+        const { casterStatus } = getStatusDefinition(status.id);
+        if (casterStatus === undefined) {
+          continue;
+        }
+        links ??= new Map();
+        let held = links.get(status.sourceId);
+        if (held === undefined) {
+          held = new Map();
+          links.set(status.sourceId, held);
+        }
+        const link = held.get(casterStatus);
+        if (link === undefined) {
+          held.set(casterStatus, {
+            stacks: 1,
+            remainingSeconds: status.remainingSeconds,
+            durationSeconds: status.durationSeconds,
+          });
+        } else {
+          link.stacks += 1;
+          if (status.remainingSeconds > link.remainingSeconds) {
+            link.remainingSeconds = status.remainingSeconds;
+            link.durationSeconds = status.durationSeconds;
+          }
+        }
+      }
+    }
+    if (links === undefined && !this.#links) {
+      return;
+    }
+    this.#links = links !== undefined;
+    for (const record of this.#participants.values()) {
+      const { statuses } = record.combatant;
+      const held = record.combatant.dead ? undefined : links?.get(record.id);
+      for (const status of statuses.active) {
+        if (getStatusDefinition(status.id).linked && held?.has(status.id) !== true) {
+          statuses.remove(status.id);
+        }
+      }
+      for (const [statusId, link] of held ?? []) {
+        statuses.link(
+          statusId,
+          record.id,
+          statusRanks(statusId, record.combatant),
+          link.stacks,
+          link.remainingSeconds,
+          link.durationSeconds,
+        );
+      }
+    }
+  }
+
+  /**
    * Spreading statuses (#765), once everyone has acted: every living
    * combatant of the bearer's own species (#3881, `speciesOf`)
    * adjacent to a living bearer, on either team, catches it for
@@ -4838,7 +4943,10 @@ export class MatchSimulation {
         const had = other.combatant.statuses.has(status.id);
         other.combatant.statuses.catch(
           status.id,
-          scaledStatusDuration(other.combatant, status.id, remainingSeconds),
+          wholeSeconds(
+            remainingSeconds,
+            scaledStatusDuration(other.combatant, status.id, remainingSeconds),
+          ),
           status.sourceId,
           outbreak,
           status.ranks,
@@ -5439,6 +5547,7 @@ export class MatchSimulation {
       walkable: (point) =>
         isStandable(this.#graphOn(record.layer), point) &&
         walkIsClear(this.#graphOn(record.layer), record.position, point),
+      speedOf: (participantId) => this.moveSpeedFactorOf(participantId),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,
@@ -5488,6 +5597,10 @@ export class MatchSimulation {
       this.#moveInterrupts(record);
     }
     this.setTarget(record.id, intent.targetId);
+    // Only the swing (#4199): the cast, the queue and the walk go on.
+    if (intent.stopAttack) {
+      record.combatant.attack = undefined;
+    }
     // Asked only when the attack wanted is not the one going, as a player
     // presses Space once: a pet switches with its owner (#1046). So is
     // the walk to a relic (#2581).
@@ -5520,7 +5633,10 @@ export class MatchSimulation {
         const loss = applyStatus(
           target,
           application.statusId,
-          scaledStatusDuration(target, application.statusId, application.durationSeconds),
+          wholeSeconds(
+            application.durationSeconds,
+            scaledStatusDuration(target, application.statusId, application.durationSeconds),
+          ),
           record.id,
           statusRanks(application.statusId, record.combatant),
         );
@@ -7850,6 +7966,12 @@ export class MatchSimulation {
     if (this.#harmfulZones.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZonesNow() };
     }
+    if (this.#groundEffects.length > 0) {
+      this.#botObjectives = {
+        ...this.#botObjectives,
+        hostileGround: hostileGroundOf(this.#groundEffects),
+      };
+    }
     if (this.#switches.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, levers: this.#botLevers };
     }
@@ -8359,10 +8481,12 @@ export class MatchSimulation {
     }
     const next = damageBreakable(wall, amount);
     this.#breakables[at] = next;
+    const taken = wall.health - next.health;
     events.push({
       kind: "damage",
       targetId: breakableTargetId(wall.id),
-      amount: wall.health - next.health,
+      amount: taken,
+      unreduced: taken,
       critical: false,
     });
     if (!standing(next)) {
@@ -9716,8 +9840,11 @@ export class MatchSimulation {
   /**
    * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
    * warrior under pressure builds it. Each `damage` in `events` that
-   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * `source` dealt a living foe gives that foe `floor(100 × unreduced /
    * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * `unreduced` is what the hit took before the flat per-hit cuts, Shielding
+   * Hands's or Shield of Absorption's (#4163): GW1 counts adrenaline
+   * "before damage reduction", so they do not slow it.
    * Called where a skill, a swing, a shot or a spell lands, never for
    * degeneration; an ally's or your own damage, and a lethal hit, give
    * nothing. A `source` gone from the match is no one's foe. A hit for
@@ -9739,7 +9866,7 @@ export class MatchSimulation {
       }
       gainUnits(
         victim.combatant,
-        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+        Math.floor((100 * event.unreduced) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
         false,
       );
@@ -9932,6 +10059,10 @@ export class MatchSimulation {
           this.#sparedDeaths.delete(victim.combatant.id) ||
           victim.combatant.statuses.active.some(({ id }) => getStatusDefinition(id).noDeathPenalty);
         victim.combatant.statuses.endAll();
+        // Life Siphon and its kin leave every bearer with their caster (#4165).
+        for (const other of this.#participants.values()) {
+          other.combatant.statuses.endFromDeadSource(victim.combatant.id);
+        }
         victim.armedAttack = undefined;
         victim.diedAtTick = this.#tick;
         this.#clearChainMarks(victim);

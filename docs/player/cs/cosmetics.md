@@ -11,23 +11,19 @@ nerozdává: kdokoli si může žebříček ověřit a vidět, co jsi získal.
 | ----------------------------------------- | ------------------------ |
 | Nefritový rámeček a titul Vyzyvatel       | 5 hodnocených výher      |
 | Mechová aura, Mechová stopa, Mechový švih | 5 hodnocených výher      |
-| Pruhovaný plášť                           | 5 hodnocených výher      |
 | Rámeček znaku v barvě lemu                | 5 hodnocených výher      |
 | Růžový rámeček a titul Veterán            | 25 hodnocených výher     |
 | Žhavá aura, Žhavá stopa, Žhavý švih       | 25 hodnocených výher     |
-| Krokvicový plášť                          | 25 hodnocených výher     |
 | Stoupající světlo, Rozpad v popel         | 25 hodnocených výher     |
 | Mrazivá aura, Mrazivá stopa, Mrazivý švih | 75 hodnocených výher     |
 | Vír listí, Rozpad v mlhu                  | 75 hodnocených výher     |
 | Železný rámeček znaku                     | 75 hodnocených výher     |
 | Tyrkysový rámeček a titul Vojevůdce       | 200 hodnocených výher    |
-| Čtvrcený plášť                            | 200 hodnocených výher    |
 | Padající okvětí, Rozpad na střepy         | 200 hodnocených výher    |
 | Stříbrný rámeček znaku                    | 200 hodnocených výher    |
 | Hvězdná aura, Hvězdná stopa, Hvězdný švih | 500 hodnocených výher    |
 | Padající hvězdy, Rozpad v hvězdný prach   | 500 hodnocených výher    |
 | Orchidejový rámeček a titul Šampion       | Místo v Top 100          |
-| Hvězdný plášť                             | Místo v Top 100          |
 | Pozlacený rámeček znaku                   | Místo v Top 100          |
 | Plamen vítězné série                      | 3 hodnocené výhry v řadě |
 
@@ -38,9 +34,9 @@ zápas, a vrátí se k výchozímu vzhledu, dokud je znovu nezískáš. Co sis v
 
 Aura na zemi je slabý kruh u tvých nohou. Stopa kroků zanechává tam, kudy jdeš, drobné částečky, které během okamžiku zmizí. Obojí se kreslí pod každý kruh, značku a varování a nikdy nemá barvu týmu. Když máš v systému zapnutý omezený pohyb, aura stojí na místě a žádná stopa se nekreslí.
 
-## Na zbrani a plášti
+## Na zbrani
 
-Stopa zbraně je stuha za tvou zbraní, když zasáhne útok na blízko, a vybledne do pětiny sekundy od zásahu. Luky, kopí, hůlky a hole žádnou nemají a žádné kouzlo ani sesílání ji nikdy neukáže. Vzor pláště nanese na tvůj plášť cechu pruhy, krokve, čtvrtiny nebo hvězdy v jeho vlastní barvě lemu a tvůj znak vždy zůstane navrchu, stejně zřetelný jako na hladkém plášti. Když máš v systému zapnutý omezený pohyb, žádná stopa zbraně se nekreslí.
+Stopa zbraně je stuha za tvou zbraní, když zasáhne útok na blízko, a vybledne do pětiny sekundy od zásahu. Luky, kopí, hůlky a hole žádnou nemají a žádné kouzlo ani sesílání ji nikdy neukáže. Když máš v systému zapnutý omezený pohyb, žádná stopa zbraně se nekreslí.
 
 ## Návrat a pád
 
@@ -58,7 +54,7 @@ Text vedle řady (na telefonu pod ní) jmenuje vzorek, na který ukazuješ nebo 
 se získává. Zamčený vzorek je ztlumený, s malým zámkem. Tvá volba platí hned. Ostatní hráči ji uvidí
 od příští lobby, do které vstoupíš.
 
-Nad řádky má tvá postava na sobě tvůj vzhled a stojí, chodí a máchá zbraní, takže auru, stopu i stopu zbraně vidíš v pohybu. Podrž vzorek a vyzkoušíš si ho, i zamčený: řádek říká, co si prohlížíš, a dokud je zamčený, čím se získává. Pusť na získané položce a budeš ji nosit. Pusť na zamčené nebo sjeď ze vzorku a nic se nezmění. Na klávesnici podrž na vzorku mezerník.
+Vedle řádků (na telefonu nad nimi) má tvá postava na sobě tvůj vzhled a prochází se kolem: chodí, stojí, máchá zbraní a sesílá kouzla, takže auru, stopu i stopu zbraně vidíš v pohybu. Při posouvání zůstává na očích. Výběry Primární a Sekundární pod ní ukazují vzhled na libovolné dvojici profesí; mění jen náhled, nikdy tvou postavu. Podrž vzorek a vyzkoušíš si ho, i zamčený: řádek říká, co si prohlížíš, a dokud je zamčený, čím se získává. Pusť na získané položce a budeš ji nosit. Pusť na zamčené nebo sjeď ze vzorku a nic se nezmění. Na klávesnici podrž na vzorku mezerník.
 
 ## Kosmetika ostatních hráčů
 

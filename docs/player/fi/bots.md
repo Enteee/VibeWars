@@ -28,7 +28,12 @@ Botti, jolla on kaksi tai useampia parannuksia tai suojauksia, joita se voi
 loitsia liittolaiseen, on **parantaja**: se seisoo eniten haavoittuneen
 liittolaisen takana, poissa vihollisten luota. Kun kaksi tai useampia
 vihollisia keskittyy yhteen liittolaiseen, parantaja laittaa suojauksensa
-tuohon liittolaiseen ennen kuin osuma osuu. Jokainen muu botti on
+tuohon liittolaiseen ennen kuin osuma osuu. Parantaja säästää tarpeeksi
+energiaa halvimpaan parannukseensa tai suojaukseensa ja käyttää sen alle
+vain todellisessa vaarassa olevaan liittolaiseen. Botti, jolla on kaksi
+kirousta, langettaa halvan kirouksensa tärkeän päälle, jotta vihollisen
+kirouksenpoisto vie ensin halvan. Botti, jolla on energian riisto, polttaa
+vihollisen parantajan energiaa, ei Warriorin. Jokainen muu botti on
 **kaukotaistelija**: se pysyttelee siellä, minne kaikki sen hyökkäykset
 ylettyvät, ja pysähtyy taistelemaan liian lähelle tulevaa vihollista
 vastaan. Kaukotaistelijabotit ja parantajat siirtyvät paikkoihin, joihin
@@ -49,7 +54,9 @@ Botti, jolla on rampauttava tai hidastava taito, käyttää sen viereensä tulle
 
 Aluetaitoja käyttävää joukkuetta vastaan kaukotaistelijabotit ja parantajat pysyvät erillään, jotta yksi räjähdys ei osu kahteen. Ne eivät koskaan luovu suojasta sen vuoksi.
 
-Kaukotaistelija tai parantaja, jonka luo vihollinen tulee liian lähelle, vetäytyy ensin lähimmän etulinjan tiimiläisensä luo, jos tämä on tarpeeksi lähellä, ja taistelee siellä.
+Kaukotaistelija tai parantaja, jonka luo vihollinen tulee liian lähelle, vetäytyy ensin lähimmän etulinjan tiimiläisensä luo, jos tämä on tarpeeksi lähellä, ja taistelee siellä. Hidastettu lähitaistelija, esimerkiksi rampautettu, ei pysy perässä, joten sitä vastaan botti perääntyy sen sijaan laukausten välissä.
+
+Botti, jolla on hyökkäämisestä tai loitsimisesta rankaiseva kirous, kuten Empathy tai Backfire, lopettaa sen, kunnes kirous päättyy.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.
@@ -65,6 +72,8 @@ eikä odota lainkaan viimeistelläkseen vihollisen, jonka terveys on alle
 30 %. Kun kohde on suojaavan lumouksen, kuten Protective Spiritin tai
 Aegisin, alla, botti, jolla on lumouksen riisuva taito, kuten Strip
 Enchantment, poistaa sen ensin, ja muut pidättävät iskujaan sitä varten.
+Jos joukkueella ei ole lumouksen riisuvaa taitoa, botit jättävät suojatun
+vihollisen ja kääntyvät toiseen, kunnes lumous päättyy.
 
 Pahasti haavoittunut botti, joka on häviämässä taistelunsa, vetäytyy
 parantajansa taakse tai tukikohtaansa ja lepää ulottumattomissa, kunnes
@@ -81,6 +90,7 @@ toimii niille kuten sinullekin.
 
 Botit kiertävät palavan maan ja muut haitalliset alueet, kun kiertotie ei
 ole paljon pidempi, ja astuvat pois alueelta, jolla seisovat.
+Ne astuvat myös pois vastustajan vahingolliselta alueelta, kuten kaivosta, niitä vastaan suunnatusta suojasta tai myrskystä, ja taistelevat sen reunalta.
 
 Keskeytystaidolla varustettu botti säästää sen tärkeitä käyttöjä varten:
 ensin henkiin herättäminen tai alttaria valtaava aavesankari, sitten
@@ -91,6 +101,15 @@ Pelaajan tavoin se missaa noin yhden neljästä tällaisesta käytöstä.
 Botilta kuluu ihmismäinen hetki, sekunnin murto-osa, reagoida
 tapahtumiin, joten nopea keskeytys tai myöhäinen väistö voi päihittää
 sen.
+
+Kun kukaan tiimissäsi ei ole ilmoittanut kohdetta, yksi boteistasi
+ilmoittaa vihollisen, johon botit keskittyvät, aivan kuten sinä
+tekisit: näet merkin ja botin nimen, joten voit liittyä mukaan. Botin
+ilmoitus näyttää vain, minne botit ovat menossa; ne suojaavat silti
+tiimitoveria ja viimeistelevät kuolevan vihollisen. Oma ilmoituksesi
+voittaa aina: jokainen tiimin botti keskittyy kohteeseesi, mikään botti
+ei korvaa ilmoitustasi, ja botit ilmoittavat uudelleen vasta, kun
+ilmoitettu kohde on kuollut tai poissa.
 
 Kolmen tiimin taistelussa botit taistelevat yhtä vihollistiimiä vastaan
 kerrallaan: tiimiä, joka hyökkää niiden kimppuun, tai, kun kukaan ei

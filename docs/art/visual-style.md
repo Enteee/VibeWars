@@ -240,7 +240,20 @@ outlines, and the noise fill on a map without one.
   floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
   helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
   colour at its cap, its robe in friend or foe colour, its profession glyph
-  on a dark badge disc on top. Creatures and fallen bodies stay discs.
+  on a dark badge disc on top. Its outfit follows its primary profession
+  and carries one accent of its secondary (#4175, #4179, #4180, `profession-outfits.ts`):
+  `profession-outfits-match.png`, ally over foe. It turns in 16 headings, the atlas baking
+  the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
+  shadow lies on the ground under it, not in its frame. A creature with a
+  figure (#4171, `creatureSlices`, after `docs/art/creature-stack-study.md`)
+  is stacked the same way, on its team-coloured hexagon plate, which stays
+  on the ground and is never baked in; a Ghostly Hero is a pale blue-grey
+  body at 0.75 alpha with its axe and no cape, its glyph on a badge on
+  top. A creature with no figure yet, a knocked-down one and fallen
+  bodies stay discs. At match zoom: `creature-stack-match.png`, discs left,
+  figures right.
+  Its outfit follows its primary profession, one accent its secondary, the
+  team colour staying torso and skirt ([study](profession-outfit-study.svg)).
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
@@ -283,28 +296,33 @@ same place. A map of one layer draws flat, so it has none.
 
 ## 5. Animation timing
 
-| Thing            | Timing                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| Zone fill breath | one cycle every **1.6 s** (`PULSE_SECONDS`), fill alpha ± pulse                     |
-| Fire flicker     | two sines, changing every **66 ms** (`FLICKER_INTERVAL_MS`)                         |
-| Water ripple     | **5 s** period, 3 units of drift (`RIPPLE_PERIOD_SECONDS`)                          |
-| Idle loops       | **1 to 6 s**; never faster than a heartbeat, never above 3 Hz                       |
-| Strike telegraph | the edge goes 2.5× wider and the fill 60 % within **0.3 s** of the warning starting |
-| Strike           | full fill, edge stays 2.5× wide                                                     |
-| Overhang fade    | to 0.35 alpha and back over **0.2 s** (`OVERHANG_FADE_SECONDS`); at once, reduced   |
+| Thing            | Timing                                                                                 |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| Zone fill breath | one cycle every **1.6 s** (`PULSE_SECONDS`), fill alpha ± pulse                        |
+| Fire flicker     | two sines, changing every **66 ms** (`FLICKER_INTERVAL_MS`)                            |
+| Water ripple     | **5 s** period, 3 units of drift (`RIPPLE_PERIOD_SECONDS`)                             |
+| Idle loops       | **1 to 6 s**; never faster than a heartbeat, never above 3 Hz                          |
+| Strike telegraph | the edge goes 2.5× wider and the fill 60 % within **0.3 s** of the warning starting    |
+| Strike           | full fill, edge stays 2.5× wide                                                        |
+| Overhang fade    | to 0.35 alpha and back over **0.2 s** (`OVERHANG_FADE_SECONDS`); at once, reduced      |
+| Body walk        | 4 frames per **64 units** walked (`STACK_STRIDE_UNITS`), so a snare slows the stride   |
+| Cape settle      | **0.4 s** after a body stops (`STACK_CAPE_SETTLE_SECONDS`), half of it on a pass frame |
+| Body breath      | one breath every **3 s** (`STACK_BREATH_SECONDS`), each body at its own phase          |
+| Body turn        | **0.12 s** to a new heading (`STACK_TURN_SECONDS`), the short way round                |
 
 - **Danger must read in under 0.3 s**: the telegraph's change is a jump, not
   a fade, and it is a change of **edge width and brightness**, which survive
   colour blindness.
 - **Reduced motion** (`still`): breath, ripples, flicker and drift hold still
-  at their mean. **Telegraph and strike are not decoration**: they stay, as
+  at their mean; a body stands, never striding, swaying, breathing or
+  leaning, and only its heading turns it. **Telegraph and strike are not decoration**: they stay, as
   states, because a player acts on them.
 - Idle motion is calm and low-contrast. The more a thing can hurt, the less
   it may distract from the fight: fog may breathe at 0.14, mire at 0.03.
 
 Now: `zone-look.ts` (`zoneFillAlpha`, `strikeEdgeScale`), `hazard-marks.ts`
 (`hazardVisual`), `water-shape.ts`,
-`lighting-model.ts` (`flickerAt`).
+`lighting-model.ts` (`flickerAt`), `sprite-stack.ts` (`stackPose`, `stepTurn`).
 
 ## 6. Gameplay readability
 
@@ -343,9 +361,13 @@ Every rule below can be checked from one screenshot.
     under bodies; an upward chevron in the same blue stands over each body
     of the caster's side it helped, above the health bar and any hex halo,
     for 1 s. Neither is team-coloured (#3301).
-13. **A spirit** is a pale-green `#76c96f` wisp, a teardrop point up round
-    a near-white core, bobbing ±2 px over 2 s (still under reduced motion),
-    with a 1.5 px team rim. Its range is a solid 1.5 px ring in the same
+13. **A spirit** is a stacked totem (#4171) on its team-coloured hexagon
+    plate: a short dark stone base `#4a4a50`, then a wisp column narrowing
+    upward over nine slices, pale green `#76c96f` rising to near-white
+    `#e8f7e4` and fading as it rises. One heading, one pose: it never
+    turns. The whole figure bobs ±2 px over 2 s (still under reduced
+    motion). Until its figure is baked it is the flat wisp, a teardrop
+    point up round a near-white core, with a 1.5 px team rim. Its range is a solid 1.5 px ring in the same
     green at its aura's real radius, on the ground under bodies, alpha
     0.18, 0.45 while targeted or hovered. Solid, since a spirit's area is
     not harmful ground, whatever it does (#3306).
@@ -355,6 +377,27 @@ Every rule below can be checked from one screenshot.
     alpha 0.4, to 12 px, alpha 0.55; on release the weapon strikes and the
     glow becomes a 16 px white flash, gone in 0.15 s; stopped short, it
     shrinks to nothing and greys in 0.2 s. An instant skill shows none (#3320).
+15. **A Necromancer's minion** is a stacked figure (#4172) on its
+    team-coloured plate, told apart by silhouette alone; its look icon
+    stays the exact name. A **bone minion**, the smallest figure, is a
+    hunched skeleton: rib rings in bone `#d8d0bc` round dark gaps, a
+    skull on top. A **horror** is the same skeleton, larger and broader,
+    and each kind carries its cue: the bone fiend a bone spike off its
+    back, the vampiric horror a dark red `#7a1f2b` glow over its ribs,
+    the shambling horror stooped and uneven with one arm hanging, the
+    jagged horror bone spurs at its shoulders. The **flesh golem** is the
+    widest and tallest, a pale flesh mass `#b9a58f` banded by dark
+    stitched seams, a fist at each side and a small head. All turn in 8
+    headings and walk in stand and two strides; under reduced motion they
+    stand, as a body does. No rim teeth: the silhouette is the type cue.
+    Standing, its glyph rides a badge over its own figure's height, as a
+    body's does, and its bars and name clear that badge; dead or knocked
+    down it is its disc again.
+
+    Worked example (`minion-figures.png`), at match zoom: the standing
+    figures, ally and foe, bone minion to flesh golem, each glyph on its badge.
+
+    ![minion figures](visual-style/minion-figures.png)
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

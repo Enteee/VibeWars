@@ -780,7 +780,7 @@ body {
   letter-spacing: normal;
 }
 
-.options-window .options-body {
+.options-window .flyout-rail {
   padding-inline-end: 2.25rem;
 }
 
@@ -2122,41 +2122,6 @@ body:has(> .splash) #menu-background::after {
   transform: rotate(-20deg);
 }
 
-/* A cape: its pattern in the player's own cape's cloth and trim. */
-.cosmetics-swatch[data-kind="cape"] .cosmetics-swatch-art {
-  width: 24px;
-  height: 28px;
-  border-radius: 2px 2px 8px 8px;
-  border: 1px solid var(--swatch-trim);
-  background: var(--swatch);
-}
-
-.cosmetics-swatch[data-variant="stripes"] .cosmetics-swatch-art {
-  background: repeating-linear-gradient(90deg, var(--swatch) 0 4px, var(--swatch-trim) 4px 8px);
-}
-
-.cosmetics-swatch[data-variant="chevrons"] .cosmetics-swatch-art {
-  background:
-    linear-gradient(135deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
-    linear-gradient(225deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
-    var(--swatch);
-}
-
-.cosmetics-swatch[data-variant="quarters"] .cosmetics-swatch-art {
-  background: conic-gradient(
-    var(--swatch) 0 25%,
-    var(--swatch-trim) 0 50%,
-    var(--swatch) 0 75%,
-    var(--swatch-trim) 0
-  );
-}
-
-.cosmetics-swatch[data-kind="cape"][data-variant="stars"] .cosmetics-swatch-art {
-  background:
-    radial-gradient(circle, var(--swatch-trim) 0 1.5px, transparent 2px) 0 0 / 8px 8px,
-    var(--swatch);
-}
-
 /* A spawn-in style: motes gathering to a bright core. */
 .cosmetics-swatch[data-kind="spawn"] .cosmetics-swatch-art {
   background:
@@ -2227,8 +2192,42 @@ body:has(> .splash) #menu-background::after {
   }
 }
 
-.cosmetics-note {
-  color: var(--ink-dim);
+/* The figure at the side of the rows (#4177), staying in view while they scroll. */
+.cosmetics-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.cosmetics-preview-column {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* The pane would scroll sideways and so hold the sticky figure fast: Cosmetics never needs it. */
+.options-pane:has(.cosmetics-layout) {
+  overflow-x: visible;
+}
+
+.cosmetics-professions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cosmetics-professions .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cosmetics-professions select {
+  width: 100%;
 }
 
 /* The figure wearing the shown look (#3989), its nameplate above it, as in the lobby. */
@@ -2237,7 +2236,7 @@ body:has(> .splash) #menu-background::after {
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  margin: 0 auto 0.6rem;
+  margin: 0 auto;
   width: 160px;
 }
 
@@ -2257,6 +2256,27 @@ body:has(> .splash) #menu-background::after {
 @media (max-width: 479px) {
   .cosmetics-preview-figure {
     height: 120px;
+  }
+
+  /* On a phone the figure sits on top, the rows scrolling under it. */
+  .cosmetics-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Stuck over the window's padding too, so no swatch ring peeks out round it. */
+  .cosmetics-preview-column {
+    top: -1rem;
+    margin: -1rem -0.5rem 0;
+    padding: 1rem 0.5rem 0.4rem;
+    background: rgb(14 17 22);
+  }
+
+  .cosmetics-professions {
+    flex-direction: row;
+  }
+
+  .cosmetics-professions .field {
+    flex: 1;
   }
 }
 
@@ -4322,28 +4342,6 @@ body:has(> .splash) #menu-background::after {
   width: min(52rem, 100%);
 }
 
-.options-body {
-  display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.options-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.screen button.options-entry {
-  text-align: start;
-}
-
-.screen button.options-entry.is-selected {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .options-pane {
   display: flex;
   flex-direction: column;
@@ -4353,15 +4351,125 @@ body:has(> .splash) #menu-background::after {
   overflow-x: auto;
 }
 
-/* Narrow: the section list becomes a row above the section. */
+/* --- flyout rail (#4216) ------------------------------------------------ */
+
+/* A flyout's sub-pages, Help's and Options': a rail of entries beside the
+   page. A long title wraps to two lines rather than being cut. */
+.flyout-rail {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.flyout-rail-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.screen button.flyout-rail-entry {
+  text-align: start;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.screen button.flyout-rail-entry[aria-current="page"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.flyout-rail-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The back arrow and the page's title: only on a drilled-in narrow page. */
+.flyout-rail-back {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-end: 0.7rem;
+  margin-inline-end: 2.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.screen button.flyout-rail-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--accent);
+}
+
+/* A chevron, not a glyph: it points back to the list in either reading direction (#4237). */
+.flyout-rail-back-button::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-block-end: 2px solid currentcolor;
+  border-inline-start: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.flyout-rail-back-button:dir(rtl)::after {
+  transform: rotate(-45deg);
+}
+
+.flyout-rail-title {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: break-word;
+}
+
+/* Narrow: the rail is a list; an entry drills into its page, back returns. */
 @media (width <= 52rem) {
-  .options-body {
+  .flyout-rail {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .options-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .flyout-rail:not(.is-drilled) .flyout-rail-main,
+  .flyout-rail.is-drilled .flyout-rail-nav {
+    display: none;
+  }
+
+  .flyout-rail.is-drilled .flyout-rail-back {
+    display: flex;
+  }
+
+  .flyout-rail.is-drilled .flyout-rail-main {
+    animation: flyout-rail-drill 0.15s ease-out;
+  }
+
+  .screen button.flyout-rail-entry {
+    min-height: 44px;
+  }
+
+  /* Clear of the window's close button, as the back bar is. */
+  .screen button.flyout-rail-entry:first-child {
+    margin-inline-end: 2.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flyout-rail.is-drilled .flyout-rail-main {
+    animation: none;
+  }
+}
+
+@keyframes flyout-rail-drill {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flyout-rail.is-drilled .flyout-rail-main {
+    animation: none;
   }
 }
 
@@ -4378,7 +4486,7 @@ body:has(> .splash) #menu-background::after {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  width: min(640px, calc(100vw - 16px));
+  width: min(800px, calc(100vw - 16px));
   max-height: calc(100vh - var(--help-top, 3rem) - 0.3rem - 8px);
   overflow-y: auto;
   padding: 1rem;
@@ -4390,17 +4498,33 @@ body:has(> .splash) #menu-background::after {
   letter-spacing: normal;
 }
 
-/* The page scrolls between the picker and the foot, which stay put. */
-.help-window .help-page {
+/* The rail and the page scroll each on their own, between the × and the
+   foot, which stay put (#4216). */
+.help-window .flyout-rail {
   flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.help-window .flyout-rail-nav {
   min-height: 0;
   overflow-y: auto;
 }
 
+.help-window .flyout-rail-main {
+  min-height: 0;
+}
+
 /* Clear of the × at the window's top right. */
-.help-picker {
-  align-self: flex-start;
-  max-width: calc(100% - 2.5rem);
+.help-window .flyout-rail-main {
+  padding-top: 2rem;
+}
+
+.help-window .help-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .help-footer {
@@ -4599,6 +4723,47 @@ body:has(> .splash) #menu-background::after {
 .keys-warning {
   color: var(--ink-dim);
   font-size: 0.85rem;
+}
+
+/* Narrow (#4238): a row stacks, its action over its two keys side by
+   side, each half the pane, so no row is wider than a phone. */
+@media (width <= 52rem) {
+  .keys-table,
+  .keys-table tbody {
+    display: block;
+  }
+
+  .keys-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.4rem;
+  }
+
+  .keys-table th,
+  .keys-table td {
+    padding-inline: 0;
+  }
+
+  .keys-action,
+  .keys-table th.keys-group-title,
+  .keys-warning {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  /* An empty warning or a fixed row's spare cells would stand a row of their own. */
+  .keys-table td:empty {
+    display: none;
+  }
+
+  .screen button.key-cell,
+  .key-cell.is-fixed {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+  }
 }
 
 .keys-line {
@@ -6670,12 +6835,15 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* The 2px an elite's frame reaches past its box (#459) is padded in, so
+   the list neither clips the frame nor scrolls sideways (#4238). */
 .skill-groups {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 0.8rem;
   min-height: 0;
+  padding-inline: 2px;
   overflow-y: auto;
 }
 
@@ -9934,6 +10102,12 @@ body:has(> .splash) #app {
   .screen .mode-rail-entry,
   .mode-rail-size {
     width: 84px;
+  }
+
+  /* The chosen mode's bar inside the rail (#4238): at -6px it stood past
+     the rail's edge, which then scrolled sideways. */
+  .screen .mode-rail-entry[aria-pressed="true"]::after {
+    inset-inline-end: -3px;
   }
 
   .mode-rail-label {

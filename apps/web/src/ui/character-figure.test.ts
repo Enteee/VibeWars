@@ -26,10 +26,12 @@ import {
   matchDecor,
   paintFigure,
   type FigureContext,
+  type FigureWearing,
 } from "./character-figure.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { type Painter, type StandingBody } from "../render/body-painter.js";
 import {
+  STACK_SHADOW_ALPHA,
   bucketFacing,
   headingBucket,
   stackBadge,
@@ -37,7 +39,11 @@ import {
   stackSlices,
   stackTones,
 } from "../render/sprite-stack.js";
+import { WARRIOR_OUTFIT } from "../render/profession-outfits.js";
 import { STACK_BAKE_RADIUS, STACK_BAKE_SCALE } from "../render/stack-atlas.js";
+
+/** No professions: the bare body, in the warrior's outfit. */
+const BARE: FigureWearing = { primary: undefined, secondary: undefined };
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 
@@ -158,13 +164,12 @@ describe("figureBody (#1250, #4032)", () => {
   it("puts the badge behind the head, never over the visor (#4082)", () => {
     const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
     const { badge } = boxDecor(body);
-    const tones = { ...stackTones(0, undefined), visor: 0xff00ff };
+    const tones = { ...stackTones(0, undefined, WARRIOR_OUTFIT, undefined), visor: 0xff00ff };
     const visor = stackLayers(
-      stackSlices("stand"),
+      stackSlices("stand", WARRIOR_OUTFIT, undefined),
       bucketFacing(headingBucket(body.facing)),
       body.r,
       tones,
-      undefined,
     )
       .filter((layer) => layer.colour === 0xff00ff)
       .flatMap((layer) => layer.points);
@@ -256,7 +261,7 @@ function drawn(body: StandingBody): { all: Bounds; body: Bounds; marks: Bounds }
       }
     },
   };
-  paintFigure(painter, context, body, "stand", decor, () => {
+  paintFigure(painter, context, body, BARE, "stand", decor, () => {
     marking = true;
   });
   return bounds;
@@ -305,6 +310,7 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
     strokeStyle: "",
     lineWidth: 1,
     lineJoin: "miter",
+    globalAlpha: 1,
     beginPath: () => {
       polygon = false;
     },
@@ -317,17 +323,6 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
       }
     },
     stroke: () => undefined,
-    ellipse: (x, y, rx, ry) => {
-      // The bake draws its ellipses unturned: their four extremes bound them.
-      for (const [dx, dy] of [
-        [rx, 0],
-        [-rx, 0],
-        [0, ry],
-        [0, -ry],
-      ] as const) {
-        at(shift.x + (x + dx) * shift.k, shift.y + (y + dy) * shift.k);
-      }
-    },
     clearRect: () => undefined,
     save: () => {
       saved.push(shift);
@@ -347,13 +342,11 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
 
 /** The colours, bottom to top, of the arena's own slices of a standing figure turned to `facing`. */
 function arenaFills(body: StandingBody): string[] {
-  const worn = body.cape === undefined ? undefined : { look: body.cape.look, pattern: undefined };
   return stackLayers(
-    stackSlices("stand"),
+    stackSlices("stand", WARRIOR_OUTFIT, undefined),
     bucketFacing(headingBucket(body.facing)),
     STACK_BAKE_RADIUS * STACK_BAKE_SCALE,
-    stackTones(teamColour(body.team), worn),
-    undefined,
+    stackTones(teamColour(body.team), body.cape?.look, WARRIOR_OUTFIT, undefined),
   ).map((layer) => `#${layer.colour.toString(16).padStart(6, "0")}`);
 }
 
@@ -363,8 +356,12 @@ function reach(body: StandingBody, paint: (painter: Painter) => void): number {
   const at = (x: number, y: number, radius = 0): void => {
     farthest = Math.max(farthest, Math.hypot(x - body.x, y - body.y) + radius);
   };
+  // The figure's own shadow on the ground (#4060), as when the bake drew it, is no mark.
+  let shadow = false;
   paint({
-    fillStyle: () => undefined,
+    fillStyle: (colour, alpha) => {
+      shadow = colour === 0x000000 && alpha === STACK_SHADOW_ALPHA;
+    },
     lineStyle: () => undefined,
     fillCircle: (x, y, radius) => {
       if (y !== body.y - stackBadge(body.r).rise) {
@@ -382,7 +379,7 @@ function reach(body: StandingBody, paint: (painter: Painter) => void): number {
     arc: at,
     strokePath: () => undefined,
     fillPoints: (points) => {
-      for (const point of points) {
+      for (const point of shadow ? [] : points) {
         at(point.x, point.y);
       }
     },
@@ -407,6 +404,7 @@ describe("paintFigure (#1290, #4032)", () => {
       },
       context,
       body,
+      BARE,
       "stand",
       decor,
       () => {
@@ -424,9 +422,11 @@ describe("paintFigure (#1290, #4032)", () => {
   it("with a cape, fills its back slices from the robe's hem to the shoulders", () => {
     const body = figureBody(characterAppearance(newCharacter("c1")), cape);
     const { context, fills } = recording();
-    paintFigure(silent, context, body, "stand", boxDecor(body), () => undefined);
+    paintFigure(silent, context, body, BARE, "stand", boxDecor(body), () => undefined);
     expect(fills).toEqual(arenaFills(body));
-    const tones = stackSlices("stand").flatMap((slice) => slice.parts.map(() => slice.tone));
+    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined).flatMap((slice) =>
+      slice.parts.map(() => slice.tone),
+    );
     const capes = tones.flatMap((tone, i) => (tone === "cape" ? [i] : []));
     const bare = arenaFills(figureBody(characterAppearance(newCharacter("c1")), undefined));
     expect(capes.every((i) => fills[i] !== bare[i])).toBe(true);
@@ -438,7 +438,15 @@ describe("paintFigure (#1290, #4032)", () => {
     const body = figureBody(characterAppearance(newCharacter("c1")), undefined);
     expect(
       reach(body, (painter) =>
-        paintFigure(painter, recording().context, body, "stand", matchDecor(body), () => undefined),
+        paintFigure(
+          painter,
+          recording().context,
+          body,
+          BARE,
+          "stand",
+          matchDecor(body),
+          () => undefined,
+        ),
       ),
     ).toBeGreaterThan(body.r + 2);
   });
@@ -447,7 +455,15 @@ describe("paintFigure (#1290, #4032)", () => {
     const body = figureBody({ weaponId: undefined, offhandId: undefined }, undefined);
     expect(
       reach(body, (painter) =>
-        paintFigure(painter, recording().context, body, "stand", matchDecor(body), () => undefined),
+        paintFigure(
+          painter,
+          recording().context,
+          body,
+          BARE,
+          "stand",
+          matchDecor(body),
+          () => undefined,
+        ),
       ),
     ).toBeLessThanOrEqual(body.r + 2);
   });

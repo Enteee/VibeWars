@@ -24,4 +24,4 @@
 
 At the two smaller zooms only height and shoulder width survive, so heavy and tall read best; lean vs average is the subtlest pair there and reads mostly on the menu figure and the first zoom. Tall + heavy stays inside the 64 px figure box on all three outfits in the sheet (warrior's winged-less helm is the tallest).
 
-Approved by the operator without hair (Q208).
+Approved by the operator without hair (Q208), and as drawn, height × build, with the numbers below (Q214, 2026-11-28).

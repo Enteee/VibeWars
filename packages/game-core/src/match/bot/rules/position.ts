@@ -66,6 +66,7 @@ const position: BotRule = {
     const { context, self, foes } = rule;
     // A foe at its elbow: at equal speed, backing off would never end, so
     // it stands and fights, once `fall-back` has brought it to a frontliner.
+    // A slower foe, `kite` steps away from between shots (#4166).
     if (foes.some((foe) => atElbow(self, foe))) {
       return undefined;
     }

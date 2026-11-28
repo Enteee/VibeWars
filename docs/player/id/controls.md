@@ -6,6 +6,13 @@ Setiap tombol di tabel di bawah bisa diubah di **Opsi**, di bagian
 sudah dipakai pindah ke aksi baru, dan layar memberi tahu aksi mana yang
 kehilangan tombolnya. Perubahan langsung tersimpan.
 
+Sebuah tombol juga bisa berupa kombinasi: tahan Shift, Ctrl atau Alt lalu
+tekan tombolnya, misalnya **Shift + X**. Bergerak dan Tampilkan nama hanya
+menerima satu tombol, dan browser menyimpan beberapa kombinasi untuk dirinya
+sendiri, misalnya Ctrl + W. Menahan Shift untuk menampilkan nama tetap
+membiarkan tombol biasamu bekerja, kecuali kombinasi Shift itu sendiri
+dipasang untuk sesuatu.
+
 ## Tombol
 
 Preset bawaan adalah **Klasik**, untuk tangan yang terbiasa GW1. **VibeWars** memakai skill dengan tangan kiri dan bergerak dengan tombol panah.
@@ -88,7 +95,7 @@ kecuali Lobi, ada di dalam **☰** di kanan atas layar, bersama **Keluar**;
 **M** tetap membisukan suara dan **F10** tetap keluar tanpanya. Di jendela yang sempit, ikon-ikon ini dan
 tombol-tombol lain di layar terlipat ke dalam **☰**; hanya tombol utamanya yang tetap di luar.
 ⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya.
-[?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan pemilih halaman di atas; laga tetap berjalan di belakangnya.
+[?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan halaman-halamannya terdaftar di sisi kiri; laga tetap berjalan di belakangnya.
 Bantuan ditutup dengan ×-nya, Esc, klik di luarnya, atau menekan [?] sekali lagi.
 
 **Bagikan beat ke lobimu.** Di editor beat (♪, lalu **Edit**),

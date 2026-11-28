@@ -36,6 +36,7 @@ const damage = (targetId: string, amount: number): CombatEvent => ({
   kind: "damage",
   targetId,
   amount,
+  unreduced: amount,
   critical: false,
 });
 

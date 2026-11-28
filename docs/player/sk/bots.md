@@ -27,7 +27,12 @@ Bot hrá rolu, ktorú mu dáva jeho build. Ten so zbraňou na blízko je
 liečeniami alebo ochranami, ktoré môže zoslať na spojenca, je **liečiteľ**: stojí
 za najviac zraneným spojencom, ďalej od nepriateľov. Keď sa dvaja alebo viacerí
 nepriatelia sústredia na jedného spojenca, liečiteľ naňho dá ochranu skôr, než
-zásah dopadne. Každý iný bot je **na diaľku**: drží sa tam, kam dosiahne každý
+zásah dopadne. Liečiteľ si necháva dosť energie na svoje najlacnejšie liečenie
+alebo ochranu a pod túto hranicu míňa len na spojenca v skutočnom
+nebezpečenstve. Bot s dvoma kliatbami zošle lacnú kliatbu cez tú dôležitú, takže
+nepriateľovo odstránenie kliatby zloží najprv tú lacnú. Bot s odoberaním energie
+páli energiu nepriateľského liečiteľa, nie Bojovníka.
+Každý iný bot je **na diaľku**: drží sa tam, kam dosiahne každý
 jeho útok, a zastaví sa a bojuje s nepriateľom, ktorý príde príliš blízko. Boti
 na diaľku a liečitelia ustupujú tam, kam dosiahne menej nepriateľov, a stĺpy
 používajú ako kryt. Tím sa obráti proti každému nepriateľovi v dosahu, ktorý
@@ -44,7 +49,9 @@ Bot so schopnosťou, ktorá mrzačí alebo spomaľuje, ju použije na nepriateľ
 
 Proti tímu s plošnými skillmi sa boti na diaľku a liečitelia držia od seba, aby jeden výbuch nezasiahol dvoch z nich. Krytie kvôli tomu nikdy neopustia.
 
-Bot na diaľku alebo liečiteľ, ku ktorému sa nepriateľ dostane príliš blízko, najprv ustúpi k najbližšiemu spojencovi v prvej línii, ak je dosť blízko, a bojuje tam.
+Bot na diaľku alebo liečiteľ, ku ktorému sa nepriateľ dostane príliš blízko, najprv ustúpi k najbližšiemu spojencovi v prvej línii, ak je dosť blízko, a bojuje tam. Spomalený útočník na blízko, napríklad zmrzačený, nestíha, takže pred ním bot namiesto toho medzi výstrelmi cúva.
+
+Bot pod kliatbou, ktorá trestá útočenie alebo zosielanie kúziel, ako Empathy alebo Backfire, s tým prestane, kým kliatba neskončí.
 
 Lukostrelci a kopijníci zaujmú vyvýšené miesto, keď je to bezpečné.
 Bot, na ktorého sa zameria dvaja nepriatelia alebo ktorý má menej ako polovicu zdravia a rýchlo ho stráca, sa im až na tri sekundy skryje z dohľadu: za múr, pod plošinu alebo na vyvýšené miesto.
@@ -59,6 +66,8 @@ sekundy a vôbec nečaká, keď má dorážať nepriateľa pod
 30 % zdravia. Keď je cieľ pod ochranným očarovaním, ako
 Protective Spirit alebo Aegis, bot so strhnutím očarovania, ako Strip
 Enchantment, ho najprv strhne a ostatní kvôli tomu zadržia zásahy.
+Ak tím nemá strhnutie očarovania, boti nechajú chráneného nepriateľa tak
+a obrátia sa na iného, kým očarovanie neskončí.
 
 Ťažko zranený bot, ktorý prehráva svoj boj, ustúpi za svojho liečiteľa alebo
 do svojej základne a oddychuje mimo dosahu, kým nezíska väčšinu zdravia späť.
@@ -73,6 +82,7 @@ funguje rovnako ako na teba.
 
 Boti obchádzajú horiacu zem a iné škodlivé miesta, keď cesta okolo nie je o
 veľa dlhšia, a z takého miesta vystúpia, keď v ňom stoja.
+Vystúpia aj zo škodlivej oblasti nepriateľa, ako je studňa, ochrana proti nim alebo búrka, a bojujú z jej okraja.
 
 Bot s prerušením si ho šetrí na zosielania, na ktorých záleží: najprv
 oživenie alebo Prízračný hrdina, ktorý si nárokuje oltár, potom liečenie alebo
@@ -83,6 +93,14 @@ z každých štyroch takých zosielaní.
 
 Bot potrebuje ľudskú chvíľku, zlomok sekundy, aby zareagoval na
 to, čo sa deje, takže rýchle prerušenie alebo neskorý úhyb ho môžu poraziť.
+
+Keď nikto z tvojho tímu nemá určený cieľ, jeden z tvojich botov určí
+nepriateľa, na ktorého sa tvoji boti sústredia, rovnako ako by si to urobil ty:
+vidíš značku a meno bota, takže sa môžeš pridať. Cieľ určený botom iba ukazuje,
+kam boti idú; stále chránia spoluhráča a dorazia umierajúceho nepriateľa. Cieľ,
+ktorý určíš ty, vždy vyhráva: všetci boti v tíme sa sústredia na tvoj cieľ,
+žiadny bot ho nenahradí a boti určia nový až vtedy, keď je určený cieľ mŕtvy
+alebo preč.
 
 V boji troch tímov bojujú boti vždy s jedným nepriateľským tímom
 naraz: s tým, ktorý na nich útočí, alebo, kým neútočí nikto, s najviac zraneným

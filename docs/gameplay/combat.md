@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4,
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −3, Regeneration +4,
 Healing Breeze +8), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
@@ -88,7 +88,14 @@ scythe's attack skill that cleaves three foes is one, as its swing is
 nothing, and neither do spells. Taking damage from a foe charges you too
 (#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
 units, so a hit for a quarter of your health is a strike; degeneration,
-sacrifice and a killing blow give nothing. Using an adrenaline skill
+sacrifice and a killing blow give nothing. The damage counted is before
+the flat per-hit cuts (#4163): Shielding Hands, Shield of Absorption or a
+rune take health off the hit but not adrenaline, even a hit they take
+to 0. A status that makes adrenaline come **faster** (Onslaught,
+Natural Temper, Soldier's Fury, Infuriating Heat) speeds only what your
+blows earn, not damage taken nor a skill's own gain; Focused Anger alone
+speeds every source. Soothing's slowdown reaches every source too.
+Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. A skill that says **"Lose
@@ -158,7 +165,7 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
-**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+**Dwayna's Kiss** (#920) heals another ally 56, and 35 more for each
 enchantment and hex on it as the heal lands.
 **Infuse Health** (#936, Healing Prayers, 10 energy, ¼ s, no recharge)
 costs you half your current health, rounded down, and heals another
@@ -173,7 +180,7 @@ Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
 another ally and then heals it 58 for each one removed: three are 174.
 A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
-**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 20 s) heals you
+**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 10 s) heals you
 and every living team-mate 66, wherever they stand and through walls:
 your party is your team, without its creatures: no spirit, minion or
 pet. Divine Favor adds to your own heal only, as for every untargeted
@@ -226,7 +233,7 @@ spell or a chant and disables it for 10 s, along with every skill on
 the victim's bar of the same attribute; a skill with no attribute takes
 only itself. **Distracting Shot** interrupts whatever its arrow finds,
 deals only 13, and disables an interrupted skill for 20 s; the Warrior's
-**Disrupting Chop** (6 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
+**Disrupting Chop** (5 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
 which skills were disabled, and for how long; a skill already
 recharging for longer is not mentioned.
 
@@ -244,9 +251,9 @@ and **Echo** (elite, 5 energy, 1 s, 10 s recharge) are
 self-enchantments that change your bar. While Arcane Echo is up (20 s),
 the next spell you finish takes its slot for 20 s; any other skill ends
 it with no copy. While Echo is up (30 s), the next skill you finish,
-of any kind, does the same. The copy is a skill of its own: it recharges
+of any kind, takes its slot for 30 s. The copy is a skill of its own: it recharges
 apart from the original, so both can be used, and a disable or Diversion
-on one leaves the other alone. When its 20 s are over, the echo is back
+on one leaves the other alone. When its time is over, the echo is back
 in its slot and starts its own recharge. An interrupted skill was never
 finished, so it is not copied and the echo stays. An echo is never
 copied, and does not use up the other. Death or a reset ends every copy
@@ -516,7 +523,7 @@ never another profession's. With none to lose, the skill still goes off
 and costs what it costs; only its "if one was removed" part does not
 happen. Wounding Strike loses one only on a hit, and then also Deep
 Wounds its target; Signet of Pious Light then recharges 75% faster (5 s,
-not 20); Pious Restoration then also removes up to 3 of your hexes.
+not 20); Pious Restoration then also removes one of your hexes.
 Mystic Regeneration gives +3 health pips for each enchantment on you,
 any profession's and itself included, at most 3, recounted the moment
 one goes. Heart of Fury is a stance: you attack 25% faster.
@@ -786,8 +793,8 @@ whenever you lose a Dervish enchantment, you heal 41. "Lose" is any end
 but your death: expiry, a strip, a flash enchantment's own end.
 
 The other three Avatars (#1455) last 74 s too. Avatar of Balthazar: +20
-armor against physical damage, adrenaline 25% faster from every source
-(hits, damage taken, skills), holy attacks; whenever you lose a Dervish
+armor against physical damage, adrenaline 25% faster from your blows
+(#4163), holy attacks; whenever you lose a Dervish
 enchantment, foes nearby burn for 3 s. Avatar of Grenth: you are immune
 to Disease, so one on you ends as it begins, none lands and none spreads
 to you; with a scythe, your attacks deal dark damage and each hit steals
@@ -933,7 +940,7 @@ ends as "Fall Back!" does, when that ally hits.
 A chant is not a spell: dazed does not slow it. Anthem of Flame
 (Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
 each ally in earshot, the paragon included: the next attack skill each
-uses burns whoever it hits for 3 s. That attack skill uses the chant up
+uses burns whoever it hits for 4 s. That attack skill uses the chant up
 as it is released: as its blow strikes, or as its shot leaves a bow or
 a spear (#782). The burn travels with the shot, so a second attack skill
 loosed before the first arrow lands carries none, and an Anthem that
@@ -941,7 +948,7 @@ runs out while the arrow flies still burns. Only a hit burns, every
 victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
 be up at once; the same one again keeps the longer. Defensive Anthem
-(elite, Leadership, 15 energy, 2 s cast, 25 s recharge) gives each ally
+(elite, Leadership, 15 energy, 2 s cast, 15 s recharge) gives each ally
 in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill
@@ -994,7 +1001,7 @@ do not set either off. Neither does damage a trigger deals, so Mark of
 Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
 foes in one tick: it answers the first. The blow that kills the bearer
 steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
-recharge) lasts 20 s or 4 hits with any weapon: each hit deals 25
+recharge) lasts 20 s or 4 hits with any weapon: each hit deals 33
 armor-ignoring damage to every other foe adjacent to the foe hit. A miss
 or a block spends nothing. A weapon spell rides every attack, a wand's
 or a staff's bolt too (#1654); a preparation rides physical attacks only.
@@ -1004,7 +1011,7 @@ The Ritualist heals with Restoration Magic, each on an ally or yourself
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
-**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 78, and if the ally
 is under a weapon spell it also loses one condition, the newest: the
 Ritualist's first condition removal (#1022).
 Mend Body and Soul also removes one condition from the ally for each

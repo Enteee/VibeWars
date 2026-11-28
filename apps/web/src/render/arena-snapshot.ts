@@ -37,7 +37,16 @@ import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
-import { STACK_GLYPH_TINT, stackBadge, stackOverheadRise } from "./sprite-stack.js";
+import {
+  STACK_GLYPH_TINT,
+  STACK_HEIGHT,
+  STACK_STEP,
+  creatureSlices,
+  creatureStack,
+  stackBadge,
+  stackLifts,
+  stackOverheadRise,
+} from "./sprite-stack.js";
 import type { MapDecor } from "./decor-art.js";
 import type { RenderablePing } from "./call-marks.js";
 import { FOE_COLOUR, FRIEND_COLOUR } from "./colour-wheel.js";
@@ -112,6 +121,8 @@ export interface RenderableActor {
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
   readonly profession: ProfessionId | undefined;
+  /** The secondary profession, whose accent its outfit carries (#4175); `undefined`: none. */
+  readonly secondaryProfession: ProfessionId | undefined;
   /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
   readonly creatureLook: CreatureLook | undefined;
   /** How far a creature's aura reaches (#3306): a spirit's range ring; `undefined` for none. */
@@ -1015,7 +1026,40 @@ export function isStackedFigure(actor: RenderableActor): boolean {
  * they clear both (ADR-0057). 0 for a flat body.
  */
 export function overheadRise(actor: RenderableActor): number {
-  return isStackedFigure(actor) ? stackOverheadRise(actor.radius) : 0;
+  return wearsFigureBadge(actor) ? stackOverheadRise(actor.radius, figureTall(actor)) : 0;
+}
+
+/**
+ * Whether `actor` stands as a figure with its glyph on a badge on top
+ * (ADR-0057): a body, or a standing creature whose figure turns as a
+ * body's does, the Ghostly Hero (#4171) or a minion (#4172), so its glyph
+ * would hide it and its bar cut its head. A spirit keeps its glyph on
+ * its plate.
+ */
+export function wearsFigureBadge(actor: RenderableActor): boolean {
+  if (actor.creatureLook === undefined) {
+    return isStackedFigure(actor);
+  }
+  return (
+    !actor.dead && !actor.knockedDown && (creatureStack(actor.creatureLook)?.headings ?? 0) > 1
+  );
+}
+
+/** Each creature look's standing figure height, radii, once worked out. */
+const creatureTalls = new Map<CreatureLook, number>();
+
+/** How tall `actor`'s figure stands, radii: a body's, or its creature's own (#4172). */
+export function figureTall(actor: RenderableActor): number {
+  const look = actor.creatureLook;
+  if (look === undefined) {
+    return STACK_HEIGHT;
+  }
+  let tall = creatureTalls.get(look);
+  if (tall === undefined) {
+    tall = stackLifts(creatureSlices(look, "stand") ?? []) * STACK_STEP;
+    creatureTalls.set(look, tall);
+  }
+  return tall;
 }
 
 /** The shield: an arc on the body's centre, 45° to 105° left of the facing, at r + 3.5 (#275). */
@@ -1240,7 +1284,8 @@ export interface BodyGlyphLayout {
  * (ADR-0057); at 60 %, shrunk to fit its flattened disc, when knocked
  * down; a creature's
  * is its kind's (#1162), opaque, and its shape never lies down; a
- * Ghostly Hero's pale (#1377). A corpse greys it.
+ * Ghostly Hero's on its badge as a player's, its figure being a body's
+ * (#4171), and pale when knocked down (#1377). A corpse greys it.
  *
  * `undefined`: neither a profession nor a creature, so no glyph; and a
  * living spirit, whose wisp is its glyph and whose core it would hide (#3306).
@@ -1272,12 +1317,12 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
       alpha: 1,
     };
   }
-  if (isStackedFigure(actor)) {
+  if (wearsFigureBadge(actor)) {
     // On its badge on top of the figure, pale on the dark disc (ADR-0057).
     return {
       glyph,
       x,
-      y: y - stackBadge(actor.radius).rise,
+      y: y - stackBadge(actor.radius, figureTall(actor)).rise,
       size,
       tint: STACK_GLYPH_TINT,
       alpha: 1,
