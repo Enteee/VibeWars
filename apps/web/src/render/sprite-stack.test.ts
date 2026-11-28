@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { FigureBody } from "@vibewars/game-protocol";
+import { BUILDS, HEIGHTS, type FigureBody } from "@vibewars/game-protocol";
 
 import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
@@ -534,8 +534,11 @@ describe("profession outfits (#4175)", () => {
     }
     return accent;
   });
-  const standing = (outfit: Outfit, accent?: Accent): readonly StackSlice[] =>
-    stackSlices("stand", outfit, accent, AVERAGE_BODY);
+  const standing = (
+    outfit: Outfit,
+    accent?: Accent,
+    body: FigureBody = AVERAGE_BODY,
+  ): readonly StackSlice[] => stackSlices("stand", outfit, accent, body);
 
   /** Inside `polygon`, by the even-odd rule. */
   const inside = (polygon: readonly { x: number; y: number }[], x: number, y: number): boolean => {
@@ -590,14 +593,17 @@ describe("profession outfits (#4175)", () => {
     }
   });
 
-  it("keeps at least 80 % of the warrior's team colour seen from above", () => {
-    const warrior = teamArea(standing(WARRIOR_OUTFIT));
-    for (const outfit of OUTFITS) {
-      for (const accent of [undefined, ...ACCENTS]) {
-        expect(teamArea(standing(outfit, accent))).toBeGreaterThanOrEqual(0.8 * warrior);
+  it.each(HEIGHTS.flatMap((height) => BUILDS.map((build) => ({ height, build }))))(
+    "keeps at least 80 % of the warrior's team colour seen from above, $height and $build (#4176)",
+    (body) => {
+      const warrior = teamArea(standing(WARRIOR_OUTFIT, undefined, body));
+      for (const outfit of OUTFITS) {
+        for (const accent of [undefined, ...ACCENTS]) {
+          expect(teamArea(standing(outfit, accent, body))).toBeGreaterThanOrEqual(0.8 * warrior);
+        }
       }
-    }
-  });
+    },
+  );
 
   it("stands every outfit at most STACK_SLICES high, in every pose alike, at most 4 over the warrior", () => {
     const warrior = stackLifts(standing(WARRIOR_OUTFIT));

@@ -1,10 +1,11 @@
-import { packEmblem } from "@vibewars/game-protocol";
+import { BUILDS, HEIGHTS, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
   NO_UPGRADES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
+  PROFESSIONS,
   STARTER_BUILDS,
   loadoutSpec,
   resolveJoinLoadout,
@@ -210,6 +211,23 @@ describe("figureBody (#1250, #4032)", () => {
       }
     }
   });
+
+  it("keeps every height and build, in every outfit, inside its box (#4176)", () => {
+    const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
+    for (const height of HEIGHTS) {
+      for (const build of BUILDS) {
+        for (const primary of [undefined, ...Object.values(PROFESSIONS).map(({ id }) => id)]) {
+          const { all } = drawn(body, {
+            primary,
+            secondary: undefined,
+            physique: { height, build },
+          });
+          expect(Math.min(all.left, all.top)).toBeGreaterThanOrEqual(0);
+          expect(Math.max(all.right, all.bottom)).toBeLessThanOrEqual(FIGURE_FRAME);
+        }
+      }
+    }
+  });
 });
 
 interface Bounds {
@@ -219,8 +237,11 @@ interface Bounds {
   bottom: number;
 }
 
-/** The bounds of everything `body` draws in its box, of its stacked body alone, and of its marks. */
-function drawn(body: StandingBody): { all: Bounds; body: Bounds; marks: Bounds } {
+/** The bounds of everything `body` draws in its box, as `wearing` dresses it, of its stacked body alone, and of its marks. */
+function drawn(
+  body: StandingBody,
+  wearing: FigureWearing = BARE,
+): { all: Bounds; body: Bounds; marks: Bounds } {
   const empty = (): Bounds => ({
     left: Infinity,
     right: -Infinity,
@@ -263,7 +284,7 @@ function drawn(body: StandingBody): { all: Bounds; body: Bounds; marks: Bounds }
       }
     },
   };
-  paintFigure(painter, context, body, BARE, "stand", decor, () => {
+  paintFigure(painter, context, body, wearing, "stand", decor, () => {
     marking = true;
   });
   return bounds;
