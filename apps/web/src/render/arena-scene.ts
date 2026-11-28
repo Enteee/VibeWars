@@ -15,7 +15,6 @@ import {
   polygonCentre,
   pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
-  CREATURE_LOOKS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -48,6 +47,7 @@ import {
   nameplateLayout,
   isStackedFigure,
   wearsFigureBadge,
+  figureTall,
   overheadRise,
   placeFloatingText,
   signetTextureKey,
@@ -1321,12 +1321,14 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    // Every creature figure too (#4171), in the same build and upload: a
-    // row per look, never per team, and few frames, so a summon mid-fight
-    // never waits on its bake.
+    // The creatures already on the field too (#4171), in the same build
+    // and upload. A look summoned later bakes alone, off the frame path,
+    // into the place the atlas keeps for it (#4172): baking every look
+    // here held match start up by half a second.
+    const creatures = new Set(this.snapshot.actors.flatMap((actor) => actor.creatureLook ?? []));
     atlas.bake([
       ...this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
-      ...CREATURE_LOOKS.map((look): StackLook => ({ kind: "creature", look })),
+      ...[...creatures].map((look): StackLook => ({ kind: "creature", look })),
     ]);
   }
 
@@ -4221,7 +4223,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const { x, y } = actor.position;
-    const badge = stackBadge(actor.radius);
+    const badge = stackBadge(actor.radius, figureTall(actor));
     g.fillStyle(STACK_BADGE_RIM, 1);
     g.fillCircle(x, y - badge.rise, badge.radius + 1);
     g.fillStyle(STACK_BADGE_FILL, 1);

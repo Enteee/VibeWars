@@ -512,21 +512,26 @@ export const STACK_BADGE_FILL = 0x2c2620;
 export const STACK_GLYPH_TINT = 0xf4ead0;
 
 /**
- * The badge disc on top of a figure of body radius `r`: its radius, and
- * how far its centre stands over the feet, just clear of the crest (the
- * preset's badge, grown to fit today's glyph).
+ * The badge disc on top of a figure of body radius `r`, `tall` radii
+ * high, a body's unless a creature's (#4172): its radius, and how far its
+ * centre stands over the feet, just clear of the crest (the preset's
+ * badge, grown to fit today's glyph).
  */
-export function stackBadge(r: number): { readonly radius: number; readonly rise: number } {
+export function stackBadge(
+  r: number,
+  tall = STACK_HEIGHT,
+): { readonly radius: number; readonly rise: number } {
   const radius = Math.max(5, r * 0.6);
-  return { radius, rise: STACK_HEIGHT * r + r * 0.1 + radius * 0.6 };
+  return { radius, rise: tall * r + r * 0.1 + radius * 0.6 };
 }
 
 /**
  * How much higher than over a flat disc the things over a figure's head
- * stand: from its edge, `r` over the feet, to the top of its badge's rim.
+ * stand: from its edge, `r` over the feet, to the top of its badge's rim,
+ * on a figure `tall` radii high.
  */
-export function stackOverheadRise(r: number): number {
-  const badge = stackBadge(r);
+export function stackOverheadRise(r: number, tall = STACK_HEIGHT): number {
+  const badge = stackBadge(r, tall);
   return badge.rise + badge.radius + 1 - r;
 }
 
