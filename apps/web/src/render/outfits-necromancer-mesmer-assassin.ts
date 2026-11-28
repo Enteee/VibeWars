@@ -69,7 +69,7 @@ export function cowlSlices(push: Push, cx: number): void {
 
 /** A wide brim round `cx`, the face under it, a low crown and a plume in the crest's colour. */
 export function hatSlices(push: Push, cx: number): void {
-  push([ellipse(cx, 0, 0.62, 0.62, 18)], "cloth", 0.8);
+  push([ellipse(cx, 0, 0.5, 0.5, 18)], "cloth", 0.8);
   push([ellipse(cx, 0, 0.34, 0.34, 14)], "skin", 0.85, true);
   [0.3, 0.3, 0.28, 0.26, 0.22].forEach((r, i) => {
     push([ellipse(cx, 0, r * 1.05, r)], "cloth", 0.7 + 0.07 * i);
