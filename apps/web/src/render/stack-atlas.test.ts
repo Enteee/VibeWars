@@ -44,12 +44,13 @@ const CAPED: BodyStackLook = {
 };
 const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 
-/** A canvas that draws nothing: records its frames, uploads and whether it was dropped. */
+/** A canvas that draws nothing: records its frames, uploads, rect uploads and whether it was dropped. */
 class FakeSurface implements AtlasSurface {
   public readonly frames = new Map<string, number>();
   public readonly areas = new Map<string, number>();
   public readonly boxes = new Map<string, readonly [number, number, number, number]>();
   public refreshes = 0;
+  public readonly rects: (readonly [number, number, number, number])[] = [];
   public destroyed = false;
   public fills = 0;
   public readonly context: BakeContext;
@@ -88,6 +89,10 @@ class FakeSurface implements AtlasSurface {
     this.refreshes += 1;
   }
 
+  public refreshRect(x: number, y: number, width: number, height: number): void {
+    this.rects.push([x, y, width, height]);
+  }
+
   public destroy(): void {
     this.destroyed = true;
   }
@@ -119,6 +124,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(surfaces).toHaveLength(1);
     expect(surfaces[0]?.frames.size).toBe(FRAMES);
     expect(surfaces[0]?.refreshes).toBe(1);
+    expect(surfaces[0]?.rects).toEqual([]);
     expect(surfaces[0]?.fills).toBeGreaterThan(0);
   });
 
@@ -233,6 +239,9 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(surfaces).toHaveLength(2);
     expect(surfaces[0]?.destroyed).toBe(true);
     expect(surfaces[1]?.frames.size).toBe(2 * FRAMES);
+    // A new canvas uploads whole (#4271).
+    expect(surfaces[1]?.refreshes).toBe(1);
+    expect(surfaces[1]?.rects).toEqual([]);
   });
 
   it("rebuilds every look after a lost context, and drops the canvas at match end", () => {
@@ -243,6 +252,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(surfaces[0]?.destroyed).toBe(true);
     expect(surfaces[1]?.frames.size).toBe(2 * FRAMES);
     expect(surfaces[1]?.refreshes).toBe(1);
+    expect(surfaces[1]?.rects).toEqual([]);
     expect(made.bakedFigures).toBe(4 * FRAMES);
     made.destroy();
     expect(surfaces[1]?.destroyed).toBe(true);
@@ -349,9 +359,32 @@ describe("StackAtlas creatures (#4171)", () => {
     expect(made.frame(SPIRIT, 0, "stand")).toBeUndefined();
     queued[0]?.();
     expect(surfaces).toHaveLength(1);
-    expect(surfaces[0]?.refreshes).toBe(2);
     expect(made.bakedFigures).toBe(2 * FRAMES + 1);
     expect(made.frame(SPIRIT, 0, "stand")).toBeDefined();
+    // It uploads its own shelf and nothing else (#4271).
+    expect(surfaces[0]?.refreshes).toBe(1);
+    const shelf = surfaces[0]?.boxes.get(stackFrameName(stackLookKey(SPIRIT), 0, "stand"));
+    expect(surfaces[0]?.rects).toEqual([shelf]);
+    const [x, y, w, h] = shelf ?? [0, 0, 0, 0];
+    const body = surfaces[0]?.frames.get(made.frame(FRIEND, 0, "stand")?.name ?? "");
+    expect(x + w).toBeLessThanOrEqual(surfaces[0]?.width ?? 0);
+    expect(y + h).toBeLessThanOrEqual(body ?? 0);
+  });
+
+  it("uploads a body row baked into room a grown canvas kept as its own rect (#4271)", () => {
+    const { atlas: made, surfaces } = atlas();
+    made.bake([FRIEND]);
+    made.bake([FOE]);
+    made.bake([CAPED]);
+    expect(surfaces).toHaveLength(2);
+    expect(surfaces[1]?.refreshes).toBe(1);
+    const row = [...(surfaces[1]?.boxes.entries() ?? [])]
+      .filter(([name]) => name.startsWith(stackLookKey(CAPED)))
+      .map(([, box]) => box);
+    const top = Math.min(...row.map(([, y]) => y));
+    const right = Math.max(...row.map(([x, , w]) => x + w));
+    const height = row[0]?.[3] ?? 0;
+    expect(surfaces[1]?.rects).toEqual([[0, top, right, height]]);
   });
 
   it("bakes each look a match may bring on later, one task each, once, and none with no figure (#4172)", () => {
