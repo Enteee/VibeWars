@@ -129,10 +129,10 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   }),
 
   // "The next attack skill used by each party member within earshot also
-  // causes Burning for 1...3...3 seconds": 3 s, its rank-12 value.
+  // causes Burning for 1...4...5 seconds": 4 s, its rank-12 value.
   "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
     profession: "paragon",
-    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
+    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 4 } }],
   }),
   // "For 10 seconds, the next time each ally within earshot uses an attack
   // skill, that ally gains 1...8 Energy" (#1483): 7, its rank-12 value.
