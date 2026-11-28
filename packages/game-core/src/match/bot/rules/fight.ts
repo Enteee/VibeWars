@@ -34,6 +34,7 @@ import {
   spikeSeconds,
   stripFirst,
 } from "./shared.js";
+import { coverHexOf, coverTarget } from "./cover-hex.js";
 import type { BotRule } from "./types.js";
 
 /** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
@@ -76,6 +77,9 @@ const SPIKE_TOLERANCE = 1e-6;
  * at the team's target while a defence enchantment is on it (#2634),
  * and its teammates hold for it. Its weapon and attack skills go to
  * `attackTarget`, off a foe that blocks them (#4204); its spells stay.
+ * Ahead of bar order, a bot with two hexes lays its cheap one over its key
+ * hex on the nearest foe in range where that is newest (#4279,
+ * `coverTarget`).
  */
 const fight: BotRule = {
   order: 100,
@@ -259,6 +263,27 @@ const fight: BotRule = {
       }
       return holds;
     };
+    // A cheap hex over its own key hex (#4279), so hex removal takes it.
+    const cover = coverHexOf(self);
+    const covered =
+      cover === undefined
+        ? undefined
+        : coverTarget(
+            self,
+            cover,
+            foes,
+            (id) =>
+              mayUse(cover, id) &&
+              !keepsReserve(
+                self,
+                cover,
+                foes.find((foe) => foe.id === id),
+              ) &&
+              (!(holding || covering) || context.check(cover.id, id).ok),
+          );
+    if (cover !== undefined && covered !== undefined) {
+      return use(cover, covered.id);
+    }
     const skill = bar.find(
       (held) =>
         worthUsing(held) &&

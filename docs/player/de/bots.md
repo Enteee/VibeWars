@@ -29,7 +29,9 @@ steht hinter dem am stärksten verletzten Verbündeten, weg von den Gegnern. Wen
 zwei oder mehr Gegner auf einen Verbündeten gehen, wirkt ein Heiler seinen Schutz
 auf ihn, bevor der Treffer sitzt. Ein Heiler hält genug Energie für seine
 billigste Heilung oder seinen billigsten Schutz zurück und geht nur für einen
-Verbündeten in echter Gefahr darunter. Jeder andere Bot ist **Fernkämpfer**:
+Verbündeten in echter Gefahr darunter. Ein Bot mit zwei Verhexungen legt seine
+billige Verhexung über seine wichtige, sodass die Verhexungsentfernung eines
+Gegners zuerst die billige trifft. Jeder andere Bot ist **Fernkämpfer**:
 Er bleibt
 dort, wo jeder seiner Angriffe reicht, und stellt sich einem Gegner, der zu nah
 kommt. Fernkämpfer und Heiler gehen dorthin, wo weniger Gegner sie erreichen, und
