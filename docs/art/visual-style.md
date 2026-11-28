@@ -259,8 +259,8 @@ outlines, and the noise fill on a map without one.
   Their weapons are baked, so no arms or facing tick are drawn over them.
   Only a knocked-down creature and fallen bodies stay discs. At match zoom:
   `creature-stack-match.png`, discs left, figures right, and
-  `npc-stack-match.png`, a guild hall's guards, lord and priest with a pet
-  and rats, discs left, figures right.
+  `npc-stack-match.png` (scene `npc-figures`), a guild hall's guards, lord and
+  priest with a pet and rats: discs and figures at Default zoom, then Close.
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.

@@ -188,7 +188,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     }
   });
 
-  it("holds sixteen looks and every creature in under 18 MB, a row no wider than 4096 px (#4060)", () => {
+  it("holds sixteen looks and every creature in under 20 MB, a row no wider than 4096 px (#4060)", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake([
       ...Array.from({ length: 16 }, (_, i) => ({
@@ -203,8 +203,9 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(surface?.width).toBe(FRAMES * STACK_FRAME_WIDTH);
     expect(surface?.width).toBeLessThanOrEqual(4096);
     // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen,
-    // and the creature rows' 2 MB allowance (#4171) on top.
-    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(18e6);
+    // and the creature rows' 3.5 MB allowance on top: the architect raised
+    // it from #4171's 2 MB once every look was a figure (#4172, #4173).
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(20e6);
   });
 
   it("bakes a late look off the frame path, once, and shows nothing baked until then", () => {
@@ -298,12 +299,14 @@ describe("StackAtlas creatures (#4171)", () => {
     }
   });
 
-  it("keeps every creature look within the 2 MB creature allowance", () => {
+  // All 14 looks at once, the worst case: a match bakes only those on the
+  // field. Raised from 2 MB by the architect for #4172 and #4173.
+  it("keeps every creature look within the 3.5 MB creature allowance", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake(CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look })));
     const bytes = [...(surfaces.at(-1)?.areas.values() ?? [])].reduce((sum, a) => sum + a * 4, 0);
     expect(bytes).toBeGreaterThan(0);
-    expect(bytes).toBeLessThan(2e6);
+    expect(bytes).toBeLessThan(3.5e6);
   });
 
   it("keeps a creature row on the shelves over the bodies' in the same canvas (#4172)", () => {
