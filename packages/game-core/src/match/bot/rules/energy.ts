@@ -9,7 +9,7 @@ import {
   lowEnergyGain,
   ownStatuses,
 } from "../skill-intent.js";
-import { roleOf } from "../role.js";
+import { worthDenying } from "./energy-denial.js";
 import type { BotRule } from "./types.js";
 
 /** Below this share of its Energy, a bot drains a foe's for its own (#2231). */
@@ -19,9 +19,9 @@ const DRAIN_ENERGY_FRACTION = 0.5;
  * Energy for the bot itself (#2132): Ether Signet once it is below the
  * signet's threshold, and Lyssa's Aura, never one already up, with a foe
  * in reach of an offensive spell on its bar to keep it renewed. Energy
- * Drain (#2231) once it is down to half, at a foe healer in reach first
- * (#4281), then at the foe in reach with the most
- * Energy to lose.
+ * Drain (#2231) once it is down to half, at a foe healer in reach with
+ * at least `DENIAL_MIN_ENERGY` first (#4281, #4283), then at the foe in
+ * reach with the most Energy to lose.
  */
 const energy: BotRule = {
   order: 75,
@@ -54,7 +54,7 @@ const energy: BotRule = {
       .filter((foe) => foe.combatant.energy > 0)
       .sort(
         (a, b) =>
-          Number(roleOf(b) === "healer") - Number(roleOf(a) === "healer") ||
+          Number(worthDenying(b)) - Number(worthDenying(a)) ||
           b.combatant.energy - a.combatant.energy ||
           a.id.localeCompare(b.id),
       );

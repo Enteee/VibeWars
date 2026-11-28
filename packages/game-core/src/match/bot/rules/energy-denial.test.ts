@@ -10,6 +10,7 @@ import fight from "./fight.js";
 import { ELEMENTALIST, MONK, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
 
 const BURN = "mesmer.energy-burn";
+const DRAIN = "mesmer.energy-drain";
 
 const denies = (id: string): boolean => {
   const skill = getSkill(id);
@@ -79,15 +80,30 @@ describe("play-build denies the foe healer's Energy (#4281)", () => {
     expect(fightAt(at([skill], [[700, 20]]))).toMatchObject({ useSkillId: skill, targetId: "w" });
   });
 
-  it("drains a foe healer before a richer foe that heals none", () => {
-    const sim = at(["mesmer.energy-drain"], [[700, 10]]);
+  /** Whom `m`, at 5 Energy, drains: a monk with `monkEnergy`, `w` with `warriorEnergy`. */
+  const drained = (monkEnergy: number, warriorEnergy: number) => {
+    const sim = at([DRAIN], [[700, monkEnergy]]);
     const self = sim.get("m");
     const warrior = sim.get("w");
     if (self !== undefined) self.combatant.energy = 5;
-    if (warrior !== undefined) warrior.combatant.energy = 25;
-    expect(energy.decide(ruleFor(sim, "m"))).toMatchObject({
-      useSkillId: "mesmer.energy-drain",
-      targetId: "monk0",
-    });
+    if (warrior !== undefined) warrior.combatant.energy = warriorEnergy;
+    const decision = energy.decide(ruleFor(sim, "m"));
+    expect(decision?.useSkillId).toBe(DRAIN);
+    return decision?.targetId;
+  };
+
+  it("drains a foe healer before a richer foe that heals none", () => {
+    expect(drained(10, 25)).toBe("monk0");
+  });
+
+  it("drains a nearly dry healer by its Energy alone (#4283)", () => {
+    expect(drained(2, 20)).toBe("w");
+    expect(drained(6, 20)).toBe("monk0");
+    expect(drained(5, 20)).toBe("monk0");
+    expect(drained(3, 4)).toBe("w");
+  });
+
+  it("still burns the team's target over a healer at 4 Energy (#4283)", () => {
+    expect(fightAt(at([BURN], [[700, 4]]))).toMatchObject({ useSkillId: BURN, targetId: "w" });
   });
 });
