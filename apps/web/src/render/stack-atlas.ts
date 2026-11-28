@@ -99,6 +99,11 @@ export interface AtlasSurface {
   addFrame(name: string, x: number, y: number, width: number, height: number): void;
   /** Upload what the canvas now holds. */
   refresh(): void;
+  /**
+   * Upload only this rectangle of the canvas (#4271): rows drawn into
+   * space a surface already had, so the rest of it is on the GPU as is.
+   */
+  refreshRect(x: number, y: number, width: number, height: number): void;
   destroy(): void;
 }
 
@@ -464,6 +469,8 @@ export class StackAtlas {
    * row has its place kept on the shelves at the top (#4172), which a body
    * row never takes, so a summon's late row bakes alone, never every
    * body's again mid-fight. Body rows stack down the canvas under them.
+   * A new surface uploads whole; rows added to one upload only the
+   * rectangle they cover (#4271), not the whole 17.8 MB again.
    */
   private build(fresh = false): void {
     const shelves = creatureShelves();
@@ -478,6 +485,8 @@ export class StackAtlas {
       from = 0;
     }
     const surface = this.surface;
+    const whole = from === 0;
+    let drawn: { left: number; top: number; right: number; bottom: number } | undefined;
     let top = shelves.height;
     this.rows.forEach((row, index) => {
       let place = shelves.at.get(row.key);
@@ -489,7 +498,14 @@ export class StackAtlas {
         return;
       }
       const { x, y } = place;
-      surface.context.clearRect(x, y, row.width * row.frames.length, row.height);
+      const width = row.width * row.frames.length;
+      drawn = {
+        left: Math.min(drawn?.left ?? x, x),
+        top: Math.min(drawn?.top ?? y, y),
+        right: Math.max(drawn?.right ?? x + width, x + width),
+        bottom: Math.max(drawn?.bottom ?? y + row.height, y + row.height),
+      };
+      surface.context.clearRect(x, y, width, row.height);
       row.frames.forEach((frame, i) => {
         const left = x + i * row.width;
         frame.bake(surface.context, left + row.feetX, y + row.feetY);
@@ -498,6 +514,15 @@ export class StackAtlas {
       });
     });
     this.filled = this.rows.length;
-    surface.refresh();
+    if (whole || drawn === undefined) {
+      surface.refresh();
+    } else {
+      surface.refreshRect(
+        drawn.left,
+        drawn.top,
+        drawn.right - drawn.left,
+        drawn.bottom - drawn.top,
+      );
+    }
   }
 }

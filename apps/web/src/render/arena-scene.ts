@@ -550,6 +550,7 @@ import {
   type WornCape,
 } from "./body-painter.js";
 import type { Point } from "./weapon-mark-geometry.js";
+import { uploadCanvasRect } from "./canvas-rect-upload.js";
 import type {
   ArenaSnapshot,
   FloatingText,
@@ -1393,6 +1394,11 @@ export class ArenaScene extends Phaser.Scene {
       },
       refresh: () => {
         texture.refresh();
+      },
+      refreshRect: (x: number, y: number, w: number, h: number) => {
+        if (!uploadCanvasRect(this.renderer, texture, x, y, w, h)) {
+          texture.refresh();
+        }
       },
       destroy: () => {
         this.textures.remove(key);
