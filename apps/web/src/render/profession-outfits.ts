@@ -8,16 +8,19 @@ import type { ProfessionId } from "@vibewars/game-core";
  * a new outfit adds its kinds here and a case to each of its builders.
  */
 
-/** The torso: a warrior's plate, a caster's robe, a ranger's short coat. */
-export type TorsoKind = "plate" | "robe" | "coat";
+/** The torso: a warrior's plate, a caster's robe, a short coat, an assassin's tight wrap. */
+export type TorsoKind = "plate" | "robe" | "coat" | "wrap";
 /** The legs: trousers, or a long robe skirt that hides them. */
 export type LegKind = "trousers" | "robe";
-/** Over the shoulders: pauldrons, a high cloth collar, or nothing. */
-export type ShoulderKind = "pauldrons" | "collar" | "none";
-/** The head: a visored helm, a hood, a bare head with or without a circlet. */
-export type HeadKind = "helm" | "hood" | "circlet" | "bare";
-/** On the back, behind the torso. */
-export type BackKind = "quiver";
+/** Over the shoulders: pauldrons, a high cloth collar, a cloth mantle, bone spikes, or nothing. */
+export type ShoulderKind = "pauldrons" | "collar" | "mantle" | "spikes" | "none";
+/**
+ * The head: a visored helm, a hood, a cowl that hides the face, a
+ * wide-brimmed plumed hat, a bare head with or without a circlet.
+ */
+export type HeadKind = "helm" | "hood" | "cowl" | "hat" | "circlet" | "bare";
+/** On the back, behind the torso: a quiver, or two crossed blades. */
+export type BackKind = "quiver" | "blades";
 
 /**
  * An outfit: a kind per slot, and its `cloth`, the second fabric, a dark
@@ -74,6 +77,30 @@ export const PROFESSION_OUTFITS: Readonly<Partial<Record<ProfessionId, Outfit>>>
     head: "circlet",
     back: undefined,
     cloth: 0x5a2a22,
+  },
+  necromancer: {
+    torso: "robe",
+    legs: "robe",
+    shoulders: "spikes",
+    head: "cowl",
+    back: undefined,
+    cloth: 0x2e2a38,
+  },
+  mesmer: {
+    torso: "coat",
+    legs: "trousers",
+    shoulders: "mantle",
+    head: "hat",
+    back: undefined,
+    cloth: 0x3a2a4a,
+  },
+  assassin: {
+    torso: "wrap",
+    legs: "trousers",
+    shoulders: "none",
+    head: "cowl",
+    back: "blades",
+    cloth: 0x22242c,
   },
 };
 

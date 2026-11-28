@@ -447,17 +447,27 @@ describe("profession outfits (#4175)", () => {
     return hit;
   };
 
-  it("dresses the warrior, monk, elementalist and ranger each its own way", () => {
-    const looks = (["warrior", "monk", "elementalist", "ranger"] as const).map((primary) =>
-      JSON.stringify(standing(outfitOf(primary))),
-    );
-    expect(new Set(looks).size).toBe(4);
+  it("dresses every drawn profession its own way (#4175, #4179)", () => {
+    const drawn = [
+      "warrior",
+      "monk",
+      "elementalist",
+      "ranger",
+      "necromancer",
+      "mesmer",
+      "assassin",
+    ] as const;
+    for (const primary of drawn) {
+      expect(PROFESSION_OUTFITS[primary]).toBeDefined();
+    }
+    const looks = drawn.map((primary) => JSON.stringify(standing(outfitOf(primary))));
+    expect(new Set(looks).size).toBe(drawn.length);
   });
 
   it("wears the warrior's outfit with no primary, or one with no outfit yet", () => {
     expect(outfitOf("warrior")).toBe(WARRIOR_OUTFIT);
     expect(outfitOf(undefined)).toBe(WARRIOR_OUTFIT);
-    expect(outfitOf("necromancer")).toBe(WARRIOR_OUTFIT);
+    expect(outfitOf("ritualist")).toBe(WARRIOR_OUTFIT);
     expect(accentOf(undefined)).toBeUndefined();
   });
 
@@ -512,5 +522,20 @@ describe("profession outfits (#4175)", () => {
     expect(tones("monk")).not.toContain("metal");
     expect(tones("elementalist")).toContain("gold");
     expect(tones("elementalist").at(-1)).toBe("hair");
+  });
+
+  it("spikes the necromancer in bone, plumes the mesmer's hat, crosses blades on the assassin's back (#4179)", () => {
+    const tones = (primary: "necromancer" | "mesmer" | "assassin"): StackTone[] =>
+      standing(outfitOf(primary)).map((slice) => slice.tone);
+    // Both cowls hide the face in the dark.
+    expect(tones("necromancer")).toContain("bone");
+    expect(tones("necromancer")).toContain("visor");
+    expect(tones("necromancer")).not.toContain("metal");
+    expect(tones("mesmer").at(-1)).toBe("crest");
+    expect(tones("mesmer")).not.toContain("visor");
+    expect(tones("assassin")).toContain("visor");
+    expect(tones("assassin")).toContain("metal");
+    expect(tones("assassin")).not.toContain("bone");
+    expect(stackTones(0x59c2ff, undefined, outfitOf("necromancer"), undefined).bone).toBe(0xd8d0b8);
   });
 });
