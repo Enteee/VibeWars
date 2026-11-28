@@ -99,6 +99,8 @@ export interface AtlasSurface {
   addFrame(name: string, x: number, y: number, width: number, height: number): void;
   /** Upload what the canvas now holds. */
   refresh(): void;
+  /** Upload only the rect `x`, `y`, `width` × `height` of the canvas: what a late row drew (#4271). */
+  refreshRect(x: number, y: number, width: number, height: number): void;
   destroy(): void;
 }
 
@@ -464,6 +466,8 @@ export class StackAtlas {
    * row has its place kept on the shelves at the top (#4172), which a body
    * row never takes, so a summon's late row bakes alone, never every
    * body's again mid-fight. Body rows stack down the canvas under them.
+   * A new canvas uploads whole; rows drawn onto the one there is upload
+   * only the rect around them (#4271), never the whole atlas mid-fight.
    */
   private build(fresh = false): void {
     const shelves = creatureShelves();
@@ -471,14 +475,17 @@ export class StackAtlas {
       .filter((row) => !shelves.at.has(row.key))
       .reduce((sum, row) => sum + row.height, shelves.height);
     let from = this.surface === undefined || fresh ? 0 : this.filled;
+    let whole = false;
     if (this.surface === undefined || fresh || height > this.capacity) {
       this.surface?.destroy();
       this.capacity = Math.max(height, this.capacity * 2);
       this.surface = this.create(shelves.width, this.capacity);
       from = 0;
+      whole = true;
     }
     const surface = this.surface;
     let top = shelves.height;
+    let drawn: { left: number; top: number; right: number; bottom: number } | undefined;
     this.rows.forEach((row, index) => {
       let place = shelves.at.get(row.key);
       if (place === undefined) {
@@ -489,7 +496,15 @@ export class StackAtlas {
         return;
       }
       const { x, y } = place;
-      surface.context.clearRect(x, y, row.width * row.frames.length, row.height);
+      const right = x + row.width * row.frames.length;
+      const bottom = y + row.height;
+      drawn = {
+        left: Math.min(x, drawn?.left ?? x),
+        top: Math.min(y, drawn?.top ?? y),
+        right: Math.max(right, drawn?.right ?? right),
+        bottom: Math.max(bottom, drawn?.bottom ?? bottom),
+      };
+      surface.context.clearRect(x, y, right - x, row.height);
       row.frames.forEach((frame, i) => {
         const left = x + i * row.width;
         frame.bake(surface.context, left + row.feetX, y + row.feetY);
@@ -498,6 +513,15 @@ export class StackAtlas {
       });
     });
     this.filled = this.rows.length;
-    surface.refresh();
+    if (whole) {
+      surface.refresh();
+    } else if (drawn !== undefined) {
+      surface.refreshRect(
+        drawn.left,
+        drawn.top,
+        drawn.right - drawn.left,
+        drawn.bottom - drawn.top,
+      );
+    }
   }
 }

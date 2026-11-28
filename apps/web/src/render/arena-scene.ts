@@ -642,6 +642,41 @@ interface WaterCells {
   readonly textures: readonly string[];
 }
 
+/**
+ * Upload only the rect `x`, `y`, `w` × `h` of canvas texture `texture`
+ * (#4271): a late figure row, not the whole atlas. Phaser 4.2 has no
+ * partial upload, so this does what its `WebGLTextureWrapper` upload
+ * does, through its own texture-unit and pixel-store state so that stays
+ * true, with `texSubImage2D` for the rect. With no WebGL it refreshes
+ * the whole texture. Relies on Phaser 4.2.1's wrappers.
+ */
+function refreshCanvasRect(
+  renderer: Phaser.Renderer.Canvas.CanvasRenderer | Phaser.Renderer.WebGL.WebGLRenderer,
+  texture: Phaser.Textures.CanvasTexture,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  const source = texture.source[0];
+  const wrapper = source?.glTexture;
+  if (!(renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) || wrapper?.webGLTexture == null) {
+    texture.refresh();
+    return;
+  }
+  const gl = renderer.gl;
+  renderer.glTextureUnits.bind(wrapper, 0);
+  renderer.glWrapper.updateTexturing({
+    texturing: { flipY: wrapper.flipY, premultiplyAlpha: wrapper.pma },
+  });
+  // Flipped on upload, the rect's rows land counted from the bottom.
+  const top = wrapper.flipY ? texture.height - y - h : y;
+  const pixels = texture.context.getImageData(x, y, w, h);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, x, top, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  // Its mipmaps, if it has any, regenerate on its next bind.
+  wrapper.needsMipmapRegeneration = true;
+}
+
 /** Liquid `id`'s cells' texture (#4058, #4062), painted once per game. */
 function liquidCellsTileKey(id: string): string {
   return `liquid-cells-${id}`;
@@ -1393,6 +1428,9 @@ export class ArenaScene extends Phaser.Scene {
       },
       refresh: () => {
         texture.refresh();
+      },
+      refreshRect: (x: number, y: number, w: number, h: number) => {
+        refreshCanvasRect(this.game.renderer, texture, x, y, w, h);
       },
       destroy: () => {
         this.textures.remove(key);
