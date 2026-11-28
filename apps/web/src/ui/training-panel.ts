@@ -53,7 +53,7 @@ import {
 import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
-import { mapShrines } from "../net/maps.js";
+import { fileMap, mapShrines } from "../net/maps.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
@@ -685,6 +685,7 @@ export function createTrainingPanel(): TrainingPanel {
     session?.music.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
+    viewport?.scene.setMatchMap(fileMap(scenario.mapId));
     creatureOwners.clear();
     ticks = new StatusTickBatcher();
     const connection = createLocalConnection({
@@ -1052,6 +1053,7 @@ export function createTrainingPanel(): TrainingPanel {
       return;
     }
     viewport = created;
+    created.scene.setMatchMap(session === undefined ? undefined : fileMap(session.scenario.mapId));
     // At a match's scale (#709): the small stage shows less of the world
     // instead of all of it shrunk. A match's canvas is the whole window
     // (#viewport; the top bar hides in a match, #454), so that is the box

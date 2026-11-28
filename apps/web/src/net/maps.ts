@@ -374,7 +374,7 @@ const NOT_RANDOM: readonly MatchMode[] = [
  * the tutorial's canyon (#3247), which no lobby lists but which is drawn
  * as any map is; `undefined` for one it does not have.
  */
-function fileMap(mapId: string): MapData | undefined {
+export function fileMap(mapId: string): MapData | undefined {
   return (
     ARENA_MAPS.find((map) => map.id === mapId) ??
     TRAINING_MAPS.get(mapId) ??
