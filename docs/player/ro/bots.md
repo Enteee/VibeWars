@@ -27,7 +27,9 @@ Un bot joacă rolul pe care i-l dă buildul. Unul cu armă de corp la corp este
 vindecări sau protecții pe care le poate lansa asupra unui aliat este
 **vindecător**: stă în spatele aliatului cel mai rănit, departe de inamici. Când
 doi sau mai mulți inamici se concentrează pe un aliat, un vindecător îi pune
-protecția înainte să ajungă lovitura. Orice alt bot este **la distanță**: stă
+protecția înainte să ajungă lovitura. Un vindecător păstrează destulă Energie
+pentru cea mai ieftină vindecare sau protecție a sa și cheltuie sub acest prag
+doar pentru un aliat aflat în pericol real. Orice alt bot este **la distanță**: stă
 acolo unde ajunge fiecare dintre atacurile lui și se oprește să lupte cu un
 inamic care vine prea aproape. Boții la distanță și vindecătorii se mută unde îi
 pot ajunge mai puțini inamici și folosesc coloanele drept acoperire. O echipă se

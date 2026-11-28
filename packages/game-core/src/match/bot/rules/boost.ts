@@ -8,7 +8,7 @@ import {
   sacrificedFraction,
   WELL_SACRIFICE_FLOOR,
 } from "../skill-intent.js";
-import { healthFraction } from "./shared.js";
+import { healthFraction, keepsReserve } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** How far `body`'s weapon reaches `foe`, height included. */
@@ -48,7 +48,8 @@ const boost: BotRule = {
             : allies.filter((ally) => distance(ally.position, self.position) <= area.radius);
       return (
         members.some((member) => swinging(member) && boostsMember(held, member.combatant)) &&
-        mayUse(held, self.id)
+        mayUse(held, self.id) &&
+        !keepsReserve(self, held)
       );
     });
     return skill === undefined ? undefined : use(skill, self.id);

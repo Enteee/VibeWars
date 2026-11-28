@@ -29,6 +29,7 @@ import {
   SPIKE_FINISH_FRACTION,
   SPIKE_HOLD_MAX_SECONDS,
   healthFraction,
+  keepsReserve,
   spikeLands,
   spikeSeconds,
   stripFirst,
@@ -268,6 +269,7 @@ const fight: BotRule = {
         (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
         mayUse(held, castOn(held)) &&
+        !keepsReserve(self, held, target) &&
         (!(holding || covering) || context.check(held.id, castOn(held)).ok) &&
         !holdsSpike(held),
     );
