@@ -144,13 +144,16 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
     const host = network.join("host");
     const got = heard(host);
     await cryptoTurns();
+    const proofs = (): [Channel, unknown][] => got.filter(([channel]) => channel === "key-proof");
     host.send("key-challenge", { nonce: "3c".repeat(16) }, "guest");
-    await cryptoTurns();
+    // Its answer is signed and sent, and waits on the host (#4246).
+    await until(() => proofs().length === 1);
     host.send("key-challenge", { nonce: HOST_NONCE }, "guest");
+    await until(() => proofs().length === 2);
+    // And no third.
     await cryptoTurns();
-    const proofs = got.filter(([channel]) => channel === "key-proof");
-    expect(proofs).toHaveLength(2);
-    const { nonce } = proofs.at(-1)?.[1] as { nonce: string };
+    expect(proofs()).toHaveLength(2);
+    const { nonce } = proofs().at(-1)?.[1] as { nonce: string };
     host.send(
       "key-proven",
       { mac: await mac("host", HOST_NONCE, nonce, "guest", "host") },
