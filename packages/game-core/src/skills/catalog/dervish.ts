@@ -195,7 +195,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
     activationSeconds: 0.25,
-    rechargeSeconds: 12,
+    rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
@@ -205,8 +205,9 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
-    // each Enchantment (maximum of 3) on you": 17 s, its rank-12 value.
+    // "For 5...17...20 seconds, you have +1...3...4 Health regeneration for
+    // each enchantment (maximum of 3) on you" (PvP, #4264): 17 s, its
+    // rank-12 value.
     effects: [
       {
         kind: "apply-status",
@@ -230,7 +231,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
-    rechargeSeconds: 15,
+    rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
@@ -240,14 +241,14 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 4...9...10 seconds, you cannot be knocked down and move 25%
-    // faster": 9 s, its rank-12 value.
+    // "For 2...7...8 seconds, you cannot be knocked down and move 25%
+    // faster" (PvP, #4264): 7 s, its rank-12 value.
     effects: [
       {
         kind: "apply-status",
         statusId: "fleeting-stability",
         durationSeconds: {
-          scaling: { attributeId: "dervish.earth-prayers", atZero: 4, atTwelve: 8.8 },
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 2, atTwelve: 7 },
         },
       },
     ],
@@ -418,7 +419,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
-    rechargeSeconds: 8,
+    rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
@@ -429,8 +430,8 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "You gain 80...136...150 Health and remove 1 Dervish enchantment. If
-    // an enchantment was removed in this way, you also lose 1...3...3
-    // hexes": 3, its rank-12 value.
+    // an enchantment was removed in this way, you also lose 1 hex" (PvP,
+    // #4264).
     effects: [
       {
         kind: "heal",
@@ -448,7 +449,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
-        effects: [{ kind: "remove-status", category: "hex", count: 3, from: "caster" }],
+        effects: [{ kind: "remove-status", category: "hex", count: 1, from: "caster" }],
       },
     ],
   },
@@ -2107,8 +2108,8 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Deals 15...55...65 cold damage to target foe. You lose one Dervish
     // enchantment. If an enchantment was removed, target foe loses 1
-    // enchantment and you gain 1 strike of adrenaline": the wiki's 1
-    // strike, not the corpus's 2. A touch, as Vile Touch's.
+    // enchantment and you gain 2 strikes of adrenaline" (#4264). A touch, as
+    // Vile Touch's.
     effects: [
       {
         kind: "damage",
@@ -2122,7 +2123,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         condition: { kind: "removed", category: "enchantment", from: "caster" },
         effects: [
           { kind: "remove-status", category: "enchantment", count: 1 },
-          { kind: "adrenaline-gain", strikes: { flat: 1 } },
+          { kind: "adrenaline-gain", strikes: { flat: 2 } },
         ],
       },
     ],
