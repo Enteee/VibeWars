@@ -2005,6 +2005,34 @@ body:has(> .splash) #menu-background::after {
   gap: 6px;
 }
 
+/* Height and Build (#4176): free, so words, not swatches to unlock. */
+.cosmetics-pills {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.cosmetics-pill {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  font: inherit;
+  color: var(--ink-dim);
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.cosmetics-pill:hover,
+.cosmetics-pill:focus-visible {
+  border-color: var(--ink-dim);
+}
+
+.cosmetics-pill.is-chosen {
+  color: var(--accent);
+  background: rgb(89 194 255 / 12%);
+  border-color: var(--accent);
+}
+
 .cosmetics-detail {
   flex: 1 1 12rem;
   margin: 0;

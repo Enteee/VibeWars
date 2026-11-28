@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { COSMETIC_CATALOG, type CosmeticEntry } from "../cosmetics/catalog.js";
+import { bodyFromKey } from "../cosmetics/body.js";
 import { createCosmeticsStore, type CosmeticsStore } from "../cosmetics/store.js";
+import { setOwnPubkey } from "../cosmetics/view.js";
 import { t } from "../i18n/index.js";
 import type { WornCosmetics } from "../cosmetics/selection.js";
 import type { FigureLook } from "./character-card.js";
@@ -139,7 +141,10 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
 
   it("shows each slot as one row: None, then a swatch per item", () => {
     const container = mounted(emptyStore());
-    for (const group of container.all("cosmetics-slot")) {
+    // Height and Build (#4176) are rows of words, not of swatches.
+    for (const group of container
+      .all("cosmetics-slot")
+      .filter((each) => each.all("cosmetics-pill").length === 0)) {
       const items = COSMETIC_CATALOG.filter((entry) => entry.slot === group.dataset.slot);
       expect(group.all("cosmetics-row")).toHaveLength(1);
       const swatches = group.all("cosmetics-swatch").map((swatch) => swatch.dataset.item);
@@ -490,5 +495,77 @@ describe("Options > Cosmetics, the preview's professions (#4177)", () => {
     secondary.fire("change");
     expect(figure.professions).toEqual(["monk", "mesmer"]);
     expect(setItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("Options > Cosmetics, Height and Build (#4176)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement(), activeElement: null });
+    setOwnPubkey("ab".repeat(32));
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** `axis`'s row: each value's label, and the one chosen. */
+  const row = (container: FakeElement, axis: string): { labels: string[]; chosen: string[] } => {
+    const pills = slotOf(container, axis).all("cosmetics-pill");
+    return {
+      labels: pills.map((pill) => pill.textContent),
+      chosen: pills
+        .filter((pill) => pill.getAttribute("aria-checked") === "true")
+        .map((pill) => pill.textContent),
+    };
+  };
+  const heightName = (height: string): string =>
+    t(
+      height === "short"
+        ? "cosmetics.heightShort"
+        : height === "tall"
+          ? "cosmetics.heightTall"
+          : "cosmetics.heightAverage",
+    );
+  const buildName = (build: string): string =>
+    t(
+      build === "lean"
+        ? "cosmetics.buildLean"
+        : build === "heavy"
+          ? "cosmetics.buildHeavy"
+          : "cosmetics.buildAverage",
+    );
+
+  it("shows each row's value from your key until you pick, every value free", () => {
+    const derived = bodyFromKey("ab".repeat(32));
+    const container = mounted(emptyStore());
+    expect(row(container, "height").labels).toEqual(["short", "average", "tall"].map(heightName));
+    expect(row(container, "height").chosen).toEqual([heightName(derived.height)]);
+    expect(row(container, "build").chosen).toEqual([buildName(derived.build)]);
+    expect(slotOf(container, "build").all("cosmetics-locked")).toEqual([]);
+  });
+
+  it("stores only the row picked, the other still your key's", () => {
+    const derived = bodyFromKey("ab".repeat(32));
+    const store = emptyStore();
+    const container = mounted(store);
+    const tall = slotOf(container, "height")
+      .all("cosmetics-pill")
+      .find((pill) => pill.textContent === heightName("tall"));
+    tall?.click();
+    expect(store.body()).toEqual({ height: "tall", build: null });
+    expect(row(container, "height").chosen).toEqual([heightName("tall")]);
+    expect(row(container, "build").chosen).toEqual([buildName(derived.build)]);
+  });
+
+  it("walks a row with the arrows, picking as it goes", () => {
+    const store = emptyStore();
+    store.pickBody({ build: "lean" });
+    const container = mounted(store);
+    const build = slotOf(container, "build");
+    const lean = build.all("cosmetics-pill")[0];
+    if (lean === undefined) {
+      throw new Error("no lean");
+    }
+    press(build.all("cosmetics-pills")[0] ?? build, lean, "ArrowRight");
+    expect(store.body().build).toBe("average");
   });
 });
