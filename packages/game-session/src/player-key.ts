@@ -4,6 +4,7 @@
  * code of its own, and never holds the secret half.
  */
 
+import type { FigureBody } from "@vibewars/game-protocol";
 import type { RankedResult, RankedStart } from "@vibewars/ranking";
 
 /**
@@ -23,13 +24,14 @@ export interface LobbyProofFields {
 }
 
 /**
- * What a player wears (ADR-0056): at most one catalog id per slot, as
- * `pubkey` chose them at `at`, ms since the epoch. Only `apps/web` reads
- * the ids; everything between relays them untouched.
+ * What a player wears (ADR-0056): at most one catalog id per slot and a
+ * body, as `pubkey` chose them at `at`, ms since the epoch. Only
+ * `apps/web` reads them; everything between relays them untouched.
  */
 export interface CosmeticSelection {
   readonly pubkey: string;
   readonly ids: readonly string[];
+  readonly body: FigureBody;
   readonly at: number;
 }
 
