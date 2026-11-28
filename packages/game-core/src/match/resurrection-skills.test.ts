@@ -321,6 +321,21 @@ describe("Flesh of My Flesh (#474)", () => {
     expect(resurrections(events)[0]?.energyFraction).toBeCloseTo(0.17, 10);
   });
 
+  it("is usable again 6 s after it resolves, and not before (#4244)", () => {
+    const sim = match(spec("r", 0, vec2(0, 40)));
+    kill(sim, "w");
+    kill(sim, "v");
+    use(sim, "r", 3, "w");
+    stepFor(sim, cast(4));
+    expect(get(sim, "w").combatant.dead).toBe(false);
+
+    stepFor(sim, 5.9);
+    sim.setTarget("r", "v");
+    expect(sim.requestSkill("r", 3)?.check).not.toEqual({ ok: true });
+    stepFor(sim, 0.2);
+    use(sim, "r", 3, "v");
+  });
+
   it("gives at most the ally's own maximum", () => {
     const sim = match(spec("big", 0, vec2(0, 40), { maxHealth: 1200 }));
     kill(sim, "w");

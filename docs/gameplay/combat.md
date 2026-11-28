@@ -1001,7 +1001,7 @@ do not set either off. Neither does damage a trigger deals, so Mark of
 Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
 foes in one tick: it answers the first. The blow that kills the bearer
 steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
-recharge) lasts 20 s or 4 hits with any weapon: each hit deals 25
+recharge) lasts 20 s or 4 hits with any weapon: each hit deals 33
 armor-ignoring damage to every other foe adjacent to the foe hit. A miss
 or a block spends nothing. A weapon spell rides every attack, a wand's
 or a staff's bolt too (#1654); a preparation rides physical attacks only.
@@ -1011,7 +1011,7 @@ The Ritualist heals with Restoration Magic, each on an ally or yourself
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
-**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 78, and if the ally
 is under a weapon spell it also loses one condition, the newest: the
 Ritualist's first condition removal (#1022).
 Mend Body and Soul also removes one condition from the ally for each
