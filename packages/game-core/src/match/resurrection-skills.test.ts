@@ -259,6 +259,14 @@ describe("Signet of Return (#474)", () => {
     expect(resurrected?.energyFraction).toBeCloseTo(0.03, 10);
   });
 
+  it("stands the ally up 4 s after the cast starts, and not before (#4257)", () => {
+    const sim = match();
+    kill(sim, "w");
+    use(sim, "m", 2, "w");
+    expect(resurrections(stepFor(sim, 4 - 2 * DT))).toEqual([]);
+    expect(resurrections(stepFor(sim, 3 * DT)).map((event) => event.targetId)).toEqual(["w"]);
+  });
+
   it("counts each living ally in earshot, and no creature, corpse or ally beyond it", () => {
     const sim = match(
       spec("a", 0, vec2(0, 100)),

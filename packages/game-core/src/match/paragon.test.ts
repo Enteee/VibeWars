@@ -659,6 +659,18 @@ describe("Defensive Anthem (#956)", () => {
   const damaged = (log: readonly CombatLogEntry[]): boolean =>
     log.some((entry) => entry.events.some((event) => event.kind === "damage"));
 
+  it("is usable again 15 s after use, and not before (#4257)", () => {
+    const match = new MatchSimulation({
+      seed: "defensive-anthem",
+      participants: [{ ...paragon(DEFENSIVE_ANTHEM), maxEnergy: 60 }],
+    });
+    useSkill(match, DEFENSIVE_ANTHEM);
+    stepFor(match, 14.9);
+    expect(match.requestSkill("p", 0)?.check).not.toEqual({ ok: true });
+    stepFor(match, 0.2);
+    expect(match.requestSkill("p", 0)?.check).toEqual({ ok: true });
+  });
+
   it("an elite chant that reaches every ally in earshot, the chanter too, for 9 s", () => {
     expect(skill(DEFENSIVE_ANTHEM).elite).toBe(true);
     const match = new MatchSimulation({

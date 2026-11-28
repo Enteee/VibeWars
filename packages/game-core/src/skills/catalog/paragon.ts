@@ -581,7 +581,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
     activationSeconds: 2,
-    rechargeSeconds: 25,
+    rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
     // "Each party member within earshot", the chanter among them.
@@ -1626,7 +1626,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     attributeId: "paragon.leadership",
     cost: undefined,
     overcast: 0,
-    activationSeconds: 5,
+    activationSeconds: 4,
     rechargeSeconds: 20,
     range: RANGE_SPELL,
     target: "single-dead-ally",
@@ -1675,14 +1675,14 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     range: WEAPONS.spear.range,
     target: "single-enemy",
     area: undefined,
-    // "If this attack hits, it deals +8...18...20 lightning damage. This
+    // "If this attack hits, it deals +10...18...20 lightning damage. This
     // attack has 25% armor penetration." GW1 makes the whole blow one
     // lightning packet, the spear's damage and the bonus alike.
     attack: {
       weapon: "spear",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "paragon.spear-mastery", atZero: 8, atTwelve: 18 },
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 10, atTwelve: 18 },
       },
       conditionalBonus: undefined,
       strikes: 1,
