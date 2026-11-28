@@ -1,0 +1,2 @@
+import{x as e}from"./dist-DP4LyrCy.js";var t=e;export{t as default};
+//# sourceMappingURL=describe-I8iuYg2i.js.map
