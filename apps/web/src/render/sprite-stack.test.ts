@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
 
 import {
@@ -43,7 +44,9 @@ import {
 const stackShadeOfVisor = stackShade(0x101014, 1);
 
 const centreX = (pose: (typeof STACK_POSES)[number], tone: string, part = 0): number => {
-  const slice = stackSlices(pose, WARRIOR_OUTFIT, undefined).find((s) => s.tone === tone);
+  const slice = stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY).find(
+    (s) => s.tone === tone,
+  );
   const points = slice?.parts[part] ?? [];
   return points.reduce((sum, p) => sum + p.x, 0) / points.length;
 };
@@ -52,21 +55,25 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("has the gothic preset's 28 slices in every pose, a slice a twelfth of a radius", () => {
     expect(STACK_SLICES).toBe(28);
     for (const pose of STACK_POSES) {
-      expect(stackLifts(stackSlices(pose, WARRIOR_OUTFIT, undefined))).toBe(STACK_SLICES);
+      expect(stackLifts(stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY))).toBe(
+        STACK_SLICES,
+      );
     }
     expect(STACK_STEP).toBeCloseTo(1 / 12);
     expect(STACK_HEIGHT).toBeCloseTo(28 / 12);
   });
 
   it("is helmeted, visored and crested, with a cape at its back", () => {
-    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined).map((slice) => slice.tone);
+    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY).map(
+      (slice) => slice.tone,
+    );
     expect(tones).toContain("metal");
     expect(tones.filter((tone) => tone === "visor")).toHaveLength(2);
     expect(tones.at(-1)).toBe("crest");
     expect(tones.filter((tone) => tone === "cape")).toHaveLength(11);
     expect(tones).not.toContain("hair");
     // The cape hangs behind: every cape slice is centred behind the body.
-    for (const slice of stackSlices("stand", WARRIOR_OUTFIT, undefined).filter(
+    for (const slice of stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY).filter(
       (s) => s.tone === "cape",
     )) {
       const points = slice.parts[0] ?? [];
@@ -91,10 +98,11 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   const placed = (pose: (typeof STACK_POSES)[number], facing = 0, flip = false): string[] => {
     const at = (v: number): number => (Math.round(v * 1000) + 0) / 1000;
     return stackLayers(
-      stackSlices(pose, WARRIOR_OUTFIT, undefined),
+      stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
       facing,
       12,
       stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined),
+      "average",
     )
       .map((layer) =>
         [
@@ -113,7 +121,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
 
   /** How far `pose` lifts the slices of `tone` over standing, in steps. */
   const lifted = (pose: (typeof STACK_POSES)[number], tone: string): number[] =>
-    stackSlices(pose, WARRIOR_OUTFIT, undefined)
+    stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY)
       .filter((slice) => slice.tone === tone)
       .map((slice) => slice.rise);
 
@@ -130,7 +138,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
 
   it("sways its cape out behind as it walks, the hem the most, to one side as it passes", () => {
     const capes = (pose: (typeof STACK_POSES)[number]) =>
-      stackSlices(pose, WARRIOR_OUTFIT, undefined)
+      stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY)
         .filter((slice) => slice.tone === "cape")
         .map((slice) => {
           const points = slice.parts[0] ?? [];
@@ -255,10 +263,11 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("faces its visor the way it faces, and rises a full stack", () => {
     const tones = stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined);
     const layers = stackLayers(
-      stackSlices("stand", WARRIOR_OUTFIT, undefined),
+      stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
       Math.PI / 2,
       12,
       tones,
+      "average",
     );
     const visor = layers.filter((layer) => layer.colour === stackShadeOfVisor);
     const mid = (points: readonly { readonly x: number; readonly y: number }[]) =>
@@ -291,8 +300,8 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
       WARRIOR_OUTFIT,
       undefined,
     );
-    const slices = stackSlices("stand", WARRIOR_OUTFIT, undefined);
-    const layers = stackLayers(slices, 0, 12, tones);
+    const slices = stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY);
+    const layers = stackLayers(slices, 0, 12, tones, "average");
     let cape = 0;
     let at = 0;
     for (const slice of slices) {
@@ -316,10 +325,13 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
         undefined,
       );
       const text = JSON.stringify(
-        stackLayers(stackSlices(pose, WARRIOR_OUTFIT, undefined), 1.3, 21, tones).map((layer) => [
-          layer.colour,
-          layer.points.map((p) => [p.x.toFixed(4), p.y.toFixed(4)]),
-        ]),
+        stackLayers(
+          stackSlices(pose, WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
+          1.3,
+          21,
+          tones,
+          "average",
+        ).map((layer) => [layer.colour, layer.points.map((p) => [p.x.toFixed(4), p.y.toFixed(4)])]),
       );
       let hash = 2166136261;
       for (let i = 0; i < text.length; i += 1) {
@@ -332,8 +344,8 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   });
 
   it("drops a cape's slices, not their lifts, from a figure without one", () => {
-    const caped = stackSlices("stand", WARRIOR_OUTFIT, undefined);
-    const bare = stackSlices("stand", WARRIOR_OUTFIT, undefined, false);
+    const caped = stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY);
+    const bare = stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY, false);
     expect(bare.some((slice) => slice.tone === "cape")).toBe(false);
     expect(stackLifts(bare)).toBe(stackLifts(caped));
     const helmet = (slices: typeof caped): number | undefined =>
@@ -466,7 +478,7 @@ describe("profession outfits (#4175)", () => {
     return accent;
   });
   const standing = (outfit: Outfit, accent?: Accent): readonly StackSlice[] =>
-    stackSlices("stand", outfit, accent);
+    stackSlices("stand", outfit, accent, AVERAGE_BODY);
 
   /** Inside `polygon`, by the even-odd rule. */
   const inside = (polygon: readonly { x: number; y: number }[], x: number, y: number): boolean => {
@@ -537,7 +549,7 @@ describe("profession outfits (#4175)", () => {
       expect(lifts).toBeLessThanOrEqual(STACK_SLICES);
       expect(lifts).toBeLessThanOrEqual(warrior + 4);
       for (const pose of STACK_POSES) {
-        expect(stackLifts(stackSlices(pose, outfit, undefined))).toBe(lifts);
+        expect(stackLifts(stackSlices(pose, outfit, undefined, AVERAGE_BODY))).toBe(lifts);
       }
     }
   });

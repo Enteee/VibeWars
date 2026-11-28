@@ -1,7 +1,9 @@
 import type { CreatureLook } from "@vibewars/game-core";
+import type { FigureBody, Height } from "@vibewars/game-protocol";
 
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
+import { AVERAGE_BODY, HEIGHT_SCALE, shapeParts, type BodyRegion } from "./figure-body.js";
 import {
   bladesSlices,
   cowlSlices,
@@ -202,6 +204,8 @@ export interface Figure {
   /** Adds a cape slice, or only its lift when the figure wears none (#4171). */
   readonly cape: (parts: Point[][], light: number) => void;
   readonly motion: PoseMotion;
+  /** Shape the slices pushed from now on as `region` of the body (#4176). */
+  readonly region: (region: BodyRegion) => void;
 }
 
 /** The cape's back at `hem` (1 at the hem, 0 at the shoulders), swayed. */
@@ -366,7 +370,9 @@ function torsoSlices(figure: Figure, outfit: Outfit, accent: Accent | undefined)
       }
       backSlices(figure, outfit.back, i, x - 0.52);
     }
+    figure.region("arms");
     push(arms(i), i < 2 ? hand : sleeve, i < 2 ? 0.9 : 0.7 + 0.04 * i, true);
+    figure.region("torso");
   }
 }
 
@@ -485,28 +491,35 @@ function headSlices({ push, motion }: Figure, kind: HeadKind): void {
 
 /**
  * The slices of a figure wearing `outfit` and `accent` in `pose`, boots
- * first (#4175). Without its cape (`caped` false) every other slice keeps
- * its lift.
+ * first (#4175), shaped to `body`'s build (#4176); its height is the
+ * placing's (`stackLayers`). Without its cape (`caped` false) every other
+ * slice keeps its lift.
  */
 export function stackSlices(
   pose: StackPose,
   outfit: Outfit,
   accent: Accent | undefined,
+  body: FigureBody,
   caped = true,
 ): readonly StackSlice[] {
   const motion = poseMotion(pose);
   const slices: StackSlice[] = [];
   let rise = 0;
   let lift = -1;
+  let region: BodyRegion = "legs";
   const push: Push = (parts, tone, light, same = false) => {
     if (!same) {
       lift += 1;
     }
-    slices.push({ parts, tone, light, lift, rise, alpha: 1 });
+    const shaped = shapeParts(parts, region, body.build);
+    slices.push({ parts: shaped, tone, light, lift, rise, alpha: 1 });
   };
   const figure: Figure = {
     motion,
     push,
+    region: (next) => {
+      region = next;
+    },
     cape: (parts, light) => {
       if (caped) {
         push(parts, "cape", light);
@@ -517,13 +530,17 @@ export function stackSlices(
   };
   bootSlices(figure);
   legSlices(figure, outfit.legs);
+  region = "waist";
   skirtSlices(figure, outfit, accent);
   // A breath lifts the torso, and everything over it.
   rise = motion.rise;
+  region = "torso";
   torsoSlices(figure, outfit, accent);
+  region = "shoulders";
   shoulderSlices(figure, outfit.shoulders);
   // A stride bobs the head at its passing frames.
   rise = motion.rise + motion.bob;
+  region = "head";
   headSlices(figure, outfit.head);
   return slices;
 }
@@ -539,7 +556,7 @@ export function stackLifts(slices: readonly { readonly lift: number }[]): number
  */
 export const STACK_SLICES = Math.max(
   ...[WARRIOR_OUTFIT, ...Object.values(PROFESSION_OUTFITS)].map((outfit) =>
-    stackLifts(stackSlices("stand", outfit, undefined)),
+    stackLifts(stackSlices("stand", outfit, undefined, AVERAGE_BODY)),
   ),
 );
 
@@ -609,8 +626,8 @@ export interface StackLayer {
 
 /**
  * The polygons of `slices`, slice `i` in `colours[i]`, turned to `facing`
- * at radius `r` and lifted, relative to the centre of the feet: what the
- * bake fills, bottom to top. Slices go up by lift, those on one lift in
+ * at radius `r` and lifted, each lift `step` radii over the last,
+ * relative to the centre of the feet: what the bake fills, bottom to top. Slices go up by lift, those on one lift in
  * list order, so a prop restarting at the hand is painted under the head
  * listed before it (#4171).
  */
@@ -619,6 +636,7 @@ function placeSlices<Tone>(
   colours: readonly number[],
   facing: number,
   r: number,
+  step: number,
 ): StackLayer[] {
   const cos = Math.cos(facing);
   const sin = Math.sin(facing);
@@ -626,8 +644,8 @@ function placeSlices<Tone>(
   order.sort((a, b) => a.slice.lift - b.slice.lift);
   const layers: StackLayer[] = [];
   for (const { slice, colour } of order) {
-    const lift = (slice.lift + 1) * STACK_STEP * r;
-    const rise = slice.rise * STACK_STEP * r;
+    const lift = (slice.lift + 1) * step * r;
+    const rise = slice.rise * step * r;
     for (const part of slice.parts) {
       layers.push({
         points: part.map((p) => ({
@@ -642,12 +660,16 @@ function placeSlices<Tone>(
   return layers;
 }
 
-/** A body's `slices`, shaded in `tones`, placed (`placeSlices`). */
+/**
+ * A body's `slices`, shaded in `tones`, placed (`placeSlices`) as high as
+ * its `height` stacks them (#4176).
+ */
 export function stackLayers(
   slices: readonly StackSlice[],
   facing: number,
   r: number,
   tones: Record<StackTone, number>,
+  height: Height,
 ): StackLayer[] {
   let cape = 0;
   const colours = slices.map((slice) => {
@@ -659,7 +681,7 @@ export function stackLayers(
     }
     return stackShade(tones[tone], slice.light);
   });
-  return placeSlices(slices, colours, facing, r);
+  return placeSlices(slices, colours, facing, r, STACK_STEP * HEIGHT_SCALE[height]);
 }
 
 /** A creature's `slices`, shaded in their own colours, placed (`placeSlices`). */
@@ -669,7 +691,7 @@ export function creatureLayers(
   r: number,
 ): StackLayer[] {
   const colours = slices.map((slice) => stackShade(slice.tone, slice.light));
-  return placeSlices(slices, colours, facing, r);
+  return placeSlices(slices, colours, facing, r, STACK_STEP);
 }
 
 /**
@@ -962,6 +984,7 @@ function ghostSlices(pose: CreaturePose): readonly StackSlice<number>[] {
     pose === "stride-a" ? "contact-a" : pose === "stride-b" ? "contact-b" : "stand",
     WARRIOR_OUTFIT,
     undefined,
+    AVERAGE_BODY,
     false,
   );
   const slices: StackSlice<number>[] = body.map((slice) => ({

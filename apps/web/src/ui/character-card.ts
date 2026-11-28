@@ -5,9 +5,10 @@ import {
   isWeaponId,
   type ProfessionId,
 } from "@vibewars/game-core";
-import type { WireProposalBuild } from "@vibewars/game-protocol";
+import type { FigureBody, WireProposalBuild } from "@vibewars/game-protocol";
 
 import type { CapeLook } from "../render/cape-shape.js";
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import {
   characterAppearance,
@@ -24,7 +25,7 @@ import { h, playCard } from "./kit.js";
  * same.
  */
 
-/** What a character card draws: who, what they hold, their bar and cape. */
+/** What a character card draws: who, what they hold, their bar, cape and body. */
 export interface FigureLook {
   readonly primary: ProfessionId;
   readonly secondary: ProfessionId | undefined;
@@ -32,22 +33,30 @@ export interface FigureLook {
   readonly appearance: CharacterAppearance;
   readonly skillBar: TeamCharacter["skillBar"];
   readonly cape: CapeLook | undefined;
+  /** Its player's height and build (#4176). */
+  readonly physique: FigureBody;
 }
 
 /** A stored character's look: an invalid build is the bare body (#1250). */
-export function lookOfCharacter(character: TeamCharacter, cape: CapeLook | undefined): FigureLook {
+export function lookOfCharacter(
+  character: TeamCharacter,
+  cape: CapeLook | undefined,
+  physique: FigureBody,
+): FigureLook {
   return {
     primary: character.primaryProfession,
     secondary: character.secondaryProfession,
     appearance: characterAppearance(character),
     skillBar: character.skillBar,
     cape,
+    physique,
   };
 }
 
 /**
  * A lobby member's look from the wire (#1811): what the host sent it
- * holding, no cape, as other players' are not on the wire. No build yet,
+ * holding, no cape, as other players' are not on the wire, and the
+ * average body, as a proposal's member is a build, not a player. No build yet,
  * or a house seat, is the bare body with an empty bar; a weapon or skill
  * this client does not know is none, an empty slot. `undefined`: a
  * profession this client does not know, which has no figure.
@@ -76,6 +85,7 @@ export function lookOfWire(
       id !== null && getSkill(id) !== undefined ? id : null,
     ),
     cape: undefined,
+    physique: AVERAGE_BODY,
   };
 }
 

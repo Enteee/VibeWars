@@ -8,6 +8,7 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import { atRest } from "../render/pick.test-support.js";
 import { createDoubleClick } from "./double-click.js";
 import {
@@ -107,6 +108,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     heroRank: 0,
     signet: undefined,
     cosmetics: {},
+    physique: AVERAGE_BODY,
     cape: undefined,
     bot: false,
     position: vec2(x, 0),

@@ -1365,7 +1365,8 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * What `actor`'s figure is painted in: its team's colour, its cape
-   * (ADR-0056), and its professions' outfit and accent (#4175).
+   * (ADR-0056), its professions' outfit and accent (#4175), and its
+   * height and build (#4176).
    */
   private stackLook(actor: RenderableActor): StackLook {
     return {
@@ -1374,6 +1375,7 @@ export class ArenaScene extends Phaser.Scene {
       cape: actor.cape,
       primary: actor.profession,
       secondary: actor.secondaryProfession,
+      physique: actor.physique,
     };
   }
 

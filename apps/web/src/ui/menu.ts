@@ -1,5 +1,6 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 
+import { ownBody } from "../cosmetics/view.js";
 import { t } from "../i18n/index.js";
 import { capeLook } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
@@ -175,7 +176,7 @@ function characterCard(
         : h("span", "roster-invalid-tag", t("menu.invalidTag")),
     ),
     content: [
-      characterFigureCard(lookOfCharacter(character, worn), {
+      characterFigureCard(lookOfCharacter(character, worn, ownBody()), {
         size: "card",
         line: rosterSubtitle(character),
       }),

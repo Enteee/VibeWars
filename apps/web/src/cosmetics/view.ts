@@ -52,3 +52,11 @@ export function seenBody(seat: SeatWorn | undefined, participantId: string): Fig
   }
   return visibleBody(seat, participantId);
 }
+
+/**
+ * The body you see yourself in (#4176): as picked, each axis never picked
+ * your key's; before main has loaded the key, the empty key's.
+ */
+export function ownBody(): FigureBody {
+  return bodyOf(cosmeticsStore.body(), ownPubkey ?? "");
+}

@@ -15,6 +15,8 @@ import {
 } from "@vibewars/game-protocol";
 import { MATCH_RECORD_VERSION, type MatchRecord } from "@vibewars/game-session";
 
+import { bodyFromKey } from "../cosmetics/body.js";
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
@@ -235,7 +237,13 @@ function playerMember(player: MatchRecordPlayer): TeamFigureMember {
   }
   heading.appendChild(h("span", "match-player-name", label));
   return {
-    look: decoded.ok ? lookOfCharacter(decoded.character, undefined) : undefined,
+    look: decoded.ok
+      ? lookOfCharacter(
+          decoded.character,
+          undefined,
+          player.pubkey === null ? AVERAGE_BODY : bodyFromKey(player.pubkey),
+        )
+      : undefined,
     label,
     heading,
   };

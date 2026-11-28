@@ -1,5 +1,6 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
+import { ownBody } from "../cosmetics/view.js";
 import { t } from "../i18n/index.js";
 import { isTeamBuildSize, type StoredTeam, type TeamBuildSize } from "../storage/schema.js";
 import { loadStarterTeamId } from "../storage/starter-team.js";
@@ -181,7 +182,7 @@ function teamCards(
     };
     // No cape: a team's members wear none, as in the lobby.
     const members = team.members.map(({ character }) => ({
-      look: lookOfCharacter(character, undefined),
+      look: lookOfCharacter(character, undefined, ownBody()),
       label: t("teamPlay.memberLabel", {
         name: character.name,
         professions: professionLabel(character.primaryProfession, character.secondaryProfession),

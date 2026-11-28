@@ -10,6 +10,7 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import {
   STROKE_BATCH_MS,
   compassReach,
@@ -35,6 +36,7 @@ function actor(
     heroRank: 0,
     signet: undefined,
     cosmetics: {},
+    physique: AVERAGE_BODY,
     cape: undefined,
     bot: false,
     position: vec2(x, y),

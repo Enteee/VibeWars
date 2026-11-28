@@ -45,6 +45,7 @@ import {
   shapeOutline,
   tunnelsHolding,
 } from "./layer-surfaces.js";
+import { AVERAGE_BODY } from "./figure-body.js";
 import { mapStructure } from "../net/maps.js";
 
 import { atRest } from "./pick.test-support.js";
@@ -535,6 +536,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     heroRank: 0,
     signet: undefined,
     cosmetics: {},
+    physique: AVERAGE_BODY,
     cape: undefined,
     bot: false,
     facing: 0,

@@ -1,4 +1,5 @@
 import { CREATURE_LOOKS, type CreatureLook, type ProfessionId } from "@vibewars/game-core";
+import type { FigureBody } from "@vibewars/game-protocol";
 
 import type { CapeLook } from "./cape-shape.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
@@ -36,8 +37,8 @@ import {
  */
 
 /**
- * A body's figure: its body colour, the cape it wears, and the
- * professions its outfit and accent follow (#4175).
+ * A body's figure: its body colour, the cape it wears, the professions
+ * its outfit and accent follow (#4175), and its height and build (#4176).
  */
 export interface BodyStackLook {
   readonly kind: "body";
@@ -45,6 +46,7 @@ export interface BodyStackLook {
   readonly cape: CapeLook | undefined;
   readonly primary: ProfessionId | undefined;
   readonly secondary: ProfessionId | undefined;
+  readonly physique: FigureBody;
 }
 
 /** A creature's figure: its look alone (#4171). */
@@ -112,14 +114,15 @@ export type SurfaceFactory = (width: number, height: number) => AtlasSurface;
 
 const css = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
 
-/** A look's name: a body's colours and professions, or a creature's look, which is all a bake depends on. */
+/** A look's name: a body's colours, professions and physique, or a creature's look, which is all a bake depends on. */
 export function stackLookKey(look: StackLook): string {
   if (look.kind === "creature") {
     return `creature:${look.look}`;
   }
   const { cape } = look;
   const worn = cape === undefined ? "" : `/${css(cape.main)}${css(cape.trim)}`;
-  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}`;
+  const { height, build } = look.physique;
+  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}+${height}+${build}`;
 }
 
 /**
@@ -201,10 +204,11 @@ export function bakeFigure(
     x,
     y,
     stackLayers(
-      stackSlices(pose, outfit, accent),
+      stackSlices(pose, outfit, accent, look.physique),
       bucketFacing(bucket),
       r,
       stackTones(look.body, look.cape, outfit, accent),
+      look.physique.height,
     ),
   );
 }

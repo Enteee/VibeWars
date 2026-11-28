@@ -30,10 +30,12 @@ import {
   stackSlices,
   stackTones,
 } from "./sprite-stack.js";
+import { BUILDS, HEIGHTS } from "@vibewars/game-protocol";
+import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
 import { PROFESSION_OUTFITS, SECONDARY_ACCENTS } from "./profession-outfits.js";
 
-const BARE = { primary: undefined, secondary: undefined } as const;
+const BARE = { primary: undefined, secondary: undefined, physique: AVERAGE_BODY } as const;
 const FRIEND: BodyStackLook = { kind: "body", body: 0x59c2ff, cape: undefined, ...BARE };
 const FOE: BodyStackLook = { kind: "body", body: 0xff7b72, cape: undefined, ...BARE };
 const CAPED: BodyStackLook = {
@@ -166,7 +168,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     });
   });
 
-  it("fits every outfit and accent, every pose at every baked heading, in its frame, outline and all (#4060, #4175)", () => {
+  it("fits every body, outfit and accent, every pose at every baked heading, in its frame, outline and all (#4060, #4175, #4176)", () => {
     const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
     const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
     const outfits = Object.values(PROFESSION_OUTFITS);
@@ -175,24 +177,26 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
       undefined,
       ...new Map(Object.values(SECONDARY_ACCENTS).map((accent) => [accent.kind, accent])).values(),
     ];
-    for (const outfit of outfits) {
-      for (const accent of accents) {
-        for (const pose of STACK_POSES) {
-          for (const bucket of STACK_BAKED_HEADINGS) {
-            const layers = stackLayers(
-              stackSlices(pose, outfit, accent),
-              bucketFacing(bucket),
-              r,
-              stackTones(FRIEND.body, undefined, outfit, accent),
-            );
-            const points = layers.flatMap((layer) => layer.points);
-            const xs = points.map((p) => STACK_FRAME_FEET_X + p.x);
-            const ys = points.map((p) => STACK_FRAME_FEET_Y + p.y);
-            expect(Math.min(...xs) - pad).toBeGreaterThanOrEqual(0);
-            expect(Math.max(...xs) + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
-            expect(Math.min(...ys) - pad).toBeGreaterThanOrEqual(0);
-            expect(Math.max(...ys) + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
-          }
+    const bodies = HEIGHTS.flatMap((height) => BUILDS.map((build) => ({ height, build })));
+    for (const [outfit, accent, body] of outfits.flatMap((outfit) =>
+      accents.flatMap((accent) => bodies.map((body) => [outfit, accent, body] as const)),
+    )) {
+      for (const pose of STACK_POSES) {
+        for (const bucket of STACK_BAKED_HEADINGS) {
+          const layers = stackLayers(
+            stackSlices(pose, outfit, accent, body),
+            bucketFacing(bucket),
+            r,
+            stackTones(FRIEND.body, undefined, outfit, accent),
+            body.height,
+          );
+          const points = layers.flatMap((layer) => layer.points);
+          const xs = points.map((p) => STACK_FRAME_FEET_X + p.x);
+          const ys = points.map((p) => STACK_FRAME_FEET_Y + p.y);
+          expect(Math.min(...xs) - pad).toBeGreaterThanOrEqual(0);
+          expect(Math.max(...xs) + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
+          expect(Math.min(...ys) - pad).toBeGreaterThanOrEqual(0);
+          expect(Math.max(...ys) + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
         }
       }
     }

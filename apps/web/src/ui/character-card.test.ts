@@ -1,6 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
   characterFigureCard,
@@ -102,7 +103,7 @@ describe("the character card (#1864)", () => {
   });
 
   const look = (overrides: Partial<StoredCharacter> = {}): FigureLook =>
-    lookOfCharacter(character(overrides), undefined);
+    lookOfCharacter(character(overrides), undefined, AVERAGE_BODY);
 
   for (const size of ["card", "row"] as const) {
     it(`as a ${size}, is the figure holding its weapons and the bar's eight cells, never the name`, () => {
@@ -195,7 +196,10 @@ describe("teamFigureCard (#1864)", () => {
   });
 
   const members = [
-    { look: lookOfCharacter(character(), undefined), label: "Ser Bash, Warrior / Monk" },
+    {
+      look: lookOfCharacter(character(), undefined, AVERAGE_BODY),
+      label: "Ser Bash, Warrior / Monk",
+    },
     { look: undefined, label: "?" },
   ];
 

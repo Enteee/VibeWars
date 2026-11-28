@@ -74,7 +74,7 @@ import {
 } from "./build-check.js";
 import { buildSelection, factsOf, signSelection } from "./cosmetics/selection.js";
 import { cosmeticsStore } from "./cosmetics/store.js";
-import { setOwnPubkey } from "./cosmetics/view.js";
+import { ownBody, setOwnPubkey } from "./cosmetics/view.js";
 import { keySignet } from "./identity/key-signet.js";
 import { createProfilePacer } from "./profile-pacer.js";
 import { mapName } from "./i18n/game-names.js";
@@ -529,7 +529,11 @@ async function main(): Promise<void> {
         const { guildCape } = playerGuild();
         return character === undefined
           ? undefined
-          : lookOfCharacter(character, guildCape === null ? undefined : capeLook(guildCape));
+          : lookOfCharacter(
+              character,
+              guildCape === null ? undefined : capeLook(guildCape),
+              ownBody(),
+            );
       } catch (error) {
         // Unreadable, the figure is the bare body: not worth more than a warning.
         console.warn("[web] could not load the selected character", error);
