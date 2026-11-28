@@ -28,7 +28,9 @@ phía sau đồng minh nào đang bị thương nặng nhất, tránh xa địch
 trở lên tập trung vào một đồng minh, bot hồi máu đặt kỹ năng bảo vệ lên đồng
 minh đó trước khi đòn đánh tới. Bot hồi máu giữ lại đủ Năng lượng cho kỹ
 năng hồi máu hoặc bảo vệ rẻ nhất của nó, và chỉ tiêu xuống dưới mức đó cho
-đồng minh đang thật sự gặp nguy. Mọi bot khác là **tầm xa**: nó giữ vị trí mà
+đồng minh đang thật sự gặp nguy. Bot có hai lời nguyền sẽ đặt lời nguyền rẻ đè
+lên lời nguyền quan trọng, để kỹ năng gỡ nguyền của địch gỡ cái rẻ trước. Mọi
+bot khác là **tầm xa**: nó giữ vị trí mà
 mọi đòn tấn công của nó đều với tới, và đứng lại đánh địch nào tiến quá gần.
 Bot tầm xa và bot hồi máu bước tới chỗ ít địch với tới được hơn, và dùng cột
 làm chỗ nấp. Cả đội quay sang bất kỳ địch nào trong tầm có máu dưới 60%, để

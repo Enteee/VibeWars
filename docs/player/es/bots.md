@@ -29,7 +29,9 @@ un **sanador**: se coloca detrás del aliado más herido, lejos de los
 enemigos. Cuando dos o más enemigos se centran en un aliado, el sanador le
 pone su protección antes de que llegue el golpe. El sanador guarda energía
 suficiente para su curación o protección más barata, y solo gasta por
-debajo de eso en un aliado en peligro real. Los demás bots son **a
+debajo de eso en un aliado en peligro real. Un bot con dos maleficios pone su
+maleficio barato encima del importante, para que la eliminación de maleficios de
+un enemigo quite primero el barato. Los demás bots son **a
 distancia**: se mantienen donde alcanzan todos sus ataques, y se plantan a
 luchar contra el enemigo que se acerca demasiado. Los bots a distancia y
 los sanadores se mueven a donde menos enemigos pueden alcanzarlos, y usan

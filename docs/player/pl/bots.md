@@ -26,7 +26,9 @@ osłonami, które może rzucić na sojusznika, jest **uzdrowicielem**: stoi za
 najbardziej rannym sojusznikiem, z dala od wrogów. Gdy dwóch lub więcej wrogów
 skupia się na jednym sojuszniku, uzdrowiciel nakłada na niego osłonę, zanim padnie
 cios. Uzdrowiciel zachowuje tyle Energii, ile trzeba na jego najtańsze leczenie lub
-osłonę, i schodzi poniżej tego tylko dla sojusznika w prawdziwym niebezpieczeństwie.
+osłonę, i schodzi poniżej tego tylko dla sojusznika w prawdziwym
+niebezpieczeństwie. Bot z dwiema klątwami rzuca tanią klątwę na ważną, więc
+usuwanie klątw przez wroga najpierw zdejmuje tę tanią.
 Każdy inny bot walczy **z dystansu**: trzyma się miejsca, z którego sięgają
 wszystkie jego ataki, a wroga, który podejdzie zbyt blisko, zwalcza na miejscu.
 Boty dystansowe i uzdrowiciele przechodzą tam, gdzie może ich dosięgnąć mniej

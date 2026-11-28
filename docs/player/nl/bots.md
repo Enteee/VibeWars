@@ -29,7 +29,9 @@ meer genezingen of beschermingen die hij op een bondgenoot kan casten, is een
 vijanden. Als twee of meer vijanden zich op één bondgenoot richten, geeft een
 healer die bondgenoot zijn bescherming voordat de klap aankomt. Een healer
 houdt genoeg Energie achter voor zijn goedkoopste genezing of bescherming, en
-gaat daar alleen onder voor een bondgenoot in echt gevaar. Elke andere bot
+gaat daar alleen onder voor een bondgenoot in echt gevaar. Een bot met twee
+vloeken legt zijn goedkope vloek over zijn belangrijke, zodat de
+vloekverwijdering van een vijand eerst de goedkope weghaalt. Elke andere bot
 is **ranged**: hij blijft waar elk van zijn aanvallen reikt, en blijft staan
 om te vechten met een vijand die te dichtbij komt. Ranged bots en healers
 stappen naar plekken waar minder vijanden ze kunnen bereiken, en gebruiken

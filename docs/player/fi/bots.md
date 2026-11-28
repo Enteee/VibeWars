@@ -30,7 +30,9 @@ liittolaisen takana, poissa vihollisten luota. Kun kaksi tai useampia
 vihollisia keskittyy yhteen liittolaiseen, parantaja laittaa suojauksensa
 tuohon liittolaiseen ennen kuin osuma osuu. Parantaja säästää tarpeeksi
 energiaa halvimpaan parannukseensa tai suojaukseensa ja käyttää sen alle
-vain todellisessa vaarassa olevaan liittolaiseen. Jokainen muu botti on
+vain todellisessa vaarassa olevaan liittolaiseen. Botti, jolla on kaksi
+kirousta, langettaa halvan kirouksensa tärkeän päälle, jotta vihollisen
+kirouksenpoisto vie ensin halvan. Jokainen muu botti on
 **kaukotaistelija**: se pysyttelee siellä, minne kaikki sen hyökkäykset
 ylettyvät, ja pysähtyy taistelemaan liian lähelle tulevaa vihollista
 vastaan. Kaukotaistelijabotit ja parantajat siirtyvät paikkoihin, joihin

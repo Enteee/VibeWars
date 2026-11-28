@@ -28,7 +28,10 @@ penyembuhan atau perlindungan yang bisa dirapal pada sekutu adalah **penyembuh**
 di belakang sekutu mana pun yang paling terluka, jauh dari musuh. Saat dua atau lebih
 musuh mengeroyok satu sekutu, penyembuh memasang perlindungannya pada sekutu itu sebelum
 pukulan mendarat. Penyembuh menyisakan cukup Energi untuk penyembuhan atau perlindungan
-termurahnya, dan hanya memakai di bawah itu untuk sekutu yang benar-benar dalam bahaya.
+termurahnya, dan hanya memakai di bawah itu untuk sekutu yang benar-benar dalam
+bahaya. Bot dengan dua kutukan menaruh kutukan murahnya di atas kutukan
+pentingnya, sehingga penghapusan kutukan milik musuh mengambil yang murah lebih
+dulu.
 Setiap bot lainnya adalah **jarak jauh**: ia menjaga posisi di mana semua
 serangannya mencapai sasaran, dan berdiri melawan musuh yang datang terlalu dekat. Bot jarak jauh
 dan penyembuh bergeser ke tempat yang lebih sedikit dijangkau musuh, dan memakai pilar
