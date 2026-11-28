@@ -66,6 +66,8 @@ import { nearestWithin, pickAt, type ClickableKind, type DrawnClickable } from "
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
 import type { WornCosmetics } from "../cosmetics/selection.js";
+import type { FigureBody } from "../cosmetics/body.js";
+import { HEIGHT_SCALE } from "./figure-body.js";
 
 /**
  * The renderer's own data shape and its pure helpers (team colour lookup,
@@ -99,6 +101,8 @@ export interface RenderableActor {
   readonly signet: number | undefined;
   /** What it wears (ADR-0056), as this page checked it: `{}`, the default, for most. */
   readonly cosmetics: WornCosmetics;
+  /** Its height and build (#4176), the same for every viewer. */
+  readonly physique: FigureBody;
   /** The player's guild cape (#1422), drawn behind a standing body; `undefined` for none. */
   readonly cape: CapeLook | undefined;
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */
@@ -1048,11 +1052,14 @@ export function wearsFigureBadge(actor: RenderableActor): boolean {
 /** Each creature look's standing figure height, radii, once worked out. */
 const creatureTalls = new Map<CreatureLook, number>();
 
-/** How tall `actor`'s figure stands, radii: a body's, or its creature's own (#4172). */
+/**
+ * How tall `actor`'s figure stands, radii: a body's at its height
+ * (#4176), or its creature's own (#4172).
+ */
 export function figureTall(actor: RenderableActor): number {
   const look = actor.creatureLook;
   if (look === undefined) {
-    return STACK_HEIGHT;
+    return STACK_HEIGHT * HEIGHT_SCALE[actor.physique.height];
   }
   let tall = creatureTalls.get(look);
   if (tall === undefined) {

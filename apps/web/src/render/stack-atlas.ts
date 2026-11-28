@@ -1,4 +1,5 @@
 import { CREATURE_LOOKS, type CreatureLook, type ProfessionId } from "@vibewars/game-core";
+import type { FigureBody } from "@vibewars/game-protocol";
 
 import type { CapeLook } from "./cape-shape.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
@@ -36,8 +37,8 @@ import {
  */
 
 /**
- * A body's figure: its body colour, the cape it wears, and the
- * professions its outfit and accent follow (#4175).
+ * A body's figure: its body colour, the cape it wears, the professions
+ * its outfit and accent follow (#4175), and its height and build (#4176).
  */
 export interface BodyStackLook {
   readonly kind: "body";
@@ -45,6 +46,7 @@ export interface BodyStackLook {
   readonly cape: CapeLook | undefined;
   readonly primary: ProfessionId | undefined;
   readonly secondary: ProfessionId | undefined;
+  readonly physique: FigureBody;
 }
 
 /** A creature's figure: its look alone (#4171). */
@@ -71,6 +73,24 @@ export const STACK_FRAME_HEIGHT = 75;
 /** Where the centre of the feet sits in a frame, pixels from its top-left. */
 export const STACK_FRAME_FEET_X = STACK_FRAME_WIDTH / 2;
 export const STACK_FRAME_FEET_Y = 63;
+
+/**
+ * The frame a body of `physique` bakes into (#4176): the average body's,
+ * stretched up for a tall one's crest and out for a heavy one's
+ * shoulders, so a short or lean figure keeps the average frame.
+ */
+export function stackFrameSize(physique: FigureBody): {
+  readonly width: number;
+  readonly height: number;
+  readonly feetX: number;
+  readonly feetY: number;
+} {
+  const heavy = physique.build === "heavy";
+  const width = heavy ? 54 : STACK_FRAME_WIDTH;
+  const above = (physique.height === "tall" ? 67 : STACK_FRAME_FEET_Y) + (heavy ? 2 : 0);
+  const below = heavy ? 13 : STACK_FRAME_HEIGHT - STACK_FRAME_FEET_Y;
+  return { width, height: above + below, feetX: width / 2, feetY: above };
+}
 
 const FRAMES_PER_LOOK = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 const ATLAS_WIDTH = STACK_FRAME_WIDTH * FRAMES_PER_LOOK;
@@ -112,14 +132,15 @@ export type SurfaceFactory = (width: number, height: number) => AtlasSurface;
 
 const css = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
 
-/** A look's name: a body's colours and professions, or a creature's look, which is all a bake depends on. */
+/** A look's name: a body's colours, professions and physique, or a creature's look, which is all a bake depends on. */
 export function stackLookKey(look: StackLook): string {
   if (look.kind === "creature") {
     return `creature:${look.look}`;
   }
   const { cape } = look;
   const worn = cape === undefined ? "" : `/${css(cape.main)}${css(cape.trim)}`;
-  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}`;
+  const { height, build } = look.physique;
+  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}+${height}+${build}`;
 }
 
 /**
@@ -201,10 +222,11 @@ export function bakeFigure(
     x,
     y,
     stackLayers(
-      stackSlices(pose, outfit, accent),
+      stackSlices(pose, outfit, accent, look.physique),
       bucketFacing(bucket),
       r,
       stackTones(look.body, look.cape, outfit, accent),
+      look.physique.height,
     ),
   );
 }
@@ -228,14 +250,11 @@ interface StackRow {
   }[];
 }
 
-/** A body look's row: its baked headings by its poses, in the fixed body frame. */
+/** A body look's row: its baked headings by its poses, in its physique's frame. */
 function bodyRow(key: string, look: BodyStackLook): StackRow {
   return {
     key,
-    width: STACK_FRAME_WIDTH,
-    height: STACK_FRAME_HEIGHT,
-    feetX: STACK_FRAME_FEET_X,
-    feetY: STACK_FRAME_FEET_Y,
+    ...stackFrameSize(look.physique),
     radius: STACK_BAKE_RADIUS,
     frames: STACK_POSES.flatMap((pose) =>
       STACK_BAKED_HEADINGS.map((bucket) => ({
@@ -348,6 +367,7 @@ export class StackAtlas {
   private surface: AtlasSurface | undefined;
   /** The surface's height, pixels, and how many of the rows are on it. */
   private capacity = 0;
+  private width = 0;
   private filled = 0;
   private bakes = 0;
 
@@ -460,14 +480,16 @@ export class StackAtlas {
     this.baked.clear();
     this.pending.clear();
     this.capacity = 0;
+    this.width = 0;
     this.filled = 0;
   }
 
   /**
    * Bake the rows not on the surface yet, or all of them on a new one when
-   * they no longer fit, or `fresh`: one canvas, one upload. Every creature
-   * row has its place kept on the shelves at the top (#4172), which a body
-   * row never takes, so a summon's late row bakes alone, never every
+   * they no longer fit, a heavy body's wider row too (#4176), or
+   * `fresh`: one canvas, one upload. Every creature row has its place
+   * kept on the shelves at the top (#4172), which a body row never takes,
+   * so a summon's late row bakes alone, never every
    * body's again mid-fight. Body rows stack down the canvas under them.
    * A new surface uploads whole; rows added to one upload only the
    * rectangle they cover (#4271), not the whole 17.8 MB again.
@@ -477,11 +499,16 @@ export class StackAtlas {
     const height = this.rows
       .filter((row) => !shelves.at.has(row.key))
       .reduce((sum, row) => sum + row.height, shelves.height);
+    const across = Math.max(
+      shelves.width,
+      ...this.rows.map((row) => row.width * row.frames.length),
+    );
     let from = this.surface === undefined || fresh ? 0 : this.filled;
-    if (this.surface === undefined || fresh || height > this.capacity) {
+    if (this.surface === undefined || fresh || height > this.capacity || across > this.width) {
       this.surface?.destroy();
       this.capacity = Math.max(height, this.capacity * 2);
-      this.surface = this.create(shelves.width, this.capacity);
+      this.width = across;
+      this.surface = this.create(across, this.capacity);
       from = 0;
     }
     const surface = this.surface;

@@ -47,6 +47,10 @@ Belirme stili, belirdiğinde ya da diriltildiğinde ayaklarının dibinde küç�
 
 Amblem çerçevesi, lonca pelerinindeki amblemin çevresinde ince bir kenardır. Amblemi asla örtmez, kaydırmaz ya da değiştirmez; pelerininin kendi kenar renginde ya da sade bir metal renginde çizilir, asla bir takım renginde değil. Takmak için bir lonca pelerini gerekir: yuva, lonca pelerini giydiğin anda Seçenekler'de görünür.
 
+## Boyun ve vücut yapın
+
+İki satır figürünün bedenini belirler: **Boy** (Kısa, Orta veya Uzun) ve **Vücut yapısı** (İnce, Orta veya İri). Her birini ayrı seç, dokuz birleşimin herhangi birinde, her meslekte. Diğer kozmetiklerin aksine ücretsizdir: kazanılacak bir şey yoktur ve her oyuncu seçimini görür. Sen seçene kadar her biri oyuncu anahtarından seçilen bir değerle başlar. Yalnızca görünüştür: sana nereden tıklanabildiği ve neye çarptığın asla değişmez.
+
 ## Nasıl kullanılır
 
 Ayarlar'ı aç ve **Kozmetikler** bölümünü seç. Her yuva tek sıra örnekten oluşur; her biri öğesinin

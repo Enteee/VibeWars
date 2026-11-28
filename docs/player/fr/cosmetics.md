@@ -48,6 +48,10 @@ Un style d’apparition rassemble de petites particules à tes pieds quand tu ap
 
 Un cadre d’emblème est une fine bordure autour de l’emblème de ta cape de guilde. Il ne couvre, ne déplace ni ne modifie jamais l’emblème, et se dessine dans la couleur du liseré de ta cape ou dans un métal sobre, jamais dans une couleur d’équipe. Il te faut une cape de guilde pour en porter un : l’emplacement apparaît dans Options dès que tu portes une cape de guilde.
 
+## Ta taille et ta carrure
+
+Deux lignes règlent le corps de ton personnage : **Taille** (Petite, Moyenne ou Grande) et **Carrure** (Mince, Moyenne ou Massive). Choisis chacune séparément, dans n'importe laquelle des neuf combinaisons, avec toutes les professions. Contrairement aux autres cosmétiques, elles sont gratuites : rien à gagner, et tous les joueurs voient ton choix. Tant que tu ne choisis pas, chacune part d'une valeur tirée de ta clé de joueur. Elles ne changent que l'apparence : là où l'on peut cliquer sur toi et ce que tu heurtes ne changent jamais.
+
 ## Les porter
 
 Ouvre Options et choisis **Cosmétiques**. Chaque emplacement est une rangée de vignettes, chacune

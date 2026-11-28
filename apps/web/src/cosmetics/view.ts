@@ -7,7 +7,7 @@
 import type { SeatWorn } from "@vibewars/game-session";
 
 import { leaderboard } from "../net/leaderboard.js";
-import { bodyOf, type FigureBody } from "./body.js";
+import { bodyOf, type BodyChoice, type FigureBody } from "./body.js";
 import {
   DEFAULT_LOOK,
   ownCosmetics,
@@ -51,4 +51,17 @@ export function seenBody(seat: SeatWorn | undefined, participantId: string): Fig
     return bodyOf(cosmeticsStore.body(), ownPubkey);
   }
   return visibleBody(seat, participantId);
+}
+
+/**
+ * The body you see yourself in (#4176): as picked, each axis never picked
+ * your key's; before main has loaded the key, the empty key's.
+ */
+export function ownBody(): FigureBody {
+  return ownBodyOf(cosmeticsStore.body());
+}
+
+/** `choice` as your body: each axis never picked your key's. */
+export function ownBodyOf(choice: BodyChoice): FigureBody {
+  return bodyOf(choice, ownPubkey ?? "");
 }

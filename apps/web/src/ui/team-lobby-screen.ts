@@ -7,6 +7,7 @@ import type {
 } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { ownBody } from "../cosmetics/view.js";
 import { locale, t } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
@@ -670,7 +671,7 @@ function drawerRow(
       member.append(
         name,
         // No cape: a team's members wear none, as on Team Builder.
-        characterFigureCard(lookOfCharacter(character, undefined), { size: "card" }),
+        characterFigureCard(lookOfCharacter(character, undefined, ownBody()), { size: "card" }),
       );
       members.appendChild(member);
     }
@@ -873,7 +874,7 @@ function syncSolo(
 
 function soloCard(entry: SoloEntry, picked: boolean, onPick: (key: string) => void): HTMLElement {
   const content = [
-    characterFigureCard(lookOfCharacter(entry.character, undefined), {
+    characterFigureCard(lookOfCharacter(entry.character, undefined, ownBody()), {
       size: "card",
       note: entry.team === undefined ? undefined : t("teamLobby.teamNote", { team: entry.team }),
     }),

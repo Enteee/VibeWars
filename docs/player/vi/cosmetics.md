@@ -47,6 +47,10 @@ Kiểu xuất hiện tụ những hạt nhỏ dưới chân bạn khi bạn xu�
 
 Khung huy hiệu là một viền mảnh quanh huy hiệu trên áo choàng hội của bạn. Nó không bao giờ che, dời hay thay đổi huy hiệu, và được vẽ bằng màu viền của chính áo choàng hoặc một kim loại trơn, không bao giờ bằng màu đội. Bạn cần áo choàng hội để đeo nó: ô này hiện trong Tùy chọn ngay khi bạn mặc áo choàng hội.
 
+## Chiều cao và vóc dáng của bạn
+
+Hai hàng quyết định cơ thể nhân vật của bạn: **Chiều cao** (Thấp, Trung bình hoặc Cao) và **Vóc dáng** (Mảnh khảnh, Trung bình hoặc Vạm vỡ). Chọn từng thứ riêng, theo bất kỳ tổ hợp nào trong chín tổ hợp, với mọi nghề. Khác với các trang trí khác, chúng miễn phí: không có gì phải đạt được, và mọi người chơi đều thấy lựa chọn của bạn. Cho đến khi bạn chọn, mỗi thứ bắt đầu ở một giá trị lấy từ khóa người chơi của bạn. Chúng chỉ là ngoại hình: chỗ có thể nhấp vào bạn và những gì bạn va phải không bao giờ thay đổi.
+
 ## Cách trang bị
 
 Mở Tùy chọn và chọn **Trang trí**. Mỗi ô là một hàng mẫu, mỗi mẫu là một hình nhỏ của vật phẩm; mẫu

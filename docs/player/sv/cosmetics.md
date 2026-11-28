@@ -47,6 +47,10 @@ En ankomststil samlar små korn vid dina fötter när du dyker upp eller återup
 
 En emblemram är en tunn kant runt emblemet på din gillesmantel. Den täcker, flyttar eller ändrar aldrig emblemet och ritas i din mantels egen bårdfärg eller i en enkel metall, aldrig i en lagfärg. Du behöver en gillesmantel för att bära en: platsen syns i Inställningar så fort du bär en gillesmantel.
 
+## Din längd och kroppsbyggnad
+
+Två rader bestämmer din figurs kropp: **Längd** (Kort, Medel eller Lång) och **Kroppsbyggnad** (Smal, Medel eller Kraftig). Välj var och en för sig, i vilken som helst av de nio kombinationerna, för alla yrken. Till skillnad från övriga kosmetika är de gratis: det finns inget att förtjäna, och alla spelare ser ditt val. Tills du väljer börjar var och en på ett värde som valts utifrån din spelarnyckel. De ändrar bara utseendet: var man kan klicka på dig och vad du krockar med ändras aldrig.
+
 ## Så bär du den
 
 Öppna Alternativ och välj **Kosmetik**. Varje plats är en rad med rutor, var och en en liten bild av

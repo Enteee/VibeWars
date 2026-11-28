@@ -48,6 +48,10 @@ Ilmestymistyyli kokoaa pieniä hiukkasia jalkojesi juureen, kun ilmestyt tai sin
 
 Tunnuksen kehys on ohut reunus kiltaviittasi tunnuksen ympärillä. Se ei koskaan peitä, siirrä tai muuta tunnusta, ja se piirretään viittasi oman reunuksen värillä tai pelkällä metallilla, ei koskaan joukkueen värillä. Tarvitset kiltaviitan käyttääksesi sitä: paikka näkyy Asetuksissa heti, kun käytät kiltaviittaa.
 
+## Pituutesi ja ruumiinrakenteesi
+
+Kaksi riviä määrää hahmosi vartalon: **Pituus** (Lyhyt, Keskikokoinen tai Pitkä) ja **Ruumiinrakenne** (Hoikka, Keskikokoinen tai Roteva). Valitse kumpikin erikseen, missä tahansa yhdeksästä yhdistelmästä, jokaisella ammatilla. Toisin kuin muut kosmetiikat ne ovat ilmaisia: ansaittavaa ei ole, ja jokainen pelaaja näkee valintasi. Kunnes valitset, kumpikin alkaa pelaaja-avaimestasi valitusta arvosta. Ne ovat pelkkää ulkonäköä: mihin sinua voi klikata ja mihin törmäät, ei muutu koskaan.
+
 ## Käyttäminen
 
 Avaa Asetukset ja valitse **Kosmetiikka**. Jokainen paikka on yksi rivi näytteitä, kukin pieni kuva

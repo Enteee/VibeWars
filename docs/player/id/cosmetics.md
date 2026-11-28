@@ -48,6 +48,10 @@ Gaya kemunculan mengumpulkan butiran kecil di kakimu saat kamu muncul atau dihid
 
 Bingkai lambang adalah garis tipis di sekeliling lambang pada jubah guild-mu. Bingkai ini tidak pernah menutupi, memindahkan, atau mengubah lambang, dan digambar dengan warna pinggiran jubahmu sendiri atau logam polos, tidak pernah dengan warna tim. Kamu perlu jubah guild untuk memakainya: slotnya muncul di Opsi begitu kamu memakai jubah guild.
 
+## Tinggi dan perawakanmu
+
+Dua baris mengatur tubuh figurmu: **Tinggi** (Pendek, Sedang, atau Tinggi) dan **Perawakan** (Ramping, Sedang, atau Kekar). Pilih masing-masing sendiri, dalam salah satu dari sembilan kombinasi, untuk setiap profesi. Tidak seperti kosmetik lain, keduanya gratis: tidak ada yang perlu diraih, dan setiap pemain melihat pilihanmu. Sampai kamu memilih, masing-masing dimulai dari nilai yang dipilih dari kunci pemainmu. Keduanya hanya tampilan: di mana kamu bisa diklik dan apa yang kamu tabrak tidak pernah berubah.
+
 ## Memakainya
 
 Buka Opsi dan pilih **Kosmetik**. Setiap slot berupa satu baris contoh, masing-masing gambar kecil

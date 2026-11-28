@@ -1,3 +1,4 @@
+import { AVERAGE_BODY } from "./figure-body.js";
 import { FLAT_STRUCTURE } from "./arena-snapshot.js";
 import { describe, expect, it } from "vitest";
 
@@ -169,6 +170,7 @@ function actor(
     heroRank: 0,
     signet: undefined,
     cosmetics: {},
+    physique: AVERAGE_BODY,
     cape: undefined,
     bot: false,
     position: vec2(x, y),

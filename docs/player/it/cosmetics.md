@@ -47,6 +47,10 @@ Uno stile di comparsa raccoglie piccole particelle ai tuoi piedi quando compari 
 
 Una cornice dell’emblema è un bordo sottile attorno all’emblema del tuo mantello di gilda. Non copre, non sposta e non cambia mai l’emblema, ed è disegnata nel colore del bordo del tuo mantello o in un metallo semplice, mai in un colore di squadra. Ti serve un mantello di gilda per indossarne una: lo spazio compare in Opzioni appena indossi un mantello di gilda.
 
+## La tua altezza e corporatura
+
+Due righe definiscono il corpo della tua figura: **Altezza** (Bassa, Media o Alta) e **Corporatura** (Snella, Media o Robusta). Scegli ciascuna da sola, in una qualsiasi delle nove combinazioni, con ogni professione. A differenza degli altri cosmetici sono gratuite: non c'è nulla da guadagnare, e ogni giocatore vede la tua scelta. Finché non scegli, ciascuna parte da un valore ricavato dalla tua chiave giocatore. Cambiano solo l'aspetto: dove si può cliccare su di te e contro cosa urti non cambiano mai.
+
 ## Come indossarli
 
 Apri Opzioni e scegli **Cosmetici**. Ogni slot è una fila di campioni, ciascuno una piccola immagine

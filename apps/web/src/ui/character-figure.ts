@@ -21,6 +21,7 @@ import {
   STACK_BADGE_FILL,
   STACK_BADGE_RIM,
   STACK_GLYPH_TINT,
+  STACK_HEIGHT,
   STACK_OUTLINE_WIDTH,
   bucketFacing,
   headingBucket,
@@ -38,6 +39,9 @@ import {
   type BodyStackLook,
 } from "../render/stack-atlas.js";
 import { WARRIOR_OUTFIT } from "../render/profession-outfits.js";
+import { AVERAGE_BODY, HEIGHT_SCALE } from "../render/figure-body.js";
+import type { FigureBody } from "../cosmetics/body.js";
+import { ownBody } from "../cosmetics/view.js";
 import { t } from "../i18n/index.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -64,15 +68,19 @@ const BOX_WEAPON_FACING = 0;
 const BOX_OFFHAND_FACING = Math.PI + FOCUS_ANGLE;
 /** How far the bake's shadow reaches below the feet, in radii (`STACK_FRAME_HEIGHT`). */
 const SHADOW_DROP = 0.91;
-/** How high the warrior's helmet, a figure of the most lifts, stands over its feet, its outline included. */
+/**
+ * How high a tall warrior's helmet, a figure of the most lifts at the
+ * tallest height (#4176), stands over its feet, its outline included.
+ */
 const HELMET_TOP =
   STACK_OUTLINE_WIDTH -
   Math.min(
     ...stackLayers(
-      stackSlices("stand", WARRIOR_OUTFIT, undefined),
+      stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
       bucketFacing(headingBucket(FIGURE_FACING)),
       BODY_RADIUS,
       stackTones(0, undefined, WARRIOR_OUTFIT, undefined),
+      "tall",
     ).flatMap((layer) => layer.points.map((point) => point.y)),
   );
 /** How much of its box the figure fills (#4082): helmet to shadow, or mark to mark. */
@@ -156,8 +164,8 @@ export function figureBody(
   };
 }
 
-/** The professions a figure's outfit and accent follow (#4175). */
-export type FigureWearing = Pick<BodyStackLook, "primary" | "secondary">;
+/** The professions a figure's outfit and accent follow (#4175), and its height and build (#4176). */
+export type FigureWearing = Pick<BodyStackLook, "primary" | "secondary" | "physique">;
 
 /** What a figure's slices are drawn into: a bake's calls, and a transform to place them. */
 export type FigureContext = BakeContext &
@@ -170,10 +178,14 @@ export interface FigureDecor {
   readonly offhandFacing: number;
 }
 
-/** As a match lays them out: the badge over the head, the marks round the feet as it faces. */
-export function matchDecor(body: StandingBody): FigureDecor {
+/**
+ * As a match lays them out: the badge over the head at `physique`'s
+ * height (#4176), the marks round the feet as it faces.
+ */
+export function matchDecor(body: StandingBody, physique: FigureBody): FigureDecor {
+  const tall = STACK_HEIGHT * HEIGHT_SCALE[physique.height];
   return {
-    badge: { x: body.x, y: body.y - stackBadge(body.r).rise },
+    badge: { x: body.x, y: body.y - stackBadge(body.r, tall).rise },
     weaponFacing: body.facing,
     offhandFacing: body.facing,
   };
@@ -217,6 +229,7 @@ export function paintFigure(
     cape: cape?.look,
     primary: wearing.primary,
     secondary: wearing.secondary,
+    physique: wearing.physique,
   };
   const size = body.r / (STACK_BAKE_RADIUS * STACK_BAKE_SCALE);
   context.save();
@@ -336,7 +349,7 @@ export function drawBodyGlyph(
  * that gives no 2D context leaves the box empty.
  */
 export function createCharacterFigure(
-  look: Pick<FigureLook, "primary" | "secondary" | "appearance" | "cape">,
+  look: Pick<FigureLook, "primary" | "secondary" | "appearance" | "cape" | "physique">,
   scale = 1,
 ): HTMLCanvasElement {
   const pixels = Math.round(FIGURE_BOX.wide * window.devicePixelRatio * scale);
@@ -417,6 +430,7 @@ export function createCharacterDot(character: TeamCharacter): HTMLElement {
         secondary: character.secondaryProfession,
         appearance: characterAppearance(character),
         cape: undefined,
+        physique: ownBody(),
       },
       BALL_SCALE,
     ),

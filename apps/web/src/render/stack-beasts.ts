@@ -1,5 +1,6 @@
 import type { CreatureLook } from "@vibewars/game-core";
 
+import { AVERAGE_BODY } from "./figure-body.js";
 import { WARRIOR_OUTFIT, type Accent, type Outfit } from "./profession-outfits.js";
 import {
   ellipse,
@@ -239,6 +240,7 @@ function humanoidSlices(build: Humanoid, pose: CreaturePose): readonly StackSlic
     stride === 1 ? "contact-a" : stride === -1 ? "contact-b" : "stand",
     build.outfit,
     build.accent,
+    AVERAGE_BODY,
     build.caped,
   );
   let capes = 0;

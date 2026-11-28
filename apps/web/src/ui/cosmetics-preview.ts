@@ -1,6 +1,7 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1, isWeaponId, type ProfessionId } from "@vibewars/game-core";
 
 import type { WornCosmetics } from "../cosmetics/selection.js";
+import { ownBody } from "../cosmetics/view.js";
 import { REST_FRAME, type AttackFrame } from "../render/attack-clock.js";
 import { BODY_GLYPH_SIZE } from "../render/arena-snapshot.js";
 import type { StandingBody, WornCape } from "../render/body-painter.js";
@@ -218,7 +219,7 @@ export function createCosmeticsPreview(
   let glyph: HTMLImageElement | undefined;
   let tinted: { readonly pixels: number; readonly canvas: HTMLCanvasElement } | undefined;
   /** The professions whose outfit is worn (#4175): none until known or picked, the bare body's. */
-  let wearing: FigureWearing = { primary: undefined, secondary: undefined };
+  let wearing: Omit<FigureWearing, "physique"> = { primary: undefined, secondary: undefined };
   /** The profession whose glyph is worn: the last asked for wins, however the loads finish. */
   let wanted: ProfessionId | undefined;
   const wear = (profession: ProfessionId, secondary: ProfessionId | undefined): void => {
@@ -410,8 +411,10 @@ export function createCosmeticsPreview(
       phase: 0,
       reducedMotion: still,
     });
-    const decor = matchDecor(body);
-    paintFigure(painter, context, body, wearing, pose, decor, () => {
+    // Your body as picked this moment, so a pick in the flyout shows at once (#4176).
+    const physique = ownBody();
+    const decor = matchDecor(body, physique);
+    paintFigure(painter, context, body, { ...wearing, physique }, pose, decor, () => {
       if (tinted !== undefined) {
         drawBodyGlyph(context, decor.badge, tinted.canvas);
       }

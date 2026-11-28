@@ -1,10 +1,11 @@
-import { packEmblem } from "@vibewars/game-protocol";
+import { BUILDS, HEIGHTS, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
   NO_UPGRADES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
+  PROFESSIONS,
   STARTER_BUILDS,
   loadoutSpec,
   resolveJoinLoadout,
@@ -12,6 +13,7 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 
+import { AVERAGE_BODY } from "../render/figure-body.js";
 import { REST_FRAME } from "../render/attack-clock.js";
 import { capeLook, presetEmblem } from "../render/cape-shape.js";
 import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
@@ -43,7 +45,7 @@ import { WARRIOR_OUTFIT } from "../render/profession-outfits.js";
 import { STACK_BAKE_RADIUS, STACK_BAKE_SCALE } from "../render/stack-atlas.js";
 
 /** No professions: the bare body, in the warrior's outfit. */
-const BARE: FigureWearing = { primary: undefined, secondary: undefined };
+const BARE: FigureWearing = { primary: undefined, secondary: undefined, physique: AVERAGE_BODY };
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 
@@ -166,10 +168,11 @@ describe("figureBody (#1250, #4032)", () => {
     const { badge } = boxDecor(body);
     const tones = { ...stackTones(0, undefined, WARRIOR_OUTFIT, undefined), visor: 0xff00ff };
     const visor = stackLayers(
-      stackSlices("stand", WARRIOR_OUTFIT, undefined),
+      stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
       bucketFacing(headingBucket(body.facing)),
       body.r,
       tones,
+      "average",
     )
       .filter((layer) => layer.colour === 0xff00ff)
       .flatMap((layer) => layer.points);
@@ -208,6 +211,23 @@ describe("figureBody (#1250, #4032)", () => {
       }
     }
   });
+
+  it("keeps every height and build, in every outfit, inside its box (#4176)", () => {
+    const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
+    for (const height of HEIGHTS) {
+      for (const build of BUILDS) {
+        for (const primary of [undefined, ...Object.values(PROFESSIONS).map(({ id }) => id)]) {
+          const { all } = drawn(body, {
+            primary,
+            secondary: undefined,
+            physique: { height, build },
+          });
+          expect(Math.min(all.left, all.top)).toBeGreaterThanOrEqual(0);
+          expect(Math.max(all.right, all.bottom)).toBeLessThanOrEqual(FIGURE_FRAME);
+        }
+      }
+    }
+  });
 });
 
 interface Bounds {
@@ -217,8 +237,11 @@ interface Bounds {
   bottom: number;
 }
 
-/** The bounds of everything `body` draws in its box, of its stacked body alone, and of its marks. */
-function drawn(body: StandingBody): { all: Bounds; body: Bounds; marks: Bounds } {
+/** The bounds of everything `body` draws in its box, as `wearing` dresses it, of its stacked body alone, and of its marks. */
+function drawn(
+  body: StandingBody,
+  wearing: FigureWearing = BARE,
+): { all: Bounds; body: Bounds; marks: Bounds } {
   const empty = (): Bounds => ({
     left: Infinity,
     right: -Infinity,
@@ -261,7 +284,7 @@ function drawn(body: StandingBody): { all: Bounds; body: Bounds; marks: Bounds }
       }
     },
   };
-  paintFigure(painter, context, body, BARE, "stand", decor, () => {
+  paintFigure(painter, context, body, wearing, "stand", decor, () => {
     marking = true;
   });
   return bounds;
@@ -343,10 +366,11 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
 /** The colours, bottom to top, of the arena's own slices of a standing figure turned to `facing`. */
 function arenaFills(body: StandingBody): string[] {
   return stackLayers(
-    stackSlices("stand", WARRIOR_OUTFIT, undefined),
+    stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY),
     bucketFacing(headingBucket(body.facing)),
     STACK_BAKE_RADIUS * STACK_BAKE_SCALE,
     stackTones(teamColour(body.team), body.cape?.look, WARRIOR_OUTFIT, undefined),
+    "average",
   ).map((layer) => `#${layer.colour.toString(16).padStart(6, "0")}`);
 }
 
@@ -424,7 +448,7 @@ describe("paintFigure (#1290, #4032)", () => {
     const { context, fills } = recording();
     paintFigure(silent, context, body, BARE, "stand", boxDecor(body), () => undefined);
     expect(fills).toEqual(arenaFills(body));
-    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined).flatMap((slice) =>
+    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY).flatMap((slice) =>
       slice.parts.map(() => slice.tone),
     );
     const capes = tones.flatMap((tone, i) => (tone === "cape" ? [i] : []));
@@ -444,7 +468,7 @@ describe("paintFigure (#1290, #4032)", () => {
           body,
           BARE,
           "stand",
-          matchDecor(body),
+          matchDecor(body, AVERAGE_BODY),
           () => undefined,
         ),
       ),
@@ -461,7 +485,7 @@ describe("paintFigure (#1290, #4032)", () => {
           body,
           BARE,
           "stand",
-          matchDecor(body),
+          matchDecor(body, AVERAGE_BODY),
           () => undefined,
         ),
       ),

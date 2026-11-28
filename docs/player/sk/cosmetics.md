@@ -47,6 +47,10 @@ Stopa zbrane je stuha za tvojou zbraňou, keď zasiahne útok na blízko, a vybl
 
 Rámik znaku je tenký okraj okolo znaku na tvojom cechovom plášti. Znak nikdy nezakrýva, neposúva ani nemení a kreslí sa vo farbe lemu tvojho plášťa alebo v obyčajnom kove, nikdy vo farbe tímu. Aby si ho mohol nosiť, potrebuješ cechový plášť: miesto sa v Nastaveniach objaví, len čo nosíš cechový plášť.
 
+## Tvoja výška a postava
+
+Dva riadky určujú telo tvojej postavy: **Výška** (Malá, Priemerná alebo Vysoká) a **Postava** (Štíhla, Priemerná alebo Mohutná). Každú vyberáš zvlášť, v ktorejkoľvek z deviatich kombinácií, pri každej profesii. Na rozdiel od ostatnej kozmetiky sú zadarmo: nie je čo získavať a tvoju voľbu vidí každý hráč. Kým nevyberieš, každá začína na hodnote odvodenej z tvojho hráčskeho kľúča. Ide len o vzhľad: kam na teba možno kliknúť a do čoho narážaš, sa nikdy nemení.
+
 ## Ako ju nosiť
 
 Otvor Nastavenia a vyber **Kozmetika**. Každý slot je jeden rad vzoriek, každá je malý obrázok

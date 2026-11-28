@@ -12,12 +12,13 @@ import {
 import { ownCosmetics, type WornCosmetics } from "../cosmetics/selection.js";
 import type { CosmeticsStore } from "../cosmetics/store.js";
 import { isUnlocked } from "../cosmetics/unlocks.js";
+import { ownBodyOf } from "../cosmetics/view.js";
 import { professionName } from "../i18n/game-names.js";
 import { locale, t, type MessageKey } from "../i18n/index.js";
 import { LANGUAGES } from "../i18n/languages.js";
 import type { FigureLook } from "./character-card.js";
 import type { createCosmeticsPreview } from "./cosmetics-preview.js";
-import { h } from "./kit.js";
+import { button, h } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 import { loadPlayerName, playerGuildTag } from "./player-section.js";
 
@@ -453,6 +454,85 @@ function slotPicker(
   return group;
 }
 
+/**
+ * A Height or Build row (#4176) under `label`: every value free, no
+ * unlock and no preview hold, `shown` chosen. A pick is `picked`; the
+ * arrows walk the row and pick.
+ */
+function bodyPicker<V extends string>(
+  axis: string,
+  label: MessageKey,
+  values: readonly (readonly [V, MessageKey])[],
+  shown: V,
+  picked: (value: V) => void,
+): HTMLElement {
+  const group = h("fieldset", "cosmetics-slot");
+  group.dataset.slot = axis;
+  group.appendChild(h("legend", undefined, t(label)));
+  const row = h("div", "cosmetics-row cosmetics-pills");
+  row.setAttribute("role", "radiogroup");
+  row.setAttribute("aria-label", t(label));
+  const pills = values.map(([value, name]) => {
+    const pill = button(t(name), "cosmetics-pill", () => {
+      picked(value);
+    });
+    pill.setAttribute("role", "radio");
+    const on = value === shown;
+    pill.classList.toggle("is-chosen", on);
+    pill.setAttribute("aria-checked", String(on));
+    pill.tabIndex = on ? 0 : -1;
+    return pill;
+  });
+  row.append(...pills);
+  row.addEventListener("keydown", (event: KeyboardEvent) => {
+    const step = arrowStep(event.key);
+    if (step === 0) {
+      return;
+    }
+    event.preventDefault();
+    const at = pills.findIndex((pill) => pill === event.target);
+    pills[(at + step + pills.length) % pills.length]?.click();
+  });
+  group.appendChild(row);
+  return group;
+}
+
+/**
+ * The Height and Build rows (#4176), each yours as picked or as your key
+ * gave it; a pick stores that axis alone.
+ */
+function bodyPickers(store: CosmeticsStore): HTMLElement[] {
+  const body = ownBodyOf(store.body());
+  return [
+    bodyPicker(
+      "height",
+      "cosmetics.height",
+      [
+        ["short", "cosmetics.heightShort"],
+        ["average", "cosmetics.heightAverage"],
+        ["tall", "cosmetics.heightTall"],
+      ],
+      body.height,
+      (height) => {
+        store.pickBody({ height });
+      },
+    ),
+    bodyPicker(
+      "build",
+      "cosmetics.build",
+      [
+        ["lean", "cosmetics.buildLean"],
+        ["average", "cosmetics.buildAverage"],
+        ["heavy", "cosmetics.buildHeavy"],
+      ],
+      body.build,
+      (build) => {
+        store.pickBody({ build });
+      },
+    ),
+  ];
+}
+
 /** How far `key` moves along a row: in a right-to-left language the row is mirrored. */
 function arrowStep(key: string | undefined): number {
   const mirrored = LANGUAGES.find((language) => language.code === locale())?.rtl === true;
@@ -644,13 +724,17 @@ export function cosmeticsSection(
         const focusedSlot = groups.find((group) => active !== null && group.contains(active))
           ?.dataset.slot;
         const worn = cape();
-        groups = COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map(
-          (slot) => slotPicker(store, slot, worn, presses, onPreview(slot)),
-        );
+        groups = [
+          ...bodyPickers(store),
+          ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map((slot) =>
+            slotPicker(store, slot, worn, presses, onPreview(slot)),
+          ),
+        ];
         slots.replaceChildren(...groups);
         const group = groups.find((each) => each.dataset.slot === focusedSlot);
-        Array.from(group?.querySelectorAll<HTMLElement>(".cosmetics-swatch") ?? [])
-          .find((swatch) => swatch.tabIndex === 0)
+        [".cosmetics-swatch", ".cosmetics-pill"]
+          .flatMap((selector) => Array.from(group?.querySelectorAll<HTMLElement>(selector) ?? []))
+          .find((choice) => choice.tabIndex === 0)
           ?.focus();
       };
       draw();

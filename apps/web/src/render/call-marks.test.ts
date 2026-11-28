@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { PING_SECONDS } from "@vibewars/game-session";
 
+import { AVERAGE_BODY } from "./figure-body.js";
 import { NAME_LABEL_HEIGHT, nameLabelBottom, type RenderableActor } from "./arena-snapshot.js";
 import { callChevron, pingRing } from "./call-marks.js";
 
@@ -15,6 +16,7 @@ const CALLED: RenderableActor = {
   heroRank: 0,
   signet: undefined,
   cosmetics: {},
+  physique: AVERAGE_BODY,
   cape: undefined,
   bot: false,
   position: CENTRE,

@@ -47,6 +47,10 @@ A megjelenési stílus apró szemcséket gyűjt a lábad köré, amikor megjelen
 
 A címerkeret vékony szegély a céhköpenyed címere körül. Soha nem takarja el, nem mozdítja el és nem változtatja meg a címert, és a köpenyed saját szegélyszínével vagy egyszerű fémmel rajzolódik, soha nem csapatszínnel. Viseléséhez céhköpeny kell: a hely akkor jelenik meg a Beállításokban, amikor céhköpenyt viselsz.
 
+## Magasságod és testalkatod
+
+Két sor adja meg a figurád testét: **Magasság** (Alacsony, Átlagos vagy Magas) és **Testalkat** (Vékony, Átlagos vagy Termetes). Mindkettőt külön választod, a kilenc kombináció bármelyikében, minden hivatásnál. A többi kozmetikummal ellentétben ingyenesek: nincs mit megszerezni, és minden játékos látja a választásod. Amíg nem választasz, mindkettő a játékoskulcsodból választott értékről indul. Csak a kinézetet változtatják: hol lehet rád kattintani és mibe ütközöl, sosem változik.
+
 ## Viselésük
 
 Nyisd meg az Opciókat, és válaszd a **Kozmetikumok** részt. Minden hely egy sornyi mintából áll,

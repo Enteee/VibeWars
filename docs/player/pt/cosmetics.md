@@ -48,6 +48,10 @@ Um estilo de surgimento junta pequenas partículas aos teus pés quando surges o
 
 Uma moldura do emblema é uma borda fina à volta do emblema da tua capa de guilda. Nunca cobre, move nem altera o emblema, e é desenhada na cor do debrum da tua própria capa ou num metal simples, nunca numa cor de equipa. Precisas de uma capa de guilda para a usar: o espaço aparece em Opções assim que usas uma capa de guilda.
 
+## Tua altura e constituição
+
+Duas linhas definem o corpo da tua figura: **Altura** (Baixa, Média ou Alta) e **Constituição** (Esguia, Média ou Robusta). Escolhe cada uma separadamente, em qualquer uma das nove combinações, em qualquer profissão. Ao contrário dos outros cosméticos, são gratuitas: não há nada a conquistar, e todos os jogadores veem a tua escolha. Até escolheres, cada uma começa num valor tirado da tua chave de jogador. São só aparência: onde podem clicar em ti e no que esbarras nunca mudam.
+
 ## Como usá-los
 
 Abre Opções e escolhe **Cosméticos**. Cada espaço é uma fila de amostras, cada qual uma pequena

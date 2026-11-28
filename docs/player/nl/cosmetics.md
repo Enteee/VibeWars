@@ -47,6 +47,10 @@ Een verschijningsstijl verzamelt kleine deeltjes aan je voeten als je verschijnt
 
 Een embleemlijst is een dunne rand rond het embleem op je gildemantel. Hij bedekt, verschuift of verandert het embleem nooit en wordt getekend in de boordkleur van je eigen mantel of in eenvoudig metaal, nooit in een teamkleur. Je hebt een gildemantel nodig om er een te dragen: het vak verschijnt in Opties zodra je een gildemantel draagt.
 
+## Je lengte en postuur
+
+Twee rijen bepalen het lichaam van je figuur: **Lengte** (Klein, Gemiddeld of Lang) en **Postuur** (Slank, Gemiddeld of Fors). Kies elk apart, in elk van de negen combinaties, bij elk beroep. Anders dan de andere cosmetica zijn ze gratis: er valt niets te verdienen, en elke speler ziet je keuze. Tot je kiest, begint elk bij een waarde die uit je spelerssleutel is gekozen. Ze veranderen alleen het uiterlijk: waar je aangeklikt kunt worden en waar je tegenaan botst, verandert nooit.
+
 ## Ze dragen
 
 Open Opties en kies **Cosmetics**. Elk vak is één rij stalen, elk een klein plaatje van zijn item;
