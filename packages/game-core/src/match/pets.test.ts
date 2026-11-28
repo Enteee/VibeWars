@@ -272,6 +272,7 @@ describe("a dead wolf (#1046)", () => {
       skillId: FIREBALL,
       key,
       remainingSeconds: 20,
+      totalSeconds: 20,
       restores: { skillId: ARCANE_ECHO, rechargeSeconds: 30 },
     });
     kill(sim, wolf(sim));

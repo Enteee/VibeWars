@@ -808,6 +808,13 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+The stacked figure's outfit per primary profession and its secondary accent
+(#4175, brief for #4175, #4179, #4180): `node scripts/assets/profession-outfit-study.mjs`
+draws all ten outfits as ally and foe, from the side, at the four camera
+zooms, and four accents, with the arena's own `stackLayers`.
+
+![Profession outfit study](profession-outfit-study.svg)
+
 How a flyout with sub-pages navigates them (Help, Options): three proposals
 mocked in the real flyouts, with a recommendation:
 [`flyout-nav-study.md`](flyout-nav-study.md).
@@ -1037,7 +1044,8 @@ hotkey.
 - **An echo's copy** (#1154): a slot an echo filled carries a 3 px
   `enchantment` strip along its bottom edge, over the recharge wipe and
   clear of its number, under the hotkey and the `↔`, draining from full
-  to empty over the copy's 20 s; the tooltip adds "Echoed: 12 s left".
+  to empty over the copy's life, 30 s for Echo's and 20 s for Arcane
+  Echo's; the tooltip adds "Echoed: 12 s left".
   Under reduced motion it steps once a second.
 
 ### Elite frame

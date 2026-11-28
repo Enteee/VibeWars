@@ -321,6 +321,7 @@ describe("CastState slot overrides (#469)", () => {
     skillId: FIREBALL,
     key: copyKey(FIREBALL, 0),
     remainingSeconds: 20,
+    totalSeconds: 20,
     restores: { skillId: ECHO, rechargeSeconds: 20 },
   });
 
