@@ -8,6 +8,14 @@ import { deniesEnergy } from "../skill-intent.js";
 export const DENIAL_MIN_ENERGY = 5;
 
 /**
+ * A foe healer with at least `DENIAL_MIN_ENERGY`: worth denying before a
+ * richer foe (#4283), for both the denial and the drain target.
+ */
+export function worthDenying(foe: Participant): boolean {
+  return roleOf(foe) === "healer" && foe.combatant.energy >= DENIAL_MIN_ENERGY;
+}
+
+/**
  * The foe to cast an energy-denial `skill` at instead of the team's
  * target (#4281, `deniesEnergy`): a foe healer within its range of `self`
  * now, with at least `DENIAL_MIN_ENERGY`, allowed by `mayCast`; the one
@@ -26,8 +34,7 @@ export function denialTarget(
   return foes
     .filter(
       (foe) =>
-        roleOf(foe) === "healer" &&
-        foe.combatant.energy >= DENIAL_MIN_ENERGY &&
+        worthDenying(foe) &&
         distance(foe.position, self.position) <= skill.range &&
         mayCast(foe.id),
     )
