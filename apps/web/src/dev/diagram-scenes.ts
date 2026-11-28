@@ -155,6 +155,29 @@ export const BENCH_SCENES: readonly DiagramScene[] = [
     ]),
     markers: [],
   },
+  ...[
+    // The PR's stills (#4173): a guild hall's lord, guards and priest, a
+    // ranger beside a guard with its pet, and rats, at Default and Close.
+    { id: "npc-figures", zoom: 0.98 },
+    { id: "npc-figures-close", zoom: 1.69 },
+  ].map(({ id, zoom }) => ({
+    id,
+    map: "ember-pits",
+    camera: { x: 1600, y: 1110, zoom },
+    actors: [{ profession: "ranger" as const, team: 0, x: 1560, y: 1150 }],
+    creatures: [
+      { look: "guild-lord" as const, team: 1, x: 1600, y: 1040 },
+      { look: "guard" as const, team: 1, x: 1550, y: 1070 },
+      { look: "guard" as const, team: 1, x: 1650, y: 1070 },
+      { look: "guard" as const, team: 1, x: 1610, y: 1150 },
+      { look: "priest" as const, team: 1, x: 1600, y: 1100 },
+      { look: "beast" as const, team: 0, x: 1525, y: 1160 },
+      { look: "rat" as const, team: 1, x: 1520, y: 1190 },
+      { look: "rat" as const, team: 1, x: 1650, y: 1185 },
+      { look: "rat" as const, team: 1, x: 1675, y: 1170 },
+    ],
+    markers: [],
+  })),
 ];
 
 export const UI_SCENES: readonly UiScene[] = [

@@ -1267,7 +1267,7 @@ drawn under it, and is drawn at its own radius. The mockups are
 | `spirit`                             | 10           | dashed ring at 1.5 r                            | facing tick    |
 | `priest`                             | 12           | `ink` ring at 1.45 r                            | staff          |
 | `guard`                              | 12           | thick `ink` hexagon at 1.34 r, `edge`-cased     | spear + shield |
-| `guild-lord`                         | 15           | five gold (`#ffd866`) gems on a 1.5 r pentagon  | sword          |
+| `guild-lord`                         | 17.5         | five gold (`#ffd866`) gems on a 1.5 r pentagon  | sword          |
 | `ghostly-hero`                       | 13.5         | team ring at 1.4 r, 2.2 wide                    | axe            |
 
 Rims are `edge`-cased; the plate stays solid team colour. The facing tick
