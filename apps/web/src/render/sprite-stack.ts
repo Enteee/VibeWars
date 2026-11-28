@@ -1,3 +1,5 @@
+import type { CreatureLook } from "@vibewars/game-core";
+
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
 import type { Point } from "./weapon-mark-geometry.js";
@@ -16,17 +18,20 @@ export type StackTone =
   "boot" | "trouser" | "skin" | "belt" | "team" | "cape" | "trim" | "metal" | "visor" | "crest";
 
 /**
- * One slice: its polygons, its tone, how lit it is (1 full colour, less
- * darker toward the ground), whether it shares the lift of the slice
- * before it, as a torso shares its shoulders' height, and how many
- * `STACK_STEP`s a breath or a stride's bob lifts it on top (#4060).
+ * One slice: its polygons, its tone (a body's named tone, or a creature's
+ * fixed colour), how lit it is (1 full colour, less darker toward the
+ * ground), its lift, how many `STACK_STEP`s a breath or a stride's bob
+ * lifts it on top (#4060), and how opaque it is. The lift counts from 0
+ * on the ground: a torso shares its shoulders' lift, and a prop held in
+ * the hand restarts lower than the head listed before it (#4171).
  */
-export interface StackSlice {
+export interface StackSlice<Tone = StackTone> {
   readonly parts: readonly (readonly Point[])[];
-  readonly tone: StackTone;
+  readonly tone: Tone;
   readonly light: number;
-  readonly same: boolean;
+  readonly lift: number;
   readonly rise: number;
+  readonly alpha: number;
 }
 
 /**
@@ -126,13 +131,29 @@ function poseMotion(pose: StackPose): PoseMotion {
   }
 }
 
-/** The slices of a figure in `pose`, boots first. */
-export function stackSlices(pose: StackPose): readonly StackSlice[] {
+/**
+ * The slices of a figure in `pose`, boots first. Without its cape
+ * (`caped` false) every other slice keeps its lift.
+ */
+export function stackSlices(pose: StackPose, caped = true): readonly StackSlice[] {
   const { stride, lean, rise: breath, bob, capeSide, capeOut } = poseMotion(pose);
   const slices: StackSlice[] = [];
   let rise = 0;
+  let lift = -1;
+  /** A slice on a new lift, or on the `same` one as the slice before it. */
   const push = (parts: Point[][], tone: StackTone, light: number, same = false): void => {
-    slices.push({ parts, tone, light, same, rise });
+    if (!same) {
+      lift += 1;
+    }
+    slices.push({ parts, tone, light, lift, rise, alpha: 1 });
+  };
+  /** A cape slice, or only its lift when the figure wears none. */
+  const cape = (parts: Point[][], light: number): void => {
+    if (caped) {
+      push(parts, "cape", light);
+    } else {
+      lift += 1;
+    }
   };
   /** The cape's back at `hem` (1 at the hem, 0 at the shoulders), swayed. */
   const capeBack = (x: number, rx: number, ry: number, hem: number): Point[] =>
@@ -154,7 +175,7 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
   }
   // The skirt, its cape behind it.
   [0.62, 0.6, 0.58, 0.56].forEach((r, i) => {
-    push([capeBack(-0.3 - 0.06 * lean, 0.32, 0.66, 1 - i / 11)], "cape", 0.5 + 0.06 * i);
+    cape([capeBack(-0.3 - 0.06 * lean, 0.32, 0.66, 1 - i / 11)], 0.5 + 0.06 * i);
     push([ellipse(0.03 * lean * i, 0, r * 0.72, r)], "team", 0.6 + 0.07 * i, true);
   });
   push([ellipse(0.12 * lean, 0, 0.4, 0.56)], "belt", 0.9);
@@ -171,7 +192,7 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
   rise = breath;
   const torso = [0.56, 0.6, 0.64, 0.68, 0.7];
   for (let i = 0; i < 7; i += 1) {
-    push([capeBack(-0.3, 0.3, 0.6 + 0.02 * i, (7 - i) / 11)], "cape", 0.6 + 0.05 * i);
+    cape([capeBack(-0.3, 0.3, 0.6 + 0.02 * i, (7 - i) / 11)], 0.6 + 0.05 * i);
     if (i >= 2) {
       const r = torso[Math.min(i - 2, 4)] ?? 0;
       push([ellipse(0.06 + 0.2 * lean * (i / 7), 0, r * 0.66, r)], "team", 0.74 + 0.04 * i, true);
@@ -214,9 +235,9 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
   return slices;
 }
 
-/** How many lifts a figure has: every slice but those sharing the one before. */
-export function stackLifts(slices: readonly StackSlice[]): number {
-  return slices.filter((slice) => !slice.same).length;
+/** How many lifts a figure has: its highest slice's, and every one under it. */
+export function stackLifts(slices: readonly { readonly lift: number }[]): number {
+  return slices.reduce((top, slice) => Math.max(top, slice.lift), -1) + 1;
 }
 
 /** The standing figure's slice count, which every pose shares. */
@@ -269,35 +290,29 @@ export function stackShade(colour: number, light: number): number {
 export interface StackLayer {
   readonly points: readonly Point[];
   readonly colour: number;
+  readonly alpha: number;
 }
 
 /**
- * The polygons of `slices` turned to `facing` at radius `r`, lifted and
- * shaded, relative to the centre of the feet: what the bake fills, bottom
- * to top.
+ * The polygons of `slices`, slice `i` in `colours[i]`, turned to `facing`
+ * at radius `r` and lifted, relative to the centre of the feet: what the
+ * bake fills, bottom to top. Slices go up by lift, those on one lift in
+ * list order, so a prop restarting at the hand is painted under the head
+ * listed before it (#4171).
  */
-export function stackLayers(
-  slices: readonly StackSlice[],
+function placeSlices<Tone>(
+  slices: readonly StackSlice<Tone>[],
+  colours: readonly number[],
   facing: number,
   r: number,
-  tones: Record<StackTone, number>,
 ): StackLayer[] {
   const cos = Math.cos(facing);
   const sin = Math.sin(facing);
-  let cape = 0;
-  let lift = 0;
+  const order = slices.map((slice, i) => ({ slice, colour: colours[i] ?? STACK_OUTLINE }));
+  order.sort((a, b) => a.slice.lift - b.slice.lift);
   const layers: StackLayer[] = [];
-  for (const slice of slices) {
-    if (!slice.same) {
-      lift += STACK_STEP * r;
-    }
-    let tone = slice.tone;
-    if (tone === "cape") {
-      // The hem is in the trim, as a flat cape's trim runs along it.
-      tone = cape === 0 ? "trim" : "cape";
-      cape += 1;
-    }
-    const colour = stackShade(tones[tone], slice.light);
+  for (const { slice, colour } of order) {
+    const lift = (slice.lift + 1) * STACK_STEP * r;
     const rise = slice.rise * STACK_STEP * r;
     for (const part of slice.parts) {
       layers.push({
@@ -306,10 +321,41 @@ export function stackLayers(
           y: (p.x * sin + p.y * cos) * r * STACK_SQUASH - lift - rise,
         })),
         colour,
+        alpha: slice.alpha,
       });
     }
   }
   return layers;
+}
+
+/** A body's `slices`, shaded in `tones`, placed (`placeSlices`). */
+export function stackLayers(
+  slices: readonly StackSlice[],
+  facing: number,
+  r: number,
+  tones: Record<StackTone, number>,
+): StackLayer[] {
+  let cape = 0;
+  const colours = slices.map((slice) => {
+    let tone = slice.tone;
+    if (tone === "cape") {
+      // The hem is in the trim, as a flat cape's trim runs along it.
+      tone = cape === 0 ? "trim" : "cape";
+      cape += 1;
+    }
+    return stackShade(tones[tone], slice.light);
+  });
+  return placeSlices(slices, colours, facing, r);
+}
+
+/** A creature's `slices`, shaded in their own colours, placed (`placeSlices`). */
+export function creatureLayers(
+  slices: readonly StackSlice<number>[],
+  facing: number,
+  r: number,
+): StackLayer[] {
+  const colours = slices.map((slice) => stackShade(slice.tone, slice.light));
+  return placeSlices(slices, colours, facing, r);
 }
 
 /**
@@ -475,4 +521,172 @@ export function stackBadge(r: number): { readonly radius: number; readonly rise:
 export function stackOverheadRise(r: number): number {
   const badge = stackBadge(r);
   return badge.rise + badge.radius + 1 - r;
+}
+
+/**
+ * The poses a creature's figure stands in (#4171): still, and the two
+ * feet of a stride. A creature does not breathe or lean into a cast.
+ */
+export type CreaturePose = "stand" | "stride-a" | "stride-b";
+
+/** How a stacked creature turns and moves: its heading buckets and its poses. */
+export interface CreatureStack {
+  readonly headings: number;
+  readonly poses: readonly CreaturePose[];
+}
+
+/**
+ * The creature looks drawn as figures (#4171), the rest keep their disc.
+ * A spirit does not turn: one heading, one pose.
+ */
+const CREATURE_STACKS: Readonly<Partial<Record<CreatureLook, CreatureStack>>> = {
+  spirit: { headings: 1, poses: ["stand"] },
+  "ghostly-hero": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+};
+
+/** How `look` turns and moves as a figure, or `undefined` when it stays a disc. */
+export function creatureStack(look: CreatureLook): CreatureStack | undefined {
+  return CREATURE_STACKS[look];
+}
+
+/**
+ * The pose of `stack` a body's `pose` is: a stride's contact frames
+ * stride, the rest stand, and a creature that does not walk always stands.
+ */
+export function creaturePose(stack: CreatureStack, pose: StackPose): CreaturePose {
+  const moved = pose === "contact-a" ? "stride-a" : pose === "contact-b" ? "stride-b" : "stand";
+  return stack.poses.includes(moved) ? moved : "stand";
+}
+
+/** The bucket of `stack`'s headings nearest a body's heading `bucket`. */
+export function creatureBucket(stack: CreatureStack, bucket: number): number {
+  return Math.round((bucket * stack.headings) / STACK_HEADINGS) % stack.headings;
+}
+
+/** The facing a creature's heading bucket is drawn at. */
+export function creatureFacing(stack: CreatureStack, bucket: number): number {
+  return (bucket * Math.PI * 2) / stack.headings;
+}
+
+/** A spirit's stone base and its wisp (the creature study, #4178). */
+const SPIRIT_STONE = 0x4a4a50;
+const SPIRIT_WISP = 0x76c96f;
+const SPIRIT_CORE = 0xe8f7e4;
+
+/**
+ * A spirit totem: two slices of dark stone, then a wisp column narrowing
+ * upward through nine slices, pale green to near white at the top, fading
+ * as it rises.
+ */
+function spiritSlices(): readonly StackSlice<number>[] {
+  const slices: StackSlice<number>[] = [
+    {
+      parts: [ellipse(0, 0, 0.55, 0.55, 10)],
+      tone: SPIRIT_STONE,
+      light: 0.35,
+      lift: 0,
+      rise: 0,
+      alpha: 1,
+    },
+    {
+      parts: [ellipse(0, 0, 0.45, 0.45, 10)],
+      tone: SPIRIT_STONE,
+      light: 0.55,
+      lift: 1,
+      rise: 0,
+      alpha: 1,
+    },
+  ];
+  for (let i = 0; i < 9; i += 1) {
+    const r = 0.38 - 0.032 * i;
+    slices.push({
+      parts: [ellipse(0, 0, r, r)],
+      tone: i > 6 ? SPIRIT_CORE : SPIRIT_WISP,
+      light: 0.6 + 0.05 * i,
+      lift: 2 + i,
+      rise: 0,
+      alpha: 0.9 - 0.04 * i,
+    });
+  }
+  return slices;
+}
+
+/** A ghostly hero's tones: a body's, desaturated blue-grey, its axe's haft and head. */
+const GHOST_BODY = 0x8fa3b8;
+const GHOST_TONES: Record<StackTone, number> = {
+  ...stackTones(GHOST_BODY, undefined),
+  trouser: 0x6a7a8e,
+  metal: 0xaebdcf,
+  crest: 0xdfe9f5,
+};
+const GHOST_HAFT = 0x6a4a2c;
+const GHOST_BLADE = 0xdfe9f5;
+const GHOST_ALPHA = 0.75;
+/** The lift the axe's haft starts on: the hand's, not over the helmet. */
+const GHOST_HAND_LIFT = 8;
+
+/**
+ * A spectral warrior: a body without its cape in the ghost's tones, every
+ * slice at `GHOST_ALPHA`, and an axe in the right hand, its haft rising
+ * from the hand to a wedge head.
+ */
+function ghostSlices(pose: CreaturePose): readonly StackSlice<number>[] {
+  const stride = pose === "stride-a" ? 1 : pose === "stride-b" ? -1 : 0;
+  const body = stackSlices(
+    pose === "stride-a" ? "contact-a" : pose === "stride-b" ? "contact-b" : "stand",
+    false,
+  );
+  const slices: StackSlice<number>[] = body.map((slice) => ({
+    ...slice,
+    tone: GHOST_TONES[slice.tone],
+    alpha: GHOST_ALPHA,
+  }));
+  const x = 0.2 - 0.1 * stride;
+  const y = 0.7;
+  for (let i = 0; i < 8; i += 1) {
+    slices.push({
+      parts: [ellipse(x, y, 0.1, 0.1, 6)],
+      tone: GHOST_HAFT,
+      light: 0.8 + 0.2 * (i / 8),
+      lift: GHOST_HAND_LIFT + i,
+      rise: 0,
+      alpha: GHOST_ALPHA,
+    });
+  }
+  for (let i = 0; i < 3; i += 1) {
+    slices.push({
+      parts: [
+        [
+          { x, y },
+          { x: x + 0.35, y: 0.95 - 0.05 * i },
+          { x: x + 0.35, y: 0.45 + 0.05 * i },
+        ],
+      ],
+      tone: GHOST_BLADE,
+      light: 0.9 + 0.05 * i,
+      lift: GHOST_HAND_LIFT + 8 + i,
+      rise: 0,
+      alpha: GHOST_ALPHA,
+    });
+  }
+  return slices;
+}
+
+/**
+ * The slices of creature `look` in `pose` (#4171), ground first, in their
+ * own colours: no team is baked in, the plate under the figure carries it.
+ * `undefined` for a look still drawn as a disc.
+ */
+export function creatureSlices(
+  look: CreatureLook,
+  pose: CreaturePose,
+): readonly StackSlice<number>[] | undefined {
+  switch (look) {
+    case "spirit":
+      return spiritSlices();
+    case "ghostly-hero":
+      return ghostSlices(pose);
+    default:
+      return undefined;
+  }
 }

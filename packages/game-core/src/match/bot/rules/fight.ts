@@ -7,6 +7,7 @@ import { distance } from "../../../vec2.js";
 import { isGhostId } from "../../ghost.js";
 import { blindTarget } from "../blind.js";
 import { clumpTarget } from "../clump.js";
+import { knockdownTarget } from "../knockdown.js";
 import { snareStatus, snareTarget } from "../snare.js";
 import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import {
@@ -59,10 +60,12 @@ const SPIKE_TOLERANCE = 1e-6;
  * clump (#4147, `clumpTarget`), unless the target is fixed. A snare at
  * a foe at its elbow, else at one diving its healer or casters (#4156,
  * `snareTarget`), unless the target is a ghost, and never held. Spiking
- * waits only for one cast at the team's target. A blind at a foe that
- * is attacking, not yet blind (#4239, `blindTarget`): the one diving its
- * healer or casters, else one on an ally, else any; unless the target is
- * fixed, and else as any skill.
+ * waits only for one cast at the team's target. An unblockable knockdown
+ * at a foe whose block stance wastes an ally attacker's blows (#4228,
+ * `knockdownTarget`), unless the target is fixed: down, it blocks none.
+ * A blind at a foe that is attacking, not yet blind (#4239,
+ * `blindTarget`): the one diving its healer or casters, else one on an
+ * ally, else any; unless the target is fixed, and else as any skill.
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
@@ -170,6 +173,21 @@ const fight: BotRule = {
       targetFixed
         ? undefined
         : clumpTarget(held, self, foes, targetId, held.range, (id) => mayUse(held, id));
+    // A knockdown at a foe whose block stance wastes an ally's blows
+    // (#4228), unless the target is fixed; else as any skill.
+    const knockdown = (held: Skill): string | undefined =>
+      targetFixed
+        ? undefined
+        : knockdownTarget(
+            held,
+            self,
+            allies,
+            foes,
+            targetId,
+            held.range,
+            (id) => mayUse(held, id),
+            surroundings,
+          );
     // A blind at a foe that is attacking (#4239), unless the target is
     // fixed: blind does nothing to a caster.
     const blind = (held: Skill): string | undefined =>
@@ -181,7 +199,7 @@ const fight: BotRule = {
     // a clump.
     const aside = (held: Skill): string | undefined =>
       snareStatus(held) === undefined
-        ? (blind(held) ?? clump(held))
+        ? (knockdown(held) ?? blind(held) ?? clump(held))
         : isGhostId(targetId)
           ? undefined
           : snareTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));

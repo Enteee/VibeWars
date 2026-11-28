@@ -205,6 +205,7 @@ export function paintFigure(
   paintFigureGround(painter, body);
   const { cape } = body;
   const look = {
+    kind: "body" as const,
     body: teamColour(body.team),
     cape: cape?.look,
   };

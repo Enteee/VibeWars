@@ -606,6 +606,42 @@ describe("snares on the diver (#4156)", () => {
   });
 });
 
+describe("knocks down a foe blocking an ally's blows (#4228)", () => {
+  const SHOCK = "elementalist.shock";
+
+  /**
+   * An elementalist with Shock at (400, 400), the team's target `t` at
+   * (420, 430), and `b` at (420, 370) in Gladiator's Defense, its warrior
+   * swinging at `b`.
+   */
+  function stancing(): MatchSimulation {
+    const sim = match([
+      fighter("e", 0, ELEMENTALIST, vec2(400, 400), { skillBar: [SHOCK] }),
+      fighter("w", 0, WARRIOR, vec2(450, 370), { behaviour: undefined }),
+      fighter("t", 1, WARRIOR, vec2(420, 430), { behaviour: undefined }),
+      fighter("b", 1, WARRIOR, vec2(420, 370), { behaviour: undefined }),
+    ]);
+    sim.get("b")?.combatant.statuses.apply("gladiators-defense", 10, "b", NO_RANKS);
+    sim.setTarget("w", "b");
+    return sim;
+  }
+
+  it("casts Shock at the blocker, not the team target", () => {
+    expect(fight.decide(ruleFor(stancing(), "e", { targetId: "t" }))).toMatchObject({
+      useSkillId: SHOCK,
+      targetId: "b",
+    });
+  });
+
+  it("casts it at a fixed target, the spike aside", () => {
+    expect(
+      fight.decide(
+        ruleFor(stancing(), "e", { targetId: "t", targetFixed: true, spikeHold: false }),
+      ),
+    ).toMatchObject({ useSkillId: SHOCK, targetId: "t" });
+  });
+});
+
 describe("blinds on an attacker (#4239)", () => {
   const BLINDING_FLASH = "elementalist.blinding-flash";
 

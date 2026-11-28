@@ -11,6 +11,11 @@ import {
   STACK_STRIDE_UNITS,
   STACK_TURN_SECONDS,
   bakedFrame,
+  creatureBucket,
+  creatureLayers,
+  creaturePose,
+  creatureSlices,
+  creatureStack,
   bucketFacing,
   headingBucket,
   stackLayers,
@@ -21,6 +26,7 @@ import {
   stackTones,
   shortTurn,
   stepTurn,
+  type StackSlice,
 } from "./sprite-stack.js";
 
 const stackShadeOfVisor = stackShade(0x101014, 1);
@@ -270,5 +276,107 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
       at += slice.parts.length;
     }
     expect(cape).toBeGreaterThan(2);
+  });
+
+  it("keeps the body's frames as they were when lifts replaced `same` (#4171)", () => {
+    // FNV-1a of the stand and contact-a layers, measured before the change.
+    const fingerprint = (pose: (typeof STACK_POSES)[number]): number => {
+      const tones = stackTones(0x3366cc, {
+        main: 0x8a2a2a,
+        trim: 0xc9a227,
+        emblem: "",
+        palette: [],
+      });
+      const text = JSON.stringify(
+        stackLayers(stackSlices(pose), 1.3, 21, tones).map((layer) => [
+          layer.colour,
+          layer.points.map((p) => [p.x.toFixed(4), p.y.toFixed(4)]),
+        ]),
+      );
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i += 1) {
+        hash = Math.imul(hash ^ text.charCodeAt(i), 16777619) >>> 0;
+      }
+      return hash;
+    };
+    expect(fingerprint("stand")).toBe(1718110711);
+    expect(fingerprint("contact-a")).toBe(47814412);
+  });
+
+  it("drops a cape's slices, not their lifts, from a figure without one", () => {
+    const caped = stackSlices("stand");
+    const bare = stackSlices("stand", false);
+    expect(bare.some((slice) => slice.tone === "cape")).toBe(false);
+    expect(stackLifts(bare)).toBe(stackLifts(caped));
+    const helmet = (slices: typeof caped): number | undefined =>
+      slices.find((slice) => slice.tone === "visor")?.lift;
+    expect(helmet(bare)).toBe(helmet(caped));
+  });
+});
+
+describe("creature figures (#4171)", () => {
+  const radius = (slice: StackSlice<number>): number =>
+    Math.max(...slice.parts.flatMap((part) => part.map((p) => Math.hypot(p.x, p.y))));
+
+  it("stands a spirit in one heading and one pose, its wisp narrowing as it rises", () => {
+    expect(creatureStack("spirit")).toEqual({ headings: 1, poses: ["stand"] });
+    const slices = creatureSlices("spirit", "stand") ?? [];
+    expect(stackLifts(slices)).toBe(11);
+    const wisp = slices.slice(2);
+    expect(wisp.length).toBeGreaterThanOrEqual(8);
+    expect(wisp.length).toBeLessThanOrEqual(10);
+    for (let i = 1; i < wisp.length; i += 1) {
+      const [below, above] = [wisp[i - 1], wisp[i]];
+      expect(below !== undefined && above !== undefined && radius(above) < radius(below)).toBe(
+        true,
+      );
+      expect((above?.alpha ?? 1) < (below?.alpha ?? 0)).toBe(true);
+    }
+  });
+
+  it("turns a ghostly hero in 8 headings and walks it in 3 poses, translucent and caped in nothing", () => {
+    const stack = creatureStack("ghostly-hero");
+    expect(stack?.headings).toBe(8);
+    expect(stack?.poses).toEqual(["stand", "stride-a", "stride-b"]);
+    for (const pose of stack?.poses ?? []) {
+      const slices = creatureSlices("ghostly-hero", pose) ?? [];
+      expect(slices.length).toBeGreaterThan(0);
+      expect(slices.every((slice) => slice.alpha === 0.75)).toBe(true);
+    }
+    expect(creatureSlices("ghostly-hero", "stride-a")).not.toEqual(
+      creatureSlices("ghostly-hero", "stride-b"),
+    );
+  });
+
+  it("restarts the ghost's axe at the hand and paints it under the head above it", () => {
+    const slices = creatureSlices("ghostly-hero", "stand") ?? [];
+    const haft = slices.find((slice) => slice.tone === 0x6a4a2c);
+    expect(haft?.lift).toBe(8);
+    // A body's 28 lifts; the axe, restarting at the hand, adds none.
+    expect(stackLifts(slices)).toBe(STACK_SLICES);
+    // Listed after the helmet, painted before it: slices go up by lift.
+    const layers = creatureLayers(slices, 0, 12);
+    const haftAt = layers.findIndex((layer) => layer.colour === stackShade(0x6a4a2c, 0.8));
+    const visorAt = layers.findIndex((layer) => layer.colour === stackShade(0x101014, 1));
+    expect(haftAt).toBeGreaterThanOrEqual(0);
+    expect(haftAt).toBeLessThan(visorAt);
+  });
+
+  it("leaves a look it has no figure for as its disc", () => {
+    expect(creatureStack("bone-minion")).toBeUndefined();
+    expect(creatureSlices("bone-minion", "stand")).toBeUndefined();
+  });
+
+  it("picks a creature's heading and pose from a body's", () => {
+    const ghost = creatureStack("ghostly-hero");
+    expect(ghost && creatureBucket(ghost, 2)).toBe(1);
+    expect(ghost && creatureBucket(ghost, 15)).toBe(0);
+    const spirit = creatureStack("spirit");
+    expect(spirit && creatureBucket(spirit, 7)).toBe(0);
+    expect(ghost && creaturePose(ghost, "contact-a")).toBe("stride-a");
+    expect(spirit && creaturePose(spirit, "contact-a")).toBe("stand");
+    expect(ghost && creaturePose(ghost, "contact-b")).toBe("stride-b");
+    expect(ghost && creaturePose(ghost, "pass-a")).toBe("stand");
+    expect(ghost && creaturePose(ghost, "cast")).toBe("stand");
   });
 });
