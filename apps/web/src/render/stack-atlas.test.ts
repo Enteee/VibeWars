@@ -154,6 +154,15 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(names).not.toContain(undefined);
   });
 
+  it("makes a look of each height and build, the same physique shared (#4176)", () => {
+    const tall: BodyStackLook = { ...FRIEND, physique: { height: "tall", build: "average" } };
+    const heavy: BodyStackLook = { ...FRIEND, physique: { height: "average", build: "heavy" } };
+    const { atlas: made } = atlas();
+    made.bake([FRIEND, tall, heavy, { ...tall }, FRIEND]);
+    expect(made.bakedFigures).toBe(3 * FRAMES);
+    expect(new Set([FRIEND, tall, heavy].map(stackLookKey)).size).toBe(3);
+  });
+
   it("names the frame of a baked look by heading bucket and pose, mirrored where it bakes none", () => {
     const { atlas: made } = atlas();
     made.bake([FOE]);

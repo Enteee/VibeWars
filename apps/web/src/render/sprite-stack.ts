@@ -627,9 +627,10 @@ export interface StackLayer {
 /**
  * The polygons of `slices`, slice `i` in `colours[i]`, turned to `facing`
  * at radius `r` and lifted, each lift `step` radii over the last,
- * relative to the centre of the feet: what the bake fills, bottom to top. Slices go up by lift, those on one lift in
- * list order, so a prop restarting at the hand is painted under the head
- * listed before it (#4171).
+ * relative to the centre of the feet: what the bake fills, bottom to
+ * top. Slices go up by lift, those on one lift in list order, so a prop
+ * restarting at the hand is painted under the head listed before it
+ * (#4171).
  */
 function placeSlices<Tone>(
   slices: readonly StackSlice<Tone>[],

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { FigureBody } from "@vibewars/game-protocol";
+
 import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
 
@@ -341,6 +343,61 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
     };
     expect(fingerprint("stand")).toBe(1718110711);
     expect(fingerprint("contact-a")).toBe(47814412);
+  });
+
+  describe("height and build (#4176)", () => {
+    const tones = stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined);
+    const layersOf = (body: FigureBody, facing = Math.PI / 2) =>
+      stackLayers(
+        stackSlices("stand", WARRIOR_OUTFIT, undefined, body),
+        facing,
+        12,
+        tones,
+        body.height,
+      );
+    const top = (body: FigureBody): number =>
+      Math.min(...layersOf(body).flatMap((layer) => layer.points.map((p) => p.y)));
+    const width = (body: FigureBody): number => {
+      const ys = stackSlices("stand", WARRIOR_OUTFIT, undefined, body).flatMap((slice) =>
+        slice.parts.flat().map((p) => p.y),
+      );
+      return Math.max(...ys) - Math.min(...ys);
+    };
+
+    it("stands a short figure lower and a tall one higher than the average, as wide", () => {
+      const short = top({ height: "short", build: "average" });
+      const tall = top({ height: "tall", build: "average" });
+      expect(short).toBeGreaterThan(top(AVERAGE_BODY));
+      expect(tall).toBeLessThan(top(AVERAGE_BODY));
+      expect(
+        stackSlices("stand", WARRIOR_OUTFIT, undefined, { height: "tall", build: "average" }),
+      ).toEqual(stackSlices("stand", WARRIOR_OUTFIT, undefined, AVERAGE_BODY));
+    });
+
+    it("widens a heavy figure and narrows a lean one, the slices and lifts the same", () => {
+      const lean = { height: "average", build: "lean" } as const;
+      const heavy = { height: "average", build: "heavy" } as const;
+      expect(width(lean)).toBeLessThan(width(AVERAGE_BODY));
+      expect(width(heavy)).toBeGreaterThan(width(AVERAGE_BODY));
+      const lifts = (body: FigureBody) =>
+        stackSlices("stand", WARRIOR_OUTFIT, undefined, body).map((slice) => slice.lift);
+      expect(lifts(lean)).toEqual(lifts(AVERAGE_BODY));
+      expect(lifts(heavy)).toEqual(lifts(AVERAGE_BODY));
+    });
+
+    it("leans a heavy figure's head forward along its heading, its boots where they were", () => {
+      const heavy = { height: "average", build: "heavy" } as const;
+      const head = (body: FigureBody) => {
+        const slices = stackSlices("stand", WARRIOR_OUTFIT, undefined, body);
+        return slices[slices.length - 1]?.parts.flat().map((p) => p.x) ?? [];
+      };
+      const boots = (body: FigureBody) =>
+        stackSlices("stand", WARRIOR_OUTFIT, undefined, body)[0]
+          ?.parts.flat()
+          .map((p) => p.x);
+      expect(Math.max(...head(heavy))).toBeGreaterThan(Math.max(...head(AVERAGE_BODY)));
+      expect(boots(heavy)).toEqual(boots(AVERAGE_BODY));
+    });
   });
 
   it("drops a cape's slices, not their lifts, from a figure without one", () => {
