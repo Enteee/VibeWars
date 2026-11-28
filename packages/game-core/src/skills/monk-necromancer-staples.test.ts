@@ -404,3 +404,30 @@ describe("profession on enchantments (#944)", () => {
     }
   });
 });
+
+describe("Necromancer audit (#4235)", () => {
+  it("Contagion recharges in 10 s", () => {
+    expect(skill("necromancer.contagion").rechargeSeconds).toBe(10);
+  });
+
+  it("Insidious Parasite costs 10 Energy and recharges in 8 s", () => {
+    const necro = caster();
+    use(necro, "necromancer.insidious-parasite", foe());
+    expect(necro.energy).toBe(20);
+    expect(skill("necromancer.insidious-parasite").rechargeSeconds).toBe(8);
+  });
+
+  it("Defile Flesh sacrifices 10% of its caster's maximum Health", () => {
+    const necro = makeCombatant({
+      id: "caster",
+      attributeRanks: RANKS,
+      energy: 30,
+      health: 600,
+      maxHealth: 600,
+    });
+    const target = foe();
+    use(necro, "necromancer.defile-flesh", target);
+    expect(necro.health).toBe(540);
+    expect(target.statuses.has("defile-flesh")).toBe(true);
+  });
+});
