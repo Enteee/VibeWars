@@ -1,19 +1,46 @@
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
+import {
+  PROFESSION_OUTFITS,
+  WARRIOR_OUTFIT,
+  type Accent,
+  type BackKind,
+  type HeadKind,
+  type LegKind,
+  type Outfit,
+  type ShoulderKind,
+  type TorsoKind,
+} from "./profession-outfits.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
  * A standing body as a stacked figure (ADR-0057, #4031): slices of a
- * helmeted, caped figure, from the boots up, each lifted `STACK_STEP`
- * over the one below. The geometry is the `gothic` preset's body slicer
- * of the #3977 spike, in body radii, `x` forward and `y` to the right.
+ * caped figure in its profession's outfit (#4175), from the boots up,
+ * each lifted `STACK_STEP` over the one below. The geometry is the
+ * `gothic` preset's body slicer of the #3977 spike, in body radii, `x`
+ * forward and `y` to the right, and the outfit study's for the outfits.
  * This file is the only source: the atlas bake draws these slices, and
  * nothing else keeps a copy of them.
  */
 
 /** What colour a slice is painted in: resolved per look by `stackTones`. */
 export type StackTone =
-  "boot" | "trouser" | "skin" | "belt" | "team" | "cape" | "trim" | "metal" | "visor" | "crest";
+  | "boot"
+  | "trouser"
+  | "skin"
+  | "belt"
+  | "team"
+  | "cape"
+  | "trim"
+  | "metal"
+  | "visor"
+  | "crest"
+  | "cloth"
+  | "leather"
+  | "rope"
+  | "hair"
+  | "gold"
+  | "accent";
 
 /**
  * One slice: its polygons, its tone, how lit it is (1 full colour, less
@@ -81,16 +108,34 @@ const BELT = 0x3a2a20;
 const STEEL = 0x9aa0a8;
 const VISOR = 0x101014;
 
-function ellipse(cx: number, cy: number, rx: number, ry: number, n = STACK_SEGMENTS): Point[] {
+/** The outfits' fixed tones (#4175): a quiver's leather, a rope belt, hair, a circlet. */
+const LEATHER = 0x5a4030;
+const ROPE = 0xb8a070;
+const HAIR = 0x2a2018;
+const GOLD = 0xc9a24a;
+
+/** An ellipse of `n` sides round `cx`, `cy`, turned `turn` radians. */
+function ellipse(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  n = STACK_SEGMENTS,
+  turn = 0,
+): Point[] {
+  const cos = Math.cos(turn);
+  const sin = Math.sin(turn);
   return Array.from({ length: n }, (_, i) => {
     const a = (i / n) * Math.PI * 2;
-    return { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
+    const px = rx * Math.cos(a);
+    const py = ry * Math.sin(a);
+    return { x: cx + px * cos - py * sin, y: cy + px * sin + py * cos };
   });
 }
 
 /**
  * How a pose moves the figure: how far it swings the legs and arms, leans
- * into a cast, lifts the torso and helmet (a breath) or the helmet alone
+ * into a cast, lifts the torso and head (a breath) or the head alone
  * (a stride's bob), in `STACK_STEP`s, and sways the cape to one side and
  * out behind. The cape trails the legs by one walk frame (#4060).
  */
@@ -126,18 +171,23 @@ function poseMotion(pose: StackPose): PoseMotion {
   }
 }
 
-/** The slices of a figure in `pose`, boots first. */
-export function stackSlices(pose: StackPose): readonly StackSlice[] {
-  const { stride, lean, rise: breath, bob, capeSide, capeOut } = poseMotion(pose);
-  const slices: StackSlice[] = [];
-  let rise = 0;
-  const push = (parts: Point[][], tone: StackTone, light: number, same = false): void => {
-    slices.push({ parts, tone, light, same, rise });
-  };
-  /** The cape's back at `hem` (1 at the hem, 0 at the shoulders), swayed. */
-  const capeBack = (x: number, rx: number, ry: number, hem: number): Point[] =>
-    ellipse(x - 0.12 * capeOut * hem, 0.15 * capeSide * hem, rx, ry, 14);
-  const f = 0.3 * stride;
+/** Adds a slice at the lift the figure has reached. */
+type Push = (parts: Point[][], tone: StackTone, light: number, same?: boolean) => void;
+
+/** A figure being built: where its slices go, and how its pose moves it. */
+interface Figure {
+  readonly push: Push;
+  readonly motion: PoseMotion;
+}
+
+/** The cape's back at `hem` (1 at the hem, 0 at the shoulders), swayed. */
+function capeBack(motion: PoseMotion, x: number, rx: number, ry: number, hem: number): Point[] {
+  return ellipse(x - 0.12 * motion.capeOut * hem, 0.15 * motion.capeSide * hem, rx, ry, 14);
+}
+
+/** The boots, striding. */
+function bootSlices({ push, motion }: Figure): void {
+  const f = 0.3 * motion.stride;
   for (let i = 0; i < 2; i += 1) {
     push(
       [ellipse(f + 0.05, -0.26, 0.26, 0.16, 10), ellipse(-f + 0.05, 0.26, 0.26, 0.16, 10)],
@@ -145,19 +195,115 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
       0.5 + 0.2 * i,
     );
   }
+}
+
+/** The legs over the boots. */
+function legSlices({ push, motion }: Figure, kind: LegKind): void {
+  const f = 0.3 * motion.stride;
   for (let i = 0; i < 4; i += 1) {
-    push(
-      [ellipse(f * 0.7, -0.24, 0.18, 0.17, 10), ellipse(-f * 0.7, 0.24, 0.18, 0.17, 10)],
-      "trouser",
-      0.55 + 0.08 * i,
-    );
+    switch (kind) {
+      case "trousers":
+        push(
+          [ellipse(f * 0.7, -0.24, 0.18, 0.17, 10), ellipse(-f * 0.7, 0.24, 0.18, 0.17, 10)],
+          "trouser",
+          0.55 + 0.08 * i,
+        );
+        break;
+      case "robe":
+        // A long skirt hides the legs: only a dark inner hem shows.
+        push([ellipse(0, 0, 0.4, 0.4, 12)], "boot", 0.55 + 0.08 * i);
+        break;
+    }
   }
-  // The skirt, its cape behind it.
-  [0.62, 0.6, 0.58, 0.56].forEach((r, i) => {
-    push([capeBack(-0.3 - 0.06 * lean, 0.32, 0.66, 1 - i / 11)], "cape", 0.5 + 0.06 * i);
-    push([ellipse(0.03 * lean * i, 0, r * 0.72, r)], "team", 0.6 + 0.07 * i, true);
+}
+
+/**
+ * The skirt's radii, hem first: a robe's long and wide, a coat's flared. A
+ * robe is the study's narrowed so that its trimmed hem fits the frame.
+ */
+function skirtRadii(outfit: Outfit): readonly number[] {
+  if (outfit.legs === "robe") {
+    return [0.84, 0.8, 0.76, 0.7];
+  }
+  switch (outfit.torso) {
+    case "coat":
+      return [0.7, 0.66, 0.62, 0.58];
+    case "plate":
+    case "robe":
+      return [0.62, 0.6, 0.58, 0.56];
+  }
+}
+
+/**
+ * The skirt, its cape behind it, then the belt: a robe's hem in its
+ * cloth, a trim accent a ring under the hem, a belt accent over the belt.
+ */
+function skirtSlices({ push, motion }: Figure, outfit: Outfit, accent: Accent | undefined): void {
+  const { lean } = motion;
+  const robe = outfit.legs === "robe";
+  skirtRadii(outfit).forEach((r, i) => {
+    const x = 0.03 * lean * i;
+    if (i === 0 && robe) {
+      push([ellipse(x, 0, r * 0.72 * 1.08, r * 1.08)], "cloth", 0.55, true);
+    }
+    if (i === 0 && accent?.kind === "trim") {
+      const k = robe ? 1.15 : 1.1;
+      push([ellipse(x, 0, r * 0.72 * k, r * k)], "accent", 0.5, true);
+    }
+    const capeLength = robe ? 0.66 + 0.04 * (1 - i / 4) : 0.66;
+    push(
+      [capeBack(motion, -0.3 - 0.06 * lean, 0.32, capeLength, 1 - i / 11)],
+      "cape",
+      0.5 + 0.06 * i,
+    );
+    push([ellipse(x, 0, r * 0.72, r)], "team", 0.6 + 0.07 * i, true);
   });
-  push([ellipse(0.12 * lean, 0, 0.4, 0.56)], "belt", 0.9);
+  push([ellipse(0.12 * lean, 0, 0.4, 0.56)], outfit.torso === "plate" ? "belt" : "rope", 0.9);
+  if (accent?.kind === "belt") {
+    push([ellipse(0.12 * lean, 0, 0.44, 0.6)], "accent", 0.92, true);
+  }
+}
+
+/** A torso's radii, waist up, and what its sleeves and hands are in. */
+function torsoShape(kind: TorsoKind): {
+  readonly radii: readonly number[];
+  readonly sleeve: StackTone;
+  readonly hand: StackTone;
+} {
+  switch (kind) {
+    case "plate":
+      return { radii: [0.56, 0.6, 0.64, 0.68, 0.7], sleeve: "team", hand: "metal" };
+    case "coat":
+      return { radii: [0.56, 0.6, 0.64, 0.68, 0.7], sleeve: "cloth", hand: "skin" };
+    case "robe":
+      return { radii: [0.52, 0.54, 0.56, 0.58, 0.6], sleeve: "cloth", hand: "skin" };
+  }
+}
+
+/** What is on the back at torso slice `i`, `x` behind its centre. */
+function backSlices({ push }: Figure, kind: BackKind | undefined, i: number, x: number): void {
+  switch (kind) {
+    case undefined:
+      return;
+    case "quiver":
+      push([ellipse(x, 0.24, 0.1, 0.1, 8)], "leather", 0.5 + 0.08 * i, true);
+      if (i === 6) {
+        // The fletchings of two arrows.
+        push([ellipse(x, 0.2, 0.05, 0.05, 6), ellipse(x, 0.3, 0.05, 0.05, 6)], "metal", 1, true);
+      }
+      return;
+  }
+}
+
+/**
+ * The torso, the cape behind it and the arms beside it: a sash accent
+ * runs over it from the right shoulder to the left hip, and what the
+ * outfit wears on its back stands behind it.
+ */
+function torsoSlices(figure: Figure, outfit: Outfit, accent: Accent | undefined): void {
+  const { push, motion } = figure;
+  const { stride, lean } = motion;
+  const { radii, sleeve, hand } = torsoShape(outfit.torso);
   const arms = (i: number): Point[][] => {
     const swing = -0.22 * stride * (1 - i / 7);
     const reach = 0.25 * lean * (i / 7);
@@ -166,51 +312,141 @@ export function stackSlices(pose: StackPose): readonly StackSlice[] {
       ellipse(-swing + reach, 0.66, 0.15, 0.14, 10),
     ];
   };
-  // The torso, the cape behind it and the arms beside it.
-  // A breath lifts it, and everything over it.
-  rise = breath;
-  const torso = [0.56, 0.6, 0.64, 0.68, 0.7];
   for (let i = 0; i < 7; i += 1) {
-    push([capeBack(-0.3, 0.3, 0.6 + 0.02 * i, (7 - i) / 11)], "cape", 0.6 + 0.05 * i);
+    push([capeBack(motion, -0.3, 0.3, 0.6 + 0.02 * i, (7 - i) / 11)], "cape", 0.6 + 0.05 * i);
     if (i >= 2) {
-      const r = torso[Math.min(i - 2, 4)] ?? 0;
-      push([ellipse(0.06 + 0.2 * lean * (i / 7), 0, r * 0.66, r)], "team", 0.74 + 0.04 * i, true);
+      const r = radii[Math.min(i - 2, 4)] ?? 0;
+      const x = 0.06 + 0.2 * lean * (i / 7);
+      push([ellipse(x, 0, r * 0.66, r)], "team", 0.74 + 0.04 * i, true);
+      if (accent?.kind === "sash" && i >= 3) {
+        push([ellipse(x, 0, 0.2, r * 1.12, 14, 0.5)], "accent", 0.82 + 0.04 * i, true);
+      }
+      backSlices(figure, outfit.back, i, x - 0.52);
     }
-    push(arms(i), i < 2 ? "metal" : "team", i < 2 ? 0.9 : 0.7 + 0.04 * i, true);
+    push(arms(i), i < 2 ? hand : sleeve, i < 2 ? 0.9 : 0.7 + 0.04 * i, true);
   }
-  // Pauldrons, the neck, then the helmet with its visor and crest.
-  for (let i = 0; i < 2; i += 1) {
-    push(
-      [ellipse(0.25 * lean, -0.6, 0.3, 0.26, 12), ellipse(0.25 * lean, 0.6, 0.3, 0.26, 12)],
-      "metal",
-      0.85 + 0.15 * i,
-    );
+}
+
+/** Over the shoulders, and the neck: a collar stands up round it. */
+function shoulderSlices({ push, motion }: Figure, kind: ShoulderKind): void {
+  const { lean } = motion;
+  const neck = (tone: StackTone): void => {
+    push([ellipse(0.06 + 0.3 * lean, 0, 0.16, 0.16, 10)], tone, 0.8);
+  };
+  switch (kind) {
+    case "pauldrons":
+      for (let i = 0; i < 2; i += 1) {
+        push(
+          [ellipse(0.25 * lean, -0.6, 0.3, 0.26, 12), ellipse(0.25 * lean, 0.6, 0.3, 0.26, 12)],
+          "metal",
+          0.85 + 0.15 * i,
+        );
+      }
+      neck("skin");
+      return;
+    case "none":
+      neck("skin");
+      return;
+    case "collar":
+      neck("cloth");
+      push([ellipse(0.3 * lean, 0, 0.3, 0.38, 14)], "cloth", 0.95);
+      push([ellipse(0.3 * lean, 0, 0.26, 0.34, 14)], "cloth", 1);
+      return;
   }
-  push([ellipse(0.06 + 0.3 * lean, 0, 0.16, 0.16, 10)], "skin", 0.8);
-  // A stride bobs the helmet at its passing frames.
-  rise = breath + bob;
-  const cx = 0.1 + 0.35 * lean;
-  [0.3, 0.36, 0.38, 0.38, 0.34, 0.26].forEach((r, i) => {
-    push([ellipse(cx, 0, r * 1.05, r)], "metal", 0.7 + 0.07 * i);
-    if (i === 2 || i === 3) {
-      push(
-        [
-          [
-            { x: cx + r * 0.55, y: -r * 0.7 },
-            { x: cx + r * 1.1, y: -r * 0.35 },
-            { x: cx + r * 1.1, y: r * 0.35 },
-            { x: cx + r * 0.55, y: r * 0.7 },
-          ],
-        ],
-        "visor",
-        1,
-        true,
-      );
-    }
-    if (i === 5) {
-      push([ellipse(cx - 0.05, 0, 0.32, 0.08, 8)], "crest", 1.05);
-    }
-  });
+}
+
+/** The head over the neck. */
+function headSlices({ push, motion }: Figure, kind: HeadKind): void {
+  const cx = 0.1 + 0.35 * motion.lean;
+  /** A round head of `radii`, bottom up, `extra` adding to each slice. */
+  const dome = (
+    radii: readonly number[],
+    tone: StackTone,
+    extra?: (r: number, i: number) => void,
+  ): void => {
+    radii.forEach((r, i) => {
+      push([ellipse(cx, 0, r * 1.05, r)], tone, 0.7 + 0.07 * i);
+      extra?.(r, i);
+    });
+  };
+  const hair = (ry: number): void => {
+    push([ellipse(cx - 0.06, 0, 0.3, ry, 12)], "hair", 0.95);
+  };
+  switch (kind) {
+    case "helm":
+      // The visor at the helm's widest, the crest on top.
+      dome([0.3, 0.36, 0.38, 0.38, 0.34, 0.26], "metal", (r, i) => {
+        if (i === 2 || i === 3) {
+          push(
+            [
+              [
+                { x: cx + r * 0.55, y: -r * 0.7 },
+                { x: cx + r * 1.1, y: -r * 0.35 },
+                { x: cx + r * 1.1, y: r * 0.35 },
+                { x: cx + r * 0.55, y: r * 0.7 },
+              ],
+            ],
+            "visor",
+            1,
+            true,
+          );
+        }
+        if (i === 5) {
+          push([ellipse(cx - 0.05, 0, 0.32, 0.08, 8)], "crest", 1.05);
+        }
+      });
+      return;
+    case "hood":
+      // The face shows at the hood's opening.
+      dome([0.3, 0.36, 0.4, 0.4, 0.36, 0.28], "cloth", (r, i) => {
+        if (i === 2 || i === 3) {
+          push([ellipse(cx + r * 0.62, 0, 0.16, 0.2, 10)], "skin", 0.95, true);
+        }
+      });
+      return;
+    case "bare":
+      dome([0.26, 0.3, 0.32, 0.32, 0.28, 0.22], "skin");
+      hair(0.3);
+      return;
+    case "circlet":
+      dome([0.26, 0.3, 0.32, 0.32, 0.28, 0.22], "skin", (r, i) => {
+        if (i === 3) {
+          push([ellipse(cx, 0, r * 1.15, r * 1.1)], "gold", 0.95, true);
+        }
+      });
+      hair(0.28);
+      return;
+  }
+}
+
+/**
+ * The slices of a figure wearing `outfit` and `accent` in `pose`, boots
+ * first (#4175).
+ */
+export function stackSlices(
+  pose: StackPose,
+  outfit: Outfit,
+  accent: Accent | undefined,
+): readonly StackSlice[] {
+  const motion = poseMotion(pose);
+  const slices: StackSlice[] = [];
+  let rise = 0;
+  const figure: Figure = {
+    motion,
+    push: (parts, tone, light, same = false) => {
+      slices.push({ parts, tone, light, same, rise });
+    },
+  };
+  bootSlices(figure);
+  legSlices(figure, outfit.legs);
+  skirtSlices(figure, outfit, accent);
+  // A breath lifts the torso, and everything over it.
+  rise = motion.rise;
+  torsoSlices(figure, outfit, accent);
+  shoulderSlices(figure, outfit.shoulders);
+  // A stride bobs the head at its passing frames.
+  rise = motion.rise + motion.bob;
+  headSlices(figure, outfit.head);
   return slices;
 }
 
@@ -219,8 +455,15 @@ export function stackLifts(slices: readonly StackSlice[]): number {
   return slices.filter((slice) => !slice.same).length;
 }
 
-/** The standing figure's slice count, which every pose shares. */
-export const STACK_SLICES = stackLifts(stackSlices("stand"));
+/**
+ * The most lifts any outfit stands in, which every pose shares: the
+ * badge and the frame are sized to the tallest.
+ */
+export const STACK_SLICES = Math.max(
+  ...[WARRIOR_OUTFIT, ...Object.values(PROFESSION_OUTFITS)].map((outfit) =>
+    stackLifts(stackSlices("stand", outfit, undefined)),
+  ),
+);
 
 /** How far a figure's top rises over its feet, in body radii. */
 export const STACK_HEIGHT = STACK_SLICES * STACK_STEP;
@@ -238,10 +481,17 @@ export function bucketFacing(bucket: number): number {
 
 /**
  * Every tone of one look: its body colour, and its cape's cloth and trim,
- * or the body colour darkened when it wears none (ADR-0057). The steel
- * takes a quarter of the body colour, as the preset's takes of its accent.
+ * or the body colour darkened when it wears none (ADR-0057); its outfit's
+ * cloth and its accent's tone, or the body colour when it has none. The
+ * steel takes a quarter of the body colour, as the preset's takes of its
+ * accent.
  */
-export function stackTones(body: number, cape: CapeLook | undefined): Record<StackTone, number> {
+export function stackTones(
+  body: number,
+  cape: CapeLook | undefined,
+  outfit: Outfit,
+  accent: Accent | undefined,
+): Record<StackTone, number> {
   const cloth = cape === undefined ? mixColour(body, 0x000000, 0.4) : cape.main;
   return {
     boot: BOOT,
@@ -254,6 +504,12 @@ export function stackTones(body: number, cape: CapeLook | undefined): Record<Sta
     metal: mixColour(STEEL, body, 0.25),
     visor: VISOR,
     crest: cape === undefined ? body : cape.trim,
+    cloth: outfit.cloth,
+    leather: LEATHER,
+    rope: ROPE,
+    hair: HAIR,
+    gold: GOLD,
+    accent: accent?.tone ?? body,
   };
 }
 

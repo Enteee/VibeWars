@@ -21,12 +21,22 @@ import {
   stackTones,
   shortTurn,
   stepTurn,
+  type StackSlice,
+  type StackTone,
 } from "./sprite-stack.js";
+import {
+  PROFESSION_OUTFITS,
+  WARRIOR_OUTFIT,
+  accentOf,
+  outfitOf,
+  type Accent,
+  type Outfit,
+} from "./profession-outfits.js";
 
 const stackShadeOfVisor = stackShade(0x101014, 1);
 
 const centreX = (pose: (typeof STACK_POSES)[number], tone: string, part = 0): number => {
-  const slice = stackSlices(pose).find((s) => s.tone === tone);
+  const slice = stackSlices(pose, WARRIOR_OUTFIT, undefined).find((s) => s.tone === tone);
   const points = slice?.parts[part] ?? [];
   return points.reduce((sum, p) => sum + p.x, 0) / points.length;
 };
@@ -35,21 +45,23 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("has the gothic preset's 28 slices in every pose, a slice a twelfth of a radius", () => {
     expect(STACK_SLICES).toBe(28);
     for (const pose of STACK_POSES) {
-      expect(stackLifts(stackSlices(pose))).toBe(STACK_SLICES);
+      expect(stackLifts(stackSlices(pose, WARRIOR_OUTFIT, undefined))).toBe(STACK_SLICES);
     }
     expect(STACK_STEP).toBeCloseTo(1 / 12);
     expect(STACK_HEIGHT).toBeCloseTo(28 / 12);
   });
 
   it("is helmeted, visored and crested, with a cape at its back", () => {
-    const tones = stackSlices("stand").map((slice) => slice.tone);
+    const tones = stackSlices("stand", WARRIOR_OUTFIT, undefined).map((slice) => slice.tone);
     expect(tones).toContain("metal");
     expect(tones.filter((tone) => tone === "visor")).toHaveLength(2);
     expect(tones.at(-1)).toBe("crest");
     expect(tones.filter((tone) => tone === "cape")).toHaveLength(11);
     expect(tones).not.toContain("hair");
     // The cape hangs behind: every cape slice is centred behind the body.
-    for (const slice of stackSlices("stand").filter((s) => s.tone === "cape")) {
+    for (const slice of stackSlices("stand", WARRIOR_OUTFIT, undefined).filter(
+      (s) => s.tone === "cape",
+    )) {
       const points = slice.parts[0] ?? [];
       expect(points.reduce((sum, p) => sum + p.x, 0) / points.length).toBeLessThan(0);
     }
@@ -71,7 +83,12 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
    */
   const placed = (pose: (typeof STACK_POSES)[number], facing = 0, flip = false): string[] => {
     const at = (v: number): number => (Math.round(v * 1000) + 0) / 1000;
-    return stackLayers(stackSlices(pose), facing, 12, stackTones(0x59c2ff, undefined))
+    return stackLayers(
+      stackSlices(pose, WARRIOR_OUTFIT, undefined),
+      facing,
+      12,
+      stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined),
+    )
       .map((layer) =>
         [
           layer.colour,
@@ -89,7 +106,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
 
   /** How far `pose` lifts the slices of `tone` over standing, in steps. */
   const lifted = (pose: (typeof STACK_POSES)[number], tone: string): number[] =>
-    stackSlices(pose)
+    stackSlices(pose, WARRIOR_OUTFIT, undefined)
       .filter((slice) => slice.tone === tone)
       .map((slice) => slice.rise);
 
@@ -106,7 +123,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
 
   it("sways its cape out behind as it walks, the hem the most, to one side as it passes", () => {
     const capes = (pose: (typeof STACK_POSES)[number]) =>
-      stackSlices(pose)
+      stackSlices(pose, WARRIOR_OUTFIT, undefined)
         .filter((slice) => slice.tone === "cape")
         .map((slice) => {
           const points = slice.parts[0] ?? [];
@@ -229,8 +246,13 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   });
 
   it("faces its visor the way it faces, and rises a full stack", () => {
-    const tones = stackTones(0x59c2ff, undefined);
-    const layers = stackLayers(stackSlices("stand"), Math.PI / 2, 12, tones);
+    const tones = stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined);
+    const layers = stackLayers(
+      stackSlices("stand", WARRIOR_OUTFIT, undefined),
+      Math.PI / 2,
+      12,
+      tones,
+    );
     const visor = layers.filter((layer) => layer.colour === stackShadeOfVisor);
     const mid = (points: readonly { readonly x: number; readonly y: number }[]) =>
       points.reduce((sum, p) => sum + p.x, 0) / points.length;
@@ -245,10 +267,10 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   });
 
   it("wears its own cape's colours, or the body colour darker without one", () => {
-    expect(stackTones(0x59c2ff, undefined).cape).toBe(0x357499);
-    expect(stackTones(0x59c2ff, undefined).trim).toBe(0x357499);
+    expect(stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined).cape).toBe(0x357499);
+    expect(stackTones(0x59c2ff, undefined, WARRIOR_OUTFIT, undefined).trim).toBe(0x357499);
     const cape = { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] };
-    expect(stackTones(0x59c2ff, cape)).toMatchObject({
+    expect(stackTones(0x59c2ff, cape, WARRIOR_OUTFIT, undefined)).toMatchObject({
       cape: 0x203040,
       trim: 0xc0a060,
       crest: 0xc0a060,
@@ -256,8 +278,13 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   });
 
   it("trims a cape's hem and leaves the rest of its back plain", () => {
-    const tones = stackTones(0x59c2ff, { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] });
-    const slices = stackSlices("stand");
+    const tones = stackTones(
+      0x59c2ff,
+      { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] },
+      WARRIOR_OUTFIT,
+      undefined,
+    );
+    const slices = stackSlices("stand", WARRIOR_OUTFIT, undefined);
     const layers = stackLayers(slices, 0, 12, tones);
     let cape = 0;
     let at = 0;
@@ -270,5 +297,113 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
       at += slice.parts.length;
     }
     expect(cape).toBeGreaterThan(2);
+  });
+});
+
+describe("profession outfits (#4175)", () => {
+  const OUTFITS = Object.values(PROFESSION_OUTFITS);
+  const ACCENTS = (["monk", "elementalist", "warrior"] as const).map((secondary) => {
+    const accent = accentOf(secondary);
+    if (accent === undefined) {
+      throw new Error(`no accent for ${secondary}`);
+    }
+    return accent;
+  });
+  const standing = (outfit: Outfit, accent?: Accent): readonly StackSlice[] =>
+    stackSlices("stand", outfit, accent);
+
+  /** Inside `polygon`, by the even-odd rule. */
+  const inside = (polygon: readonly { x: number; y: number }[], x: number, y: number): boolean => {
+    let on = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      const a = polygon[i];
+      const b = polygon[j];
+      if (a !== undefined && b !== undefined && a.y > y !== b.y > y) {
+        if (x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) {
+          on = !on;
+        }
+      }
+    }
+    return on;
+  };
+  /** How much of a grid of twenty-fifths of a radius lies under team-coloured slices, from above. */
+  const teamArea = (slices: readonly StackSlice[]): number => {
+    const parts = slices.filter((slice) => slice.tone === "team").flatMap((slice) => slice.parts);
+    let hit = 0;
+    for (let x = -30; x <= 30; x += 1) {
+      for (let y = -30; y <= 30; y += 1) {
+        if (parts.some((part) => inside(part, x / 25, y / 25))) {
+          hit += 1;
+        }
+      }
+    }
+    return hit;
+  };
+
+  it("dresses the warrior, monk, elementalist and ranger each its own way", () => {
+    const looks = (["warrior", "monk", "elementalist", "ranger"] as const).map((primary) =>
+      JSON.stringify(standing(outfitOf(primary))),
+    );
+    expect(new Set(looks).size).toBe(4);
+  });
+
+  it("wears the warrior's outfit with no primary, or one with no outfit yet", () => {
+    expect(outfitOf("warrior")).toBe(WARRIOR_OUTFIT);
+    expect(outfitOf(undefined)).toBe(WARRIOR_OUTFIT);
+    expect(outfitOf("necromancer")).toBe(WARRIOR_OUTFIT);
+    expect(accentOf(undefined)).toBeUndefined();
+  });
+
+  it("adds exactly its secondary's accent slices, and none without a secondary", () => {
+    for (const outfit of OUTFITS) {
+      const plain = standing(outfit);
+      expect(plain.map((slice) => slice.tone)).not.toContain("accent");
+      for (const accent of ACCENTS) {
+        const worn = standing(outfit, accent);
+        expect(worn.filter((slice) => slice.tone !== "accent")).toEqual(plain);
+        expect(worn.map((slice) => slice.tone)).toContain("accent");
+        expect(stackLifts(worn)).toBe(stackLifts(plain));
+      }
+    }
+  });
+
+  it("keeps at least 80 % of the warrior's team colour seen from above", () => {
+    const warrior = teamArea(standing(WARRIOR_OUTFIT));
+    for (const outfit of OUTFITS) {
+      for (const accent of [undefined, ...ACCENTS]) {
+        expect(teamArea(standing(outfit, accent))).toBeGreaterThanOrEqual(0.8 * warrior);
+      }
+    }
+  });
+
+  it("stands every outfit at most STACK_SLICES high, in every pose alike, at most 4 over the warrior", () => {
+    const warrior = stackLifts(standing(WARRIOR_OUTFIT));
+    for (const outfit of OUTFITS) {
+      const lifts = stackLifts(standing(outfit));
+      expect(lifts).toBeLessThanOrEqual(STACK_SLICES);
+      expect(lifts).toBeLessThanOrEqual(warrior + 4);
+      for (const pose of STACK_POSES) {
+        expect(stackLifts(stackSlices(pose, outfit, undefined))).toBe(lifts);
+      }
+    }
+  });
+
+  it("paints the outfit's cloth and the accent's tone", () => {
+    const monk = outfitOf("monk");
+    const accent = accentOf("elementalist");
+    const tones = stackTones(0x59c2ff, undefined, monk, accent);
+    expect(tones.cloth).toBe(monk.cloth);
+    expect(tones.accent).toBe(accent?.tone);
+  });
+
+  it("hoods the ranger with a quiver on its back, bares the monk's head, crowns the elementalist", () => {
+    const tones = (primary: "monk" | "elementalist" | "ranger"): StackTone[] =>
+      standing(outfitOf(primary)).map((slice) => slice.tone);
+    expect(tones("ranger")).toContain("leather");
+    expect(tones("ranger")).not.toContain("visor");
+    expect(tones("monk")).toContain("hair");
+    expect(tones("monk")).not.toContain("metal");
+    expect(tones("elementalist")).toContain("gold");
+    expect(tones("elementalist").at(-1)).toBe("hair");
   });
 });

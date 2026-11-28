@@ -1,4 +1,7 @@
+import type { ProfessionId } from "@vibewars/game-core";
+
 import type { CapeLook } from "./cape-shape.js";
+import { accentOf, outfitOf } from "./profession-outfits.js";
 import {
   STACK_BAKED_HEADINGS,
   STACK_HEIGHT,
@@ -21,10 +24,15 @@ import {
  * image per body, tinted by the light at its feet, never the slices.
  */
 
-/** What a figure is painted in: its body colour, and the cape it wears. */
+/**
+ * What a figure is painted in: its body colour, the cape it wears, and
+ * the professions its outfit and accent follow (#4175).
+ */
 export interface StackLook {
   readonly body: number;
   readonly cape: CapeLook | undefined;
+  readonly primary: ProfessionId | undefined;
+  readonly secondary: ProfessionId | undefined;
 }
 
 /** The body radius the bake draws at; a body of another radius scales its image. */
@@ -77,11 +85,11 @@ export type SurfaceFactory = (width: number, height: number) => AtlasSurface;
 
 const css = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
 
-/** A look's name: its colours, which is all a bake depends on. */
+/** A look's name: its colours and professions, which is all a bake depends on. */
 export function stackLookKey(look: StackLook): string {
   const { cape } = look;
   const worn = cape === undefined ? "" : `/${css(cape.main)}${css(cape.trim)}`;
-  return `${css(look.body)}${worn}`;
+  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}`;
 }
 
 /** A frame of the atlas, and whether it draws mirrored (#4060). */
@@ -109,11 +117,13 @@ export function bakeFigure(
   pose: StackPose,
 ): void {
   const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
+  const outfit = outfitOf(look.primary);
+  const accent = accentOf(look.secondary);
   const layers = stackLayers(
-    stackSlices(pose),
+    stackSlices(pose, outfit, accent),
     bucketFacing(bucket),
     r,
-    stackTones(look.body, look.cape),
+    stackTones(look.body, look.cape, outfit, accent),
   );
   const trace = (points: readonly { readonly x: number; readonly y: number }[]): void => {
     context.beginPath();
