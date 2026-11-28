@@ -1094,6 +1094,15 @@ describe("attack skills (#417)", () => {
       "+18 lightning damage",
       "25% armor penetration",
     ]);
+    // +10...18...20 at rank 0 (#4257).
+    expect(
+      describeSkill(
+        skill("paragon.spear-of-lightning"),
+        new Map([["paragon.spear-mastery", 0]]),
+        EN_WORDS,
+        EN_NAMES,
+      ).effects[0]?.text,
+    ).toBe("+10 lightning damage");
     expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
       "Heals for 66, +18 Health for each ally in earshot (max 140)",
     ]);

@@ -69,6 +69,8 @@ vár, ha egy 30% életerő alatti ellenséget kell bevégeznie. Amikor a
 célpontot védő bűbáj védi, például a Protective Spirit vagy az Aegis,
 az a bot, amelyiknek bűbájeltávolítása van, mint a Strip Enchantment,
 először azt veszi le, a többiek pedig addig visszatartják az ütéseiket.
+Ha a csapatban nincs bűbájeltávolítás, a botok otthagyják a védett
+ellenséget, és egy másikra fordulnak, amíg a bűbáj le nem jár.
 
 A súlyosan megsebesült bot, amely veszíti a harcát, visszahúzódik a
 gyógyítója mögé vagy a bázisára, és elérhetetlen helyen pihen, amíg

@@ -65,7 +65,9 @@ quatre secondes au plus, et n'attend pas du tout pour achever un ennemi sous
 30% de santé. Quand la cible est sous un enchantement protecteur comme
 Protective Spirit ou Aegis, un bot qui a un retrait d'enchantement, comme
 Strip Enchantment, l'enlève d'abord, et les autres retiennent leurs coups
-en attendant.
+en attendant. Sans retrait d'enchantement dans l'équipe, les bots laissent
+un ennemi protégé et se tournent vers un autre jusqu'à la fin de
+l'enchantement.
 
 Un bot gravement blessé qui perd son combat se replie derrière son soigneur,
 ou à sa base, et se repose hors de portée jusqu'à avoir récupéré l'essentiel

@@ -21,6 +21,7 @@ import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
 import {
+  bearsDefence,
   FINISH_FRACTION,
   FOCUS_REACH,
   HEALER_PRIORITY,
@@ -41,6 +42,7 @@ import {
   removedCategories,
   removesFromCaster,
   sacrificesTooMuch,
+  stripsEnchantment,
 } from "./skill-intent.js";
 import { floorOf } from "../layer-rules.js";
 
@@ -560,7 +562,8 @@ interface TeamTarget {
  * `planPlaced`), the team's target only within `FOCUS_REACH` past spell
  * range, so a holding, flanking or escorting bot is not pulled across the map into its teammates' fight. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
- * the `front` team (#2685); a diver from any.
+ * the `front` team (#2685); a diver from any. Past the diver, only a foe
+ * the team can hurt (#4269, `hurtable`).
  */
 function teamTarget(
   context: BehaviourContext,
@@ -587,7 +590,9 @@ function teamTarget(
   if (diver !== undefined) {
     return { id: diver.id, fixed: false };
   }
-  const teams = heldTarget(context, cursor, foes, inRange);
+  const hurt = hurtable(context, inRange);
+  const targets = inRange.filter(hurt);
+  const teams = heldTarget(context, cursor, foes.filter(hurt), targets);
   const held =
     teams !== undefined &&
     distance(teams.position, self.position) > RANGE_SPELL + FOCUS_REACH &&
@@ -609,17 +614,36 @@ function teamTarget(
   if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
     return { id: held.id, fixed: true };
   }
-  const dying = weakest(self, inRange);
+  const dying = weakest(self, targets);
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
     return { id: dying.id, fixed: true };
   }
   if (
     held !== undefined &&
-    (inRange.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
+    (targets.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
   ) {
     return { id: held.id, fixed: false };
   }
-  return { id: focusPick(self, inRange)?.id, fixed: false };
+  return { id: focusPick(self, targets)?.id, fixed: false };
+}
+
+/**
+ * Which of `inRange` the team can hurt (#4269): with no strip on a living
+ * bot's bar, self included, a foe bearing a defence enchantment
+ * (`bearsDefence`) is passed over while another eligible one in range
+ * does not bear it. A human teammate's strip is not one the bots plan
+ * around; a recharging strip still counts, as `stripFirst` waits for it.
+ */
+function hurtable(
+  context: BehaviourContext,
+  inRange: readonly Participant[],
+): (foe: Participant) => boolean {
+  const canStrip = livingMembers(context).some(
+    (mate) => context.isBot(mate.id) && skillsOf(mate).some(stripsEnchantment),
+  );
+  const eligible = fightable(inRange);
+  const open = !canStrip && inRange.some((foe) => eligible(foe) && !bearsDefence(foe));
+  return (foe) => !open || !bearsDefence(foe);
 }
 
 /**

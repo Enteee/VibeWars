@@ -940,7 +940,7 @@ ends as "Fall Back!" does, when that ally hits.
 A chant is not a spell: dazed does not slow it. Anthem of Flame
 (Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
 each ally in earshot, the paragon included: the next attack skill each
-uses burns whoever it hits for 3 s. That attack skill uses the chant up
+uses burns whoever it hits for 4 s. That attack skill uses the chant up
 as it is released: as its blow strikes, or as its shot leaves a bow or
 a spear (#782). The burn travels with the shot, so a second attack skill
 loosed before the first arrow lands carries none, and an Anthem that
@@ -948,7 +948,7 @@ runs out while the arrow flies still burns. Only a hit burns, every
 victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
 be up at once; the same one again keeps the longer. Defensive Anthem
-(elite, Leadership, 15 energy, 2 s cast, 25 s recharge) gives each ally
+(elite, Leadership, 15 energy, 2 s cast, 15 s recharge) gives each ally
 in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
 ally when one of that ally's attack skills hits, melee or thrown. A
 plain swing or arrow does not end it, and neither does an attack skill

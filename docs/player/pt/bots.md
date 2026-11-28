@@ -64,7 +64,9 @@ condições. Um bot espera os colegas no máximo quatro segundos e nem
 espera para acabar com um inimigo abaixo de 30% de vida. Quando o alvo
 está sob um encantamento protetor, como Protective Spirit ou Aegis, um
 bot que remove encantamentos, como com Strip Enchantment, tira esse
-encantamento primeiro, e os outros seguram os golpes para isso.
+encantamento primeiro, e os outros seguram os golpes para isso. Sem
+ninguém na equipe que remova encantamentos, os bots deixam o inimigo
+protegido e passam para outro até o encantamento acabar.
 
 Um bot muito ferido que está perdendo a luta recua para trás do
 curandeiro ou para a base e descansa fora de alcance até recuperar a

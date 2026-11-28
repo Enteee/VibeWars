@@ -59,7 +59,8 @@ vung vũ khí và thi triển Nguyền và Dị trạng. Bot chờ đồng độ
 giây, và không chờ chút nào để kết liễu địch dưới 30% máu. Khi mục tiêu đang
 được một Phù phép bảo vệ như Protective Spirit hay Aegis, bot có kỹ năng gỡ
 Phù phép, như Strip Enchantment, sẽ gỡ nó trước, và các bot khác giữ đòn chờ
-nó.
+nó. Nếu đội không có kỹ năng gỡ Phù phép, các bot bỏ qua kẻ địch đang được bảo
+vệ và chuyển sang mục tiêu khác cho đến khi Phù phép hết.
 
 Bot bị thương nặng đang thua thế sẽ lùi về sau bot hồi máu của nó, hoặc về
 căn cứ, và nghỉ ngoài tầm với cho đến khi hồi lại phần lớn máu.

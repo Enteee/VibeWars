@@ -65,7 +65,9 @@ fyra sekunder på sina lagkamrater, och väntar inte alls för att göra slut
 på en fiende under 30 % hälsa. När målet står under en skyddande
 förtrollning som Protective Spirit eller Aegis tar en bot med
 förtrollningsborttagning, som Strip Enchantment, bort den först, och de
-andra håller inne sina träffar för den.
+andra håller inne sina träffar för den. Har laget ingen
+förtrollningsborttagning lämnar botarna en skyddad fiende och vänder sig
+mot en annan tills förtrollningen tar slut.
 
 En svårt skadad bot som håller på att förlora sin strid drar sig tillbaka
 bakom sin helare, eller till sin bas, och vilar utom räckhåll tills den

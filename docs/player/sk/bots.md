@@ -61,6 +61,8 @@ sekundy a vôbec nečaká, keď má dorážať nepriateľa pod
 30 % zdravia. Keď je cieľ pod ochranným očarovaním, ako
 Protective Spirit alebo Aegis, bot so strhnutím očarovania, ako Strip
 Enchantment, ho najprv strhne a ostatní kvôli tomu zadržia zásahy.
+Ak tím nemá strhnutie očarovania, boti nechajú chráneného nepriateľa tak
+a obrátia sa na iného, kým očarovanie neskončí.
 
 Ťažko zranený bot, ktorý prehráva svoj boj, ustúpi za svojho liečiteľa alebo
 do svojej základne a oddychuje mimo dosahu, kým nezíska väčšinu zdravia späť.

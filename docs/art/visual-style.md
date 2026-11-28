@@ -242,7 +242,7 @@ outlines, and the noise fill on a map without one.
   colour at its cap, its robe in friend or foe colour, its profession glyph
   on a dark badge disc on top. Its outfit follows its primary profession
   and carries one accent of its secondary, the team colour staying torso
-  and skirt (#4175, `profession-outfits.ts`, [study](profession-outfit-study.svg)):
+  and skirt (#4175, #4179, `profession-outfits.ts`, [study](profession-outfit-study.svg)):
   `profession-outfits-match.png`, ally over foe. It turns in 16 headings, the atlas baking
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
   shadow lies on the ground under it, not in its frame. A creature with a

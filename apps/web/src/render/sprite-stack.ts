@@ -3,6 +3,14 @@ import type { CreatureLook } from "@vibewars/game-core";
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
 import {
+  bladesSlices,
+  cowlSlices,
+  hatSlices,
+  mantleSlices,
+  spikesSlices,
+  wrapSkirtRadii,
+} from "./outfits-necromancer-mesmer-assassin.js";
+import {
   PROFESSION_OUTFITS,
   WARRIOR_OUTFIT,
   type Accent,
@@ -44,6 +52,7 @@ export type StackTone =
   | "rope"
   | "hair"
   | "gold"
+  | "bone"
   | "accent";
 
 /**
@@ -115,11 +124,12 @@ const BELT = 0x3a2a20;
 const STEEL = 0x9aa0a8;
 const VISOR = 0x101014;
 
-/** The outfits' fixed tones (#4175): a quiver's leather, a rope belt, hair, a circlet. */
+/** The outfits' fixed tones (#4175): a quiver's leather, a rope belt, hair, a circlet, bone spikes. */
 const LEATHER = 0x5a4030;
 const ROPE = 0xb8a070;
 const HAIR = 0x2a2018;
 const GOLD = 0xc9a24a;
+const BONE = 0xd8d0b8;
 
 /** An ellipse of `n` sides round `cx`, `cy`, turned `turn` radians. */
 export function ellipse(
@@ -179,10 +189,10 @@ function poseMotion(pose: StackPose): PoseMotion {
 }
 
 /** Adds a slice at the lift the figure has reached. */
-type Push = (parts: Point[][], tone: StackTone, light: number, same?: boolean) => void;
+export type Push = (parts: Point[][], tone: StackTone, light: number, same?: boolean) => void;
 
 /** A figure being built: where its slices go, and how its pose moves it. */
-interface Figure {
+export interface Figure {
   readonly push: Push;
   /** Adds a cape slice, or only its lift when the figure wears none (#4171). */
   readonly cape: (parts: Point[][], light: number) => void;
@@ -240,6 +250,8 @@ function skirtRadii(outfit: Outfit): readonly number[] {
     case "plate":
     case "robe":
       return [0.62, 0.6, 0.58, 0.56];
+    case "wrap":
+      return wrapSkirtRadii();
   }
 }
 
@@ -283,6 +295,7 @@ function torsoShape(kind: TorsoKind): {
     case "plate":
       return { radii: [0.56, 0.6, 0.64, 0.68, 0.7], sleeve: "team", hand: "metal" };
     case "coat":
+    case "wrap":
       return { radii: [0.56, 0.6, 0.64, 0.68, 0.7], sleeve: "cloth", hand: "skin" };
     case "robe":
       return { radii: [0.52, 0.54, 0.56, 0.58, 0.6], sleeve: "cloth", hand: "skin" };
@@ -290,7 +303,8 @@ function torsoShape(kind: TorsoKind): {
 }
 
 /** What is on the back at torso slice `i`, `x` behind its centre. */
-function backSlices({ push }: Figure, kind: BackKind | undefined, i: number, x: number): void {
+function backSlices(figure: Figure, kind: BackKind | undefined, i: number, x: number): void {
+  const { push } = figure;
   switch (kind) {
     case undefined:
       return;
@@ -300,6 +314,9 @@ function backSlices({ push }: Figure, kind: BackKind | undefined, i: number, x: 
         // The fletchings of two arrows.
         push([ellipse(x, 0.2, 0.05, 0.05, 6), ellipse(x, 0.3, 0.05, 0.05, 6)], "metal", 1, true);
       }
+      return;
+    case "blades":
+      bladesSlices(figure, i, x);
       return;
   }
 }
@@ -336,8 +353,9 @@ function torsoSlices(figure: Figure, outfit: Outfit, accent: Accent | undefined)
   }
 }
 
-/** Over the shoulders, and the neck: a collar stands up round it. */
-function shoulderSlices({ push, motion }: Figure, kind: ShoulderKind): void {
+/** Over the shoulders, and the neck: a collar stands up round it, a mantle or spikes under it. */
+function shoulderSlices(figure: Figure, kind: ShoulderKind): void {
+  const { push, motion } = figure;
   const { lean } = motion;
   const neck = (tone: StackTone): void => {
     push([ellipse(0.06 + 0.3 * lean, 0, 0.16, 0.16, 10)], tone, 0.8);
@@ -360,6 +378,14 @@ function shoulderSlices({ push, motion }: Figure, kind: ShoulderKind): void {
       neck("cloth");
       push([ellipse(0.3 * lean, 0, 0.3, 0.38, 14)], "cloth", 0.95);
       push([ellipse(0.3 * lean, 0, 0.26, 0.34, 14)], "cloth", 1);
+      return;
+    case "mantle":
+      mantleSlices(figure);
+      neck("skin");
+      return;
+    case "spikes":
+      spikesSlices(figure);
+      neck("skin");
       return;
   }
 }
@@ -424,6 +450,12 @@ function headSlices({ push, motion }: Figure, kind: HeadKind): void {
         }
       });
       hair(0.28);
+      return;
+    case "cowl":
+      cowlSlices(push, cx);
+      return;
+    case "hat":
+      hatSlices(push, cx);
       return;
   }
 }
@@ -532,6 +564,7 @@ export function stackTones(
     rope: ROPE,
     hair: HAIR,
     gold: GOLD,
+    bone: BONE,
     accent: accent?.tone ?? body,
   };
 }
