@@ -63,7 +63,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "assassin",
     attributeId: "assassin.critical-strikes",
-    cost: { kind: "energy", amount: 10 },
+    cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
     rechargeSeconds: 6,
@@ -434,12 +434,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "assassin",
-    // Linked to Shadow Arts, though nothing in it scales (#1958).
+    // Linked to Shadow Arts (#1958). The PvP recharge is 12 s less 1 s per
+    // 2 ranks, at most 6: a flat 6 s at the fixed rank 12 (#4241).
     attributeId: "assassin.shadow-arts",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
-    rechargeSeconds: 8,
+    rechargeSeconds: 6,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
