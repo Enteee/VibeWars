@@ -162,7 +162,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * that heals every second (Spirit Light Weapon, #975) is healing, and so
  * is one that regenerates (Healing Breeze, Mending, #1013).
  */
-function statusRoles(status: StatusDefinition): readonly SkillRole[] {
+export function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
   if (status.category === "hex" || status.category === "condition") {
     roles.push(status.category);

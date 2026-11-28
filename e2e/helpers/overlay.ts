@@ -84,3 +84,10 @@ export async function scrollToEnd(page: Page, selector: string): Promise<void> {
     throw new Error("nothing scrolls");
   });
 }
+
+/** Options' rail entry for the section titled `name` (#4216). */
+export function optionsEntry(page: Page, name: string): Locator {
+  return page
+    .getByRole("navigation", { name: "options sections" })
+    .getByRole("button", { name, exact: true });
+}

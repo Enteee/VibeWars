@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MatchSimulation, ParticipantSpec } from "../../simulation.js";
+import type { PlayerBuild } from "../../../build.js";
 import { NO_RANKS } from "../../../skills/status.js";
 
 import { AREA_ADJACENT, RANGE_SPELL } from "../../../distances.js";
@@ -251,5 +252,129 @@ describe("play-build protects the spiked ally (#2627)", () => {
       "foe1",
     );
     expect(askBot(sim, "monk")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });
+  });
+});
+
+describe("play-build matches the defence to the threat (#4214)", () => {
+  /**
+   * A `build` "bot" holding `skillBar`, a full-health "ally", an
+   * "other" ally at `otherHealth`, and two `foeBuild` foes on
+   * `spikedId`, swinging at it when `attacking`.
+   */
+  function spike(
+    build: PlayerBuild,
+    skillBar: readonly string[],
+    spikedId: string,
+    foeBuild: PlayerBuild,
+    attacking: boolean,
+    otherHealth = 1,
+  ): MatchSimulation {
+    const sim = match([
+      fighter("bot", 0, build, vec2(400, 400), { skillBar: [...skillBar] }),
+      fighter("ally", 0, WARRIOR, vec2(480, 400), { behaviour: undefined }),
+      fighter("other", 0, WARRIOR, vec2(480, 480), {
+        behaviour: undefined,
+        startHealthFraction: otherHealth,
+      }),
+      ...[0, 1].map((n) =>
+        fighter(`foe${String(n)}`, 1, foeBuild, vec2(560, 360 + 80 * n), {
+          behaviour: undefined,
+        }),
+      ),
+    ]);
+    for (const foeId of ["foe0", "foe1"]) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.targetId = spikedId;
+      if (attacking) {
+        foe.combatant.attack = { targetId: spikedId, swingElapsed: 0.1, unreachableSeconds: 0 };
+      }
+    }
+    return sim;
+  }
+
+  it("raises armor, not a block stance, against two casters", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.shield-stance", "warrior.defy-pain"],
+      "bot",
+      ELEMENTALIST,
+      false,
+    );
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "warrior.defy-pain", targetId: "bot" });
+  });
+
+  it("raises armor against two casters wanding it as they cast a spell at it", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.shield-stance", "warrior.defy-pain"],
+      "bot",
+      ELEMENTALIST,
+      true,
+    );
+    for (const foeId of ["foe0", "foe1"]) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.combatant.cast.beginCast("elementalist.fireball", "bot", 2, undefined);
+    }
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "warrior.defy-pain", targetId: "bot" });
+  });
+
+  it("raises the block stance first against two warriors", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.defy-pain", "warrior.shield-stance"],
+      "bot",
+      WARRIOR,
+      true,
+    );
+    expect(askBot(sim, "bot")).toMatchObject({
+      useSkillId: "warrior.shield-stance",
+      targetId: "bot",
+    });
+  });
+
+  it("raises the block stance against two warriors still running up to swing", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.defy-pain", "warrior.shield-stance"],
+      "bot",
+      WARRIOR,
+      true,
+    );
+    for (const foeId of ["foe0", "foe1"]) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.combatant.moving = true;
+    }
+    expect(askBot(sim, "bot")).toMatchObject({
+      useSkillId: "warrior.shield-stance",
+      targetId: "bot",
+    });
+  });
+
+  it("casts general protection, not spell protection, on an ally warriors spike", () => {
+    const sim = spike(MONK, ["monk.holy-veil", PROTECTIVE_SPIRIT], "ally", WARRIOR, true);
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });
+  });
+
+  it("casts spell protection first on an ally casters spike", () => {
+    const sim = spike(MONK, [PROTECTIVE_SPIRIT, "monk.holy-veil"], "ally", ELEMENTALIST, false);
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "monk.holy-veil", targetId: "ally" });
+  });
+
+  it("casts Aegis against either spike", () => {
+    for (const [foes, attacking] of [
+      [WARRIOR, true],
+      [ELEMENTALIST, false],
+    ] as const) {
+      const sim = spike(MONK, ["monk.aegis"], "ally", foes, attacking);
+      expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "monk.aegis", targetId: "ally" });
+    }
+  });
+
+  it("casts no block under a caster spike, and heals the most hurt ally instead", () => {
+    const sim = spike(MONK, ["monk.guardian", "monk.heal-other"], "ally", ELEMENTALIST, false, 0.4);
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "monk.heal-other", targetId: "other" });
   });
 });

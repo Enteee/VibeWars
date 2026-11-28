@@ -29,7 +29,7 @@ export const LANDSCAPE_TOPBAR = 56;
 
 /**
  * What on the page breaks the phone's rules (#3776), one line each: a
- * sideways scroll, a control in `scope` (`#topbar` and `#screens` unless
+ * sideways scroll of the page or of a box in `scope` (#4238), a control in `scope` (`#topbar` and `#screens` unless
  * told: a match's HUD is outside both) smaller than a
  * finger, a control over an icon that is not its own, visible text
  * under `MIN_TEXT`. Empty when the page fits.
@@ -58,6 +58,23 @@ export async function phoneOffenders(
         const label = node.getAttribute("aria-label") ?? node.getAttribute("title") ?? "";
         return `${node.tagName.toLowerCase()}.${node.className} "${text || label}"`;
       };
+      // A pane that scrolls sideways inside itself (#4238): the page fits,
+      // but a row is still wider than the phone. Some boxes are made to:
+      // the team's counter chips are one swiped row on a phone, and a
+      // match summary's table keeps its columns and scrolls (#3563).
+      for (const node of document.querySelectorAll(within("*"))) {
+        const { overflowX } = getComputedStyle(node);
+        if (
+          (overflowX === "auto" || overflowX === "scroll") &&
+          !node.matches(".team-counters, .match-summary-panel") &&
+          node.scrollWidth > node.clientWidth + 1 &&
+          shown(node)
+        ) {
+          out.push(
+            `scrolls sideways: ${String(node.scrollWidth)} > ${String(node.clientWidth)}: ${name(node)}`,
+          );
+        }
+      }
       const controls = document.querySelectorAll(
         [
           "button",

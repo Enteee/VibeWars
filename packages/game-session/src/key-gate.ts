@@ -25,8 +25,14 @@ import type { Json, Transport } from "./transport.js";
  * its own side named, which the guest checks before it hears the host.
  * Until then neither side sees the other join, hears what it sends or
  * sends it anything. A wrong or malformed proof, or none in
- * `KEY_PROOF_TIMEOUT_MS`, drops the peer for good; a guest drops a host
- * whose `key-proven` fails. A peer that leaves is forgotten, proven or
+ * `KEY_PROOF_TIMEOUT_MS`, drops the peer; a guest drops a host whose
+ * `key-proven` fails. A dropped peer the transport still lists is never
+ * stuck forgotten (#4222): a page frozen past the timeout answers late,
+ * and the transport says no join again. Its next message, gated or a
+ * `key-ask`, has the host challenge it again, at most once a
+ * `KEY_PROOF_TIMEOUT_MS`; a guest whose answer has no `key-proven` in
+ * that time asks again; a late answer has the host challenge it again at
+ * once, so a page that thawed is in after one round trip. A peer that leaves is forgotten, proven or
  * not: a peer id is the peer's own to choose and shows on the relays, so
  * one coming back proves the key again, and so does the host. A guest
  * challenged again by a host it had proven sees that host leave first;
@@ -122,6 +128,8 @@ export function keyGated(
   /** Peers in the room now, as the transport says. */
   const present = new Set<string>();
   const timers = new Map<string, unknown>();
+  /** Host: when each present peer was last challenged, so a flood brings one a timeout. */
+  const challenged = new Map<string, number>();
   const handlers = new Map<Channel, Set<Handler>>();
   const joins = new Set<(peerId: string) => void>();
   const leaves = new Set<(peerId: string) => void>();
@@ -203,6 +211,7 @@ export function keyGated(
     }
     const fresh = nonce();
     clearTimeout(timers.get(peerId));
+    challenged.set(peerId, Date.now());
     peers.set(peerId, { stage: "challenged", nonce: fresh, since: (order += 1) });
     timers.set(
       peerId,
@@ -218,6 +227,23 @@ export function keyGated(
   const ask = (peerId: string): void => {
     asking.add(peerId);
     transport.send("key-ask", {} satisfies WireKeyAsk, peerId);
+  };
+
+  /**
+   * Host: `peerId`, still here as the transport says, was dropped while
+   * proving the key and is heard again: challenged once more, no sooner
+   * than `KEY_PROOF_TIMEOUT_MS` after its last challenge (#4222).
+   */
+  const rechallenge = (peerId: string): void => {
+    const last = challenged.get(peerId);
+    if (
+      side === "host" &&
+      present.has(peerId) &&
+      !peers.has(peerId) &&
+      (last === undefined || Date.now() - last >= KEY_PROOF_TIMEOUT_MS)
+    ) {
+      challenge(peerId);
+    }
   };
 
   const offs = [
@@ -249,13 +275,23 @@ export function keyGated(
       }
       present.delete(peerId);
       asking.delete(peerId);
+      challenged.delete(peerId);
       // Forgotten, proven or not: a peer id is the peer's own choice and
       // shows on the relays, so one coming back proves the key again.
       drop(peerId);
     }),
     transport.on("key-proof", (data, from) => {
       const peer = peers.get(from);
-      if (side !== "host" || peer?.stage !== "challenged") {
+      if (side !== "host") {
+        return;
+      }
+      if (peer === undefined && !proven(from)) {
+        // An answer that came after its timeout: challenged again now, not
+        // after the guest's own wait for a key-proven (#4222).
+        rechallenge(from);
+        return;
+      }
+      if (peer?.stage !== "challenged") {
         return;
       }
       const proof = parseWireKeyProof(data);
@@ -289,7 +325,12 @@ export function keyGated(
       })();
     }),
     transport.on("key-ask", (_data, from) => {
-      if (side !== "host" || !proven(from)) {
+      if (side !== "host") {
+        return;
+      }
+      if (!proven(from)) {
+        // Dropped while it could not answer, and still here (#4222).
+        rechallenge(from);
         return;
       }
       // It saw us drop and forgot us: unheard until it proves the key
@@ -300,11 +341,12 @@ export function keyGated(
       const asked = parseWireKeyChallenge(data);
       // A host that challenges again has forgotten this guest, as one that
       // saw it leave does: it proves the key again, and so must the host.
+      // So does one that dropped our answer as late (#4222).
       if (
         side !== "guest" ||
         asked === undefined ||
         !mayHost(from) ||
-        (peers.has(from) && !proven(from))
+        (peers.has(from) && !proven(from) && peers.get(from)?.stage !== "answered")
       ) {
         return;
       }
@@ -314,6 +356,18 @@ export function keyGated(
       if (!asking.delete(from)) {
         tellLeave(from);
       }
+      // A host that dropped us before the answer came sends no key-proven,
+      // and no join says it should challenge again: ask it to (#4222).
+      clearTimeout(timers.get(from));
+      timers.set(
+        from,
+        setTimeout(() => {
+          if (peers.get(from) === answered && present.has(from) && !left) {
+            peers.delete(from);
+            ask(from);
+          }
+        }, KEY_PROOF_TIMEOUT_MS),
+      );
       void (async () => {
         const mac = await sign(
           macInput("guest", answered.hostNonce, answered.guestNonce, selfId, from),
@@ -370,6 +424,11 @@ export function keyGated(
         } else if (side === "guest" && peer?.stage === "checking") {
           // Sent by the host right after its `key-proven`, before that checked.
           peer.held.push([channel, data]);
+        } else if (side === "host") {
+          rechallenge(from);
+        } else if (peer === undefined && present.has(from) && mayHost(from) && !asking.has(from)) {
+          // A host still here that forgot us and holds us proven (#4222).
+          ask(from);
         }
       }),
     );

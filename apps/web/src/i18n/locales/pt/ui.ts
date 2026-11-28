@@ -489,6 +489,7 @@ export default {
   "effects.untilEnds": "até acabar",
   "effects.you": "você",
 
+  "flyout.back": "Voltar à lista",
   "fullscreen.enter": "Tela cheia",
   "fullscreen.leave": "Sair da tela cheia",
 

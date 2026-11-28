@@ -1,7 +1,7 @@
 # Súgó
 
 A játékon belüli Súgó ablak oldalai, abban a sorrendben, ahogy az
-oldalválasztója felsorolja őket. Ennek a könyvtárnak minden oldala pontosan
+oldallistája mutatja őket. Ennek a könyvtárnak minden oldala pontosan
 egyszer szerepel itt.
 
 - [Első lépések](getting-started.md)

@@ -459,6 +459,8 @@ export const en = {
   "effects.untilEnds": "until it ends",
   "effects.you": "you",
 
+  "flyout.back": "Back to the list",
+
   "fullscreen.enter": "Fullscreen",
   "fullscreen.leave": "Leave fullscreen",
 

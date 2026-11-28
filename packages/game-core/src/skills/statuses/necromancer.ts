@@ -149,11 +149,11 @@ const RISING_BILE_DAMAGE: DamageEffect = {
 };
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
-  // Faintheartedness (GW1 PvP): attacks 50% slower, −0...2 pips at the
-  // caster's Curses (#1976).
+  // Faintheartedness: attacks 50% slower, −1...3 pips at the caster's
+  // Curses (#1976), −2.6 at rank 12 rounded to −3.
   faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
     profession: "necromancer",
-    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: 0, atTwelve: -2 } },
+    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: -1, atTwelve: -3 } },
     attackDurationMultiplier: 1.5,
   }),
   malaise: define("malaise", "Malaise", "hex", {

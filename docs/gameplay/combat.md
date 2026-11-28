@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −2, Regeneration +4,
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Faintheartedness −3, Regeneration +4,
 Healing Breeze +8), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's

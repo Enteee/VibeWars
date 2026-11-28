@@ -94,9 +94,9 @@ describe("natural health regeneration (#460)", () => {
     const sim = pair();
     const a = get(sim, "a");
     a.combatant.statuses.apply("regeneration", 60, "a", NO_RANKS);
-    expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(4, 6);
+    expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(9, 6);
     stepFor(sim, 20);
-    // Regeneration +4 and natural +7 is 11, clamped to 10.
+    // Regeneration +9 and natural +7 is 16, clamped to 10.
     expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(10, 6);
   });
 
@@ -195,9 +195,9 @@ describe("natural health regeneration (#460)", () => {
       const sim = pair();
       const a = get(sim, "a");
       a.combatant.statuses.apply("poison", 60, "b", NO_RANKS);
-      a.combatant.statuses.apply("regeneration", 60, "a", NO_RANKS);
+      a.combatant.statuses.apply("weapon-of-warding", 60, "a", NO_RANKS);
       stepFor(sim, 10);
-      // Poison −4 and Regeneration +4 lose no health, so 10 s out of combat.
+      // Poison −4 and Weapon of Warding +4 lose no health, so 10 s out of combat.
       expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(3, 6);
     });
   });
@@ -215,7 +215,7 @@ describe("net pips (#504)", () => {
   it("sum every status with natural regeneration and the base, then clamp at ±10", () => {
     const sim = pair();
     const a = get(sim, "a").combatant;
-    a.statuses.apply("regeneration", 60, "a", NO_RANKS);
+    a.statuses.apply("weapon-of-warding", 60, "a", NO_RANKS);
     a.statuses.apply("blood-ritual", 60, "a", NO_RANKS);
     expect(sim.pips(get(sim, "a"))).toEqual({ health: 4, energy: 7 });
     a.statuses.apply("burning", 60, "b", NO_RANKS);

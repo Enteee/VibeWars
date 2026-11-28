@@ -225,7 +225,7 @@ describe("skillActivationMultiplier (#1473)", () => {
 
   it("doubles a spell's and a signet's activation, not an attack skill's", () => {
     const migraine = bearer("migraine");
-    expect(effectiveActivationSeconds(skill("elementalist.fireball"), migraine)).toBe(2);
+    expect(effectiveActivationSeconds(skill("elementalist.fireball"), migraine)).toBe(3);
     expect(effectiveActivationSeconds(skill("warrior.healing-signet"), migraine)).toBe(4);
     expect(effectiveActivationSeconds(skill("warrior.distracting-blow"), migraine)).toBe(0.5);
   });
@@ -238,7 +238,7 @@ describe("skillActivationMultiplier (#1473)", () => {
 
   it("Frustration's 50% slower casting is spells only", () => {
     const frustrated = bearer("frustration");
-    expect(effectiveActivationSeconds(skill("elementalist.fireball"), frustrated)).toBe(1.5);
+    expect(effectiveActivationSeconds(skill("elementalist.fireball"), frustrated)).toBe(2.25);
     expect(effectiveActivationSeconds(skill("warrior.healing-signet"), frustrated)).toBe(2);
   });
 });

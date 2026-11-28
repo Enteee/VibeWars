@@ -103,7 +103,7 @@ sauf Salon, sont dans **☰** en haut à droite de l'écran, avec **Quitter** ;
 icônes et les autres boutons de l'écran se replient dans **☰** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
-[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.
+[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec ses pages listées sur la gauche ; un match continue derrière.
 L'Aide se ferme avec son ×, Esc, un clic à l'extérieur, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis

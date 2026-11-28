@@ -1,6 +1,6 @@
 # Hjælp
 
-Siderne i spillets Hjælp-vindue, i den rækkefølge sidevælgeren viser dem. Hver
+Siderne i spillets Hjælp-vindue, i den rækkefølge listen over sider viser dem. Hver
 side i denne mappe står her præcis én gang.
 
 - [Kom godt i gang](getting-started.md)

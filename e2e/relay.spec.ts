@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { awaitLobby, openRail } from "./helpers/menu.js";
+import { optionsEntry } from "./helpers/overlay.js";
 
 /**
  * A TURN relay by invite link (#972): what only a browser can tell is that
@@ -40,7 +41,7 @@ async function savedSharing(page: Page): Promise<string | null> {
 
 async function openRelayOptions(page: Page): Promise<void> {
   await page.locator(".topbar-options").click();
-  await page.locator('.options-entry[data-section="relay"]').click();
+  await optionsEntry(page, "relay (TURN)").click();
   await expect(page.locator(".relay-section")).toBeVisible();
 }
 

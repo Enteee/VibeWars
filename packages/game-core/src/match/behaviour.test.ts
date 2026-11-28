@@ -5,7 +5,14 @@ import { segment, type Segment } from "../geometry.js";
 import { buildNavGraph, createPathFinder } from "../pathing.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
-import { createCursor, decide, NO_OBJECTIVES, type Behaviour } from "./behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type Behaviour,
+  type BotObjectives,
+} from "./behaviour.js";
+import { breakableTargetId } from "./breakables.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -77,10 +84,10 @@ describe("cast-loop", () => {
         spec("near", 0, vec2(150, 0)),
       ],
     });
-    const casts = run(sim, 10).filter((entry) => entry.cause === "skill");
-    // Fireball recharges in 7 s: one cast at t=0, released at 1 s, and the
-    // next at 7 s, released at 8 s. Each lands 150 units on, 0.4 s after
-    // its release (#535), and only the landing does damage.
+    const casts = run(sim, 12).filter((entry) => entry.cause === "skill");
+    // Fireball recharges in 7 s from its release: one cast at t=0, released
+    // at 1.5 s (#4212), and the next at 8.5 s, released at 10 s. Each lands
+    // 150 units on, 0.4 s after its release (#535), and only the landing does damage.
     const used = { kind: "skill-used", casterId: "dummy", skillId: FIREBALL, targetId: "near" };
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
       ["dummy", used],
@@ -104,9 +111,9 @@ describe("cast-loop", () => {
     expect(dummy.combatant.cast.isCasting).toBe(false);
   });
 
-  // Troll Unguent: 3 s to cast, 10 s recharge. Fireball: 1 s, 7 s. The
-  // first cast begins at the end of tick 1, t=0.05; sixty 0.05 s ticks
-  // leave a floating-point sliver of it, so it lands one tick later, at 3.1.
+  // Troll Unguent: 3 s to cast, 10 s recharge. Fireball: 1.5 s, 7 s. The
+  // first cast begins at the end of tick 1, t=0.05, and lands 3 s on, at
+  // 3.05 (#4231).
   const inOrder = (gapSeconds: number): (string | number | undefined)[][] => {
     const troll = "ranger.troll-unguent";
     const sim = new MatchSimulation({
@@ -130,21 +137,21 @@ describe("cast-loop", () => {
   };
 
   it("takes skills in order without firstLegal, the next one queued for the end of the aftercast", () => {
-    // Troll Unguent resolves at 3.1; its 0.75 s aftercast (#317) holds
-    // Fireball's 1 s cast back until 3.85. The Fireball lands 150 units
+    // Troll Unguent resolves at 3.05; its 0.75 s aftercast (#317) holds
+    // Fireball's 1.5 s cast back until 3.8. The Fireball lands 150 units
     // on, 0.4 s after its release (#535).
     expect(inOrder(0)).toEqual([
-      ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 4.85],
-      [FIREBALL, 5.25],
+      ["ranger.troll-unguent", 3.05],
+      [FIREBALL, 5.3],
+      [FIREBALL, 5.7],
     ]);
   });
 
   it("waits gapSeconds from the start of one cast to the start of the next", () => {
     expect(inOrder(5)).toEqual([
-      ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 6.1],
-      [FIREBALL, 6.5],
+      ["ranger.troll-unguent", 3.05],
+      [FIREBALL, 6.6],
+      [FIREBALL, 7],
     ]);
   });
 });
@@ -429,7 +436,12 @@ describe("follow-and-attack (#467)", () => {
     };
   }
 
-  function ask(sim: MatchSimulation, cursor = createCursor(), behaviour = FOLLOW) {
+  function ask(
+    sim: MatchSimulation,
+    cursor = createCursor(),
+    behaviour = FOLLOW,
+    objectives: BotObjectives = NO_OBJECTIVES,
+  ) {
     const self = sim.get("minion");
     if (self === undefined) {
       throw new Error("no minion");
@@ -450,7 +462,7 @@ describe("follow-and-attack (#467)", () => {
       walkable: () => true,
       speedOf: () => 1,
       foeCentroid: undefined,
-      objectives: NO_OBJECTIVES,
+      objectives,
       projectiles: [],
       seed: 0,
       now: 0,
@@ -681,6 +693,92 @@ describe("follow-and-attack (#467)", () => {
       expect(sim.requestSkill("owner", 0)?.check).toEqual({ ok: true });
       expect(sim.get("owner")?.combatant.attack).toBeUndefined();
       expect(ask(sim).attackTargetId).toBeUndefined();
+    });
+  });
+
+  describe("striking the breakable wall its owner strikes (#4220)", () => {
+    const WALL = breakableTargetId("wall");
+    /** A standing wall along x = `x` on `layer`, as bots and summons read it. */
+    const walls = (x: number, layer = 0): BotObjectives => ({
+      ...NO_OBJECTIVES,
+      breakables: [
+        {
+          targetId: WALL,
+          field: {
+            id: "wall",
+            segments: [segment(vec2(x, -400), vec2(x, 400))],
+            layer,
+            maxHealth: 300,
+          },
+          layer,
+          gain: [],
+        },
+      ],
+    });
+    const PET: Behaviour = {
+      kind: "follow-and-attack",
+      drawnTo: undefined,
+      engage: "owner-target",
+      skillIds: [],
+      aggroUnits: 700,
+      leashUnits: 700,
+      heelUnits: 109,
+    };
+    /** `owner` and its pet on `mode` 200 east, the owner swinging at `attacking`. */
+    function pet(mode: CompanionMode, attacking: string | undefined): MatchSimulation {
+      const sim = world(spec("owner", 0, vec2(0, 0)), minion(vec2(200, 0)));
+      const self = sim.get("minion");
+      const owner = sim.get("owner");
+      if (self?.creature === undefined || owner === undefined) {
+        throw new Error("no pet");
+      }
+      self.creature.mode = mode;
+      if (attacking !== undefined) {
+        owner.combatant.attack = { targetId: attacking, swingElapsed: 0, unreachableSeconds: 0 };
+      }
+      return sim;
+    }
+
+    it("on Guard, goes for the wall its owner swings at within 700 of itself", () => {
+      expect(ask(pet("guard", WALL), createCursor(), PET, walls(600))).toMatchObject({
+        targetId: WALL,
+        attackTargetId: WALL,
+      });
+      expect(ask(pet("guard", WALL), createCursor(), PET, walls(901)).attackTargetId).toBe(
+        undefined,
+      );
+    });
+
+    it("leaves a wall on another layer, a fallen one, and one on Heel", () => {
+      expect(ask(pet("guard", WALL), createCursor(), PET, walls(600, 1)).attackTargetId).toBe(
+        undefined,
+      );
+      expect(ask(pet("guard", WALL), createCursor(), PET).attackTargetId).toBeUndefined();
+      expect(ask(pet("heel", WALL), createCursor(), PET, walls(600)).attackTargetId).toBe(
+        undefined,
+      );
+    });
+
+    it("on Fight, goes for the wall its owner has selected", () => {
+      const sim = pet("fight", undefined);
+      const owner = sim.get("owner");
+      if (owner === undefined) {
+        throw new Error("no owner");
+      }
+      owner.targetId = WALL;
+      expect(ask(sim, createCursor(), PET, walls(600))).toMatchObject({ attackTargetId: WALL });
+    });
+
+    it("as a minion, assists its master's wall within 420 of the master, never one of its own", () => {
+      const sim = world(spec("owner", 0, vec2(0, 0)), minion(vec2(20, 0)));
+      expect(ask(sim, createCursor(), FOLLOW, walls(100)).attackTargetId).toBeUndefined();
+      const owner = sim.get("owner");
+      if (owner === undefined) {
+        throw new Error("no owner");
+      }
+      owner.combatant.attack = { targetId: WALL, swingElapsed: 0, unreachableSeconds: 0 };
+      expect(ask(sim, createCursor(), FOLLOW, walls(400))).toMatchObject({ attackTargetId: WALL });
+      expect(ask(sim, createCursor(), FOLLOW, walls(421)).attackTargetId).toBeUndefined();
     });
   });
 

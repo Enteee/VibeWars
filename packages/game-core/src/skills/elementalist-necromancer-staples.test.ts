@@ -71,12 +71,12 @@ function lightning(amount: number, victim: Combatant): number {
 }
 
 describe("Lightning Strike (#918)", () => {
-  it("strikes for 33 lightning at 25% armor penetration, as Lightning Orb's formula", () => {
+  it("strikes for 50 lightning at 25% armor penetration, as Lightning Orb's formula", () => {
     const target = foe();
     const events = use(caster(), "elementalist.lightning-strike", target);
-    const expected = lightning(33, target);
+    const expected = lightning(50, target);
     expect(expected).toBeGreaterThan(
-      mitigate(skillDamage(33, "lightning", 0), target, RULES, "chest", createRng(1), new Map()),
+      mitigate(skillDamage(50, "lightning", 0), target, RULES, "chest", createRng(1), new Map()),
     );
     expect(events).toEqual([
       expect.objectContaining({ kind: "damage", targetId: "foe", amount: expected }),

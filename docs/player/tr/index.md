@@ -1,6 +1,6 @@
 # Yardım
 
-Oyun içi Yardım penceresinin sayfaları, sayfa seçicisinin listelediği sırayla.
+Oyun içi Yardım penceresinin sayfaları, sayfa listesinin gösterdiği sırayla.
 Bu dizindeki her sayfa burada tam olarak bir kez listelenir.
 
 - [Başlarken](getting-started.md)

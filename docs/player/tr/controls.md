@@ -101,7 +101,7 @@ yine sesi kapatır, **F10** de onsuz yine maçtan ayrılır. Dar bir pencerede b
 ekranın diğer düğmeleri **☰** içine katlanır; yalnızca ana düğmesi
 dışarıda kalır. ⚙, Ayarlar'ı çubuğun altında bir pencere olarak açar,
 ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır. [?] da Yardım'ı aynı
-şekilde, altında, en üstte sayfa seçicisi olan bir pencere olarak açar; maç
+şekilde, altında, sayfaları solda listelenen bir pencere olarak açar; maç
 arkasında sürer. Yardım kendi × düğmesiyle, Esc ile, dışarıya bir tıkla ya
 da [?]'e yeniden basarak kapanır.
 
