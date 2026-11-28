@@ -41,6 +41,53 @@ export const NOTHING: BehaviourIntent = {
 export const HURT_FRACTION = 0.6;
 
 /**
+ * Below this share of its health, an ally is in real danger: a healer
+ * spends its Energy reserve on it (#4275, `keepsReserve`).
+ */
+export const EMERGENCY_FRACTION = 0.4;
+
+/** Each participant's Energy-paid heals and protections; bars are locked in a match. */
+const RESERVE_SKILLS = new WeakMap<Participant, readonly Skill[]>();
+
+/**
+ * The Energy a healer keeps back (#4275): the cheapest heal or protection
+ * on its bar, as it would cost now (`energyCostOf`), so Air of
+ * Enchantment's cut counts. 0 with none. Clamped to its maximum Energy
+ * less that cost, so a healer that could never meet it does not freeze.
+ */
+export function energyReserve(self: Participant): number {
+  let skills = RESERVE_SKILLS.get(self);
+  if (skills === undefined) {
+    skills = skillsOf(self).filter(
+      (skill) =>
+        skill.cost?.kind === "energy" &&
+        botUses(skill).some((use) => use === "healing" || use === "defence"),
+    );
+    RESERVE_SKILLS.set(self, skills);
+  }
+  if (skills.length === 0) {
+    return 0;
+  }
+  const cheapest = Math.min(
+    ...skills.map((skill) => energyCostOf(skill, self.combatant, self.combatant)),
+  );
+  return Math.max(0, Math.min(cheapest, self.combatant.maxEnergy - cheapest));
+}
+
+/**
+ * Whether a healer bot skips `skill` at `target` as discretionary
+ * (#4275): it costs Energy, and casting it would leave the healer below
+ * its `energyReserve`. Other roles keep no reserve.
+ */
+export function keepsReserve(self: Participant, skill: Skill, target?: Participant): boolean {
+  if (roleOf(self) !== "healer" || skill.cost?.kind !== "energy") {
+    return false;
+  }
+  const cost = energyCostOf(skill, self.combatant, (target ?? self).combatant);
+  return self.combatant.energy - cost < energyReserve(self);
+}
+
+/**
  * Below this share of its health, an ally is worth a heal or protection
  * a punishing hex makes the bot pay for (#4199)...
  */

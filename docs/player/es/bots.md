@@ -27,7 +27,9 @@ cuerpo es de **primera línea**: se acerca y ataca a su objetivo. El que
 tiene dos o más curaciones o protecciones que puede lanzar a un aliado es
 un **sanador**: se coloca detrás del aliado más herido, lejos de los
 enemigos. Cuando dos o más enemigos se centran en un aliado, el sanador le
-pone su protección antes de que llegue el golpe. Los demás bots son **a
+pone su protección antes de que llegue el golpe. El sanador guarda energía
+suficiente para su curación o protección más barata, y solo gasta por
+debajo de eso en un aliado en peligro real. Los demás bots son **a
 distancia**: se mantienen donde alcanzan todos sus ataques, y se plantan a
 luchar contra el enemigo que se acerca demasiado. Los bots a distancia y
 los sanadores se mueven a donde menos enemigos pueden alcanzarlos, y usan

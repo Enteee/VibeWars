@@ -27,7 +27,8 @@ Bot igra ulogu koju mu daje sastav. Onaj s oružjem za blisku borbu je
 vještina liječenja ili zaštite koje može baciti na saveznika je **iscjelitelj**: stoji
 iza saveznika koji je najteže ranjen, podalje od neprijatelja. Kad dva ili više
 neprijatelja napadnu istog saveznika, iscjelitelj stavlja svoju zaštitu na njega prije
-nego što udarac padne. Svaki drugi bot je **dalekometni**: drži se tamo gdje dosežu svi
+nego što udarac padne. Iscjelitelj čuva dovoljno energije za svoje najjeftinije liječenje
+ili zaštitu, a ispod toga troši samo na saveznika u stvarnoj opasnosti. Svaki drugi bot je **dalekometni**: drži se tamo gdje dosežu svi
 njegovi napadi te staje i bori se s neprijateljem koji mu priđe preblizu. Dalekometni
 botovi i iscjelitelji pomiču se onamo gdje ih može dohvatiti manje neprijatelja i koriste stupove
 kao zaklon. Tim se okreće na svakog neprijatelja u dosegu koji padne ispod 60% zdravlja,

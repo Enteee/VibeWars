@@ -28,7 +28,9 @@ Botti, jolla on kaksi tai useampia parannuksia tai suojauksia, joita se voi
 loitsia liittolaiseen, on **parantaja**: se seisoo eniten haavoittuneen
 liittolaisen takana, poissa vihollisten luota. Kun kaksi tai useampia
 vihollisia keskittyy yhteen liittolaiseen, parantaja laittaa suojauksensa
-tuohon liittolaiseen ennen kuin osuma osuu. Jokainen muu botti on
+tuohon liittolaiseen ennen kuin osuma osuu. Parantaja säästää tarpeeksi
+energiaa halvimpaan parannukseensa tai suojaukseensa ja käyttää sen alle
+vain todellisessa vaarassa olevaan liittolaiseen. Jokainen muu botti on
 **kaukotaistelija**: se pysyttelee siellä, minne kaikki sen hyökkäykset
 ylettyvät, ja pysähtyy taistelemaan liian lähelle tulevaa vihollista
 vastaan. Kaukotaistelijabotit ja parantajat siirtyvät paikkoihin, joihin

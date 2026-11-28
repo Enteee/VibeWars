@@ -27,7 +27,9 @@ Een bot speelt de rol die zijn build hem geeft. Een bot met een melee-wapen is
 meer genezingen of beschermingen die hij op een bondgenoot kan casten, is een
 **healer**: hij staat achter de bondgenoot die het meest gewond is, weg van de
 vijanden. Als twee of meer vijanden zich op één bondgenoot richten, geeft een
-healer die bondgenoot zijn bescherming voordat de klap aankomt. Elke andere bot
+healer die bondgenoot zijn bescherming voordat de klap aankomt. Een healer
+houdt genoeg Energie achter voor zijn goedkoopste genezing of bescherming, en
+gaat daar alleen onder voor een bondgenoot in echt gevaar. Elke andere bot
 is **ranged**: hij blijft waar elk van zijn aanvallen reikt, en blijft staan
 om te vechten met een vijand die te dichtbij komt. Ranged bots en healers
 stappen naar plekken waar minder vijanden ze kunnen bereiken, en gebruiken

@@ -27,7 +27,9 @@ Bot hrá rolu, ktorú mu dáva jeho build. Ten so zbraňou na blízko je
 liečeniami alebo ochranami, ktoré môže zoslať na spojenca, je **liečiteľ**: stojí
 za najviac zraneným spojencom, ďalej od nepriateľov. Keď sa dvaja alebo viacerí
 nepriatelia sústredia na jedného spojenca, liečiteľ naňho dá ochranu skôr, než
-zásah dopadne. Každý iný bot je **na diaľku**: drží sa tam, kam dosiahne každý
+zásah dopadne. Liečiteľ si necháva dosť energie na svoje najlacnejšie liečenie
+alebo ochranu a pod túto hranicu míňa len na spojenca v skutočnom nebezpečenstve.
+Každý iný bot je **na diaľku**: drží sa tam, kam dosiahne každý
 jeho útok, a zastaví sa a bojuje s nepriateľom, ktorý príde príliš blízko. Boti
 na diaľku a liečitelia ustupujú tam, kam dosiahne menej nepriateľov, a stĺpy
 používajú ako kryt. Tím sa obráti proti každému nepriateľovi v dosahu, ktorý

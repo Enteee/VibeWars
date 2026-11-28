@@ -13,7 +13,14 @@ import {
   type DefenceAgainst,
 } from "../skill-intent.js";
 import { airFirst } from "./setup.js";
-import { HURT_FRACTION, SPIKE_FOES, healthFraction, spiritUp } from "./shared.js";
+import {
+  EMERGENCY_FRACTION,
+  HURT_FRACTION,
+  SPIKE_FOES,
+  healthFraction,
+  keepsReserve,
+  spiritUp,
+} from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -58,10 +65,14 @@ const heal: BotRule = {
       return undefined;
     }
     const patient = hurt;
+    // Above EMERGENCY_FRACTION and not spiked, a healer keeps its reserve (#4275).
+    const emergency = patient === spiked || healthFraction(patient) < EMERGENCY_FRACTION;
+    const affords = (held: Skill): boolean =>
+      castable(held, patient) && (emergency || !keepsReserve(self, held, patient));
     const skill =
-      bar.find((held) => botUses(held).includes("healing") && castable(held, patient)) ??
+      bar.find((held) => botUses(held).includes("healing") && affords(held)) ??
       matchingDefence(
-        bar.filter((held) => botUses(held).includes("defence") && castable(held, patient)),
+        bar.filter((held) => botUses(held).includes("defence") && affords(held)),
         threatOn(patient, foes),
       );
     if (skill === undefined) {

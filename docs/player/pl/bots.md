@@ -25,7 +25,9 @@ Bot odgrywa rolę, którą nadaje mu build. Bot z bronią do walki wręcz jest
 osłonami, które może rzucić na sojusznika, jest **uzdrowicielem**: stoi za
 najbardziej rannym sojusznikiem, z dala od wrogów. Gdy dwóch lub więcej wrogów
 skupia się na jednym sojuszniku, uzdrowiciel nakłada na niego osłonę, zanim padnie
-cios. Każdy inny bot walczy **z dystansu**: trzyma się miejsca, z którego sięgają
+cios. Uzdrowiciel zachowuje tyle Energii, ile trzeba na jego najtańsze leczenie lub
+osłonę, i schodzi poniżej tego tylko dla sojusznika w prawdziwym niebezpieczeństwie.
+Każdy inny bot walczy **z dystansu**: trzyma się miejsca, z którego sięgają
 wszystkie jego ataki, a wroga, który podejdzie zbyt blisko, zwalcza na miejscu.
 Boty dystansowe i uzdrowiciele przechodzą tam, gdzie może ich dosięgnąć mniej
 wrogów, i chowają się za filarami. Drużyna rzuca się na każdego wroga w zasięgu,

@@ -27,7 +27,9 @@ Bot memainkan peran yang diberikan build-nya. Bot yang memegang senjata jarak de
 penyembuhan atau perlindungan yang bisa dirapal pada sekutu adalah **penyembuh**: ia berdiri
 di belakang sekutu mana pun yang paling terluka, jauh dari musuh. Saat dua atau lebih
 musuh mengeroyok satu sekutu, penyembuh memasang perlindungannya pada sekutu itu sebelum
-pukulan mendarat. Setiap bot lainnya adalah **jarak jauh**: ia menjaga posisi di mana semua
+pukulan mendarat. Penyembuh menyisakan cukup Energi untuk penyembuhan atau perlindungan
+termurahnya, dan hanya memakai di bawah itu untuk sekutu yang benar-benar dalam bahaya.
+Setiap bot lainnya adalah **jarak jauh**: ia menjaga posisi di mana semua
 serangannya mencapai sasaran, dan berdiri melawan musuh yang datang terlalu dekat. Bot jarak jauh
 dan penyembuh bergeser ke tempat yang lebih sedikit dijangkau musuh, dan memakai pilar
 sebagai perlindungan. Sebuah tim berbalik menyerang musuh mana pun dalam jangkauan yang Darah-nya turun di bawah 60%,

@@ -27,7 +27,9 @@ mêlée est en **première ligne** : il s'approche et attaque sa cible. Celui
 qui a au moins deux soins ou protections à lancer sur un allié est un
 **soigneur** : il se place derrière l'allié le plus blessé, loin des
 ennemis. Quand au moins deux ennemis se concentrent sur un allié, un
-soigneur place sa protection sur cet allié avant que le coup ne tombe. Tous
+soigneur place sa protection sur cet allié avant que le coup ne tombe. Un
+soigneur garde assez d'énergie pour son soin ou sa protection le moins
+cher, et ne descend en dessous que pour un allié en réel danger. Tous
 les autres bots sont **à distance** : ils restent là où toutes leurs
 attaques portent, et tiennent tête à un ennemi qui s'approche trop. Les bots
 à distance et les soigneurs se déplacent là où moins d'ennemis peuvent les

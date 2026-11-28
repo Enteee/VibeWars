@@ -29,7 +29,9 @@ megtámadja a célpontját. Amelyiknek két vagy több gyógyítása vagy
 védelme van, amelyet szövetségesre varázsolhat, az **gyógyító**: annak
 a szövetségesnek a háta mögé áll, amelyik a legjobban megsérült, távol
 az ellenségektől. Amikor két vagy több ellenség egy szövetségesre
-összpontosít, a gyógyító a találat előtt ráteszi a védelmét. Minden más
+összpontosít, a gyógyító a találat előtt ráteszi a védelmét. A gyógyító
+elég Energiát tart vissza a legolcsóbb gyógyítására vagy védelmére, és
+ez alá csak valódi veszélyben lévő szövetségesért megy. Minden más
 bot **távolsági**: ott marad, ahonnan minden támadása elér, és megáll
 harcolni azzal az ellenséggel, amely túl közel jön. A távolsági botok és
 a gyógyítók oda lépnek, ahol kevesebb ellenség érheti el őket, és az
