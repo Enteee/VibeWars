@@ -35,7 +35,7 @@ import {
   STACK_BAKE_SCALE,
   bakeFigure,
   type BakeContext,
-  type StackLook,
+  type BodyStackLook,
 } from "../render/stack-atlas.js";
 import { WARRIOR_OUTFIT } from "../render/profession-outfits.js";
 import { t } from "../i18n/index.js";
@@ -157,7 +157,7 @@ export function figureBody(
 }
 
 /** The professions a figure's outfit and accent follow (#4175). */
-export type FigureWearing = Pick<StackLook, "primary" | "secondary">;
+export type FigureWearing = Pick<BodyStackLook, "primary" | "secondary">;
 
 /** What a figure's slices are drawn into: a bake's calls, and a transform to place them. */
 export type FigureContext = BakeContext &
@@ -211,7 +211,8 @@ export function paintFigure(
 ): void {
   paintFigureGround(painter, body);
   const { cape } = body;
-  const look: StackLook = {
+  const look: BodyStackLook = {
+    kind: "body",
     body: teamColour(body.team),
     cape: cape?.look,
     primary: wearing.primary,

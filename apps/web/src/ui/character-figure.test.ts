@@ -310,6 +310,7 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
     strokeStyle: "",
     lineWidth: 1,
     lineJoin: "miter",
+    globalAlpha: 1,
     beginPath: () => {
       polygon = false;
     },

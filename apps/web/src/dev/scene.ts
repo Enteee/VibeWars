@@ -20,11 +20,13 @@ import {
   type Professions,
 } from "../training/local-connection.js";
 import { SPLASH_RULES } from "../ui/splash-fight.js";
-import { DIAGRAM_SCENES, type DiagramScene } from "./diagram-scenes.js";
+import { CREATURE_DRAWN_RADIUS } from "../render/creature-shape.js";
+import type { ArenaSnapshot } from "../render/arena-snapshot.js";
+import { BENCH_SCENES, DIAGRAM_SCENES, type DiagramScene } from "./diagram-scenes.js";
 
 /** The scene `?scene=<id>` names, or undefined for none: an unknown id does nothing. */
 export function sceneNamed(id: string | null): DiagramScene | undefined {
-  return DIAGRAM_SCENES.find((scene) => scene.id === id);
+  return [...DIAGRAM_SCENES, ...BENCH_SCENES].find((scene) => scene.id === id);
 }
 
 /** What the sim needs of a scene: its bodies, and the professions each shows. */
@@ -72,6 +74,33 @@ export function sceneSetup(scene: DiagramScene): SceneSetup {
   return { participants, professions };
 }
 
+/**
+ * `snapshot` with `scene`'s creatures standing in it (#4171): each its
+ * first body's shape, as its look, at its place. The simulation has no
+ * way to stand a creature anywhere without its skill.
+ */
+export function withCreatures(snapshot: ArenaSnapshot, scene: DiagramScene): ArenaSnapshot {
+  const [body] = snapshot.actors;
+  if (body === undefined) {
+    return snapshot;
+  }
+  const creatures = scene.creatures.map((creature, index) => ({
+    ...body,
+    id: `scene-creature-${String(index)}`,
+    name: "",
+    position: { x: creature.x, y: creature.y },
+    facing: creature.team === 0 ? 0 : Math.PI,
+    team: creature.team === 0 ? ("ally" as const) : ("enemy" as const),
+    profession: undefined,
+    creatureLook: creature.look,
+    radius: CREATURE_DRAWN_RADIUS[creature.look],
+    cape: undefined,
+    weaponId: undefined,
+    offhandId: undefined,
+  }));
+  return { ...snapshot, actors: [...snapshot.actors, ...creatures] };
+}
+
 declare global {
   interface Window {
     __sceneReady?: boolean;
@@ -81,7 +110,8 @@ declare global {
 /**
  * Draws `scene` into `parent` once, from the game's own renderer, and sets
  * `window.__sceneReady` when the frame is on screen. Local, no network;
- * the sim never steps.
+ * the sim never steps. A bench scene draws on, and with `?discs` its
+ * creatures stay discs, the bench's yardstick for their figures (#4171).
  */
 export async function showScene(parent: HTMLElement, scene: DiagramScene): Promise<void> {
   const map = hostMap(scene.map);
@@ -132,6 +162,8 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
   const gated = { ...map.descriptor, gateLayers, gateLooks, switchTargets };
   viewport.setArenaBounds(map.descriptor.width, map.descriptor.height);
   viewport.scene.setFixedMarkers(scene.markers);
+  const live = BENCH_SCENES.includes(scene);
+  viewport.scene.setCreatureFigures(!new URLSearchParams(window.location.search).has("discs"));
   let framesSince = -1;
   viewport.onFrame(() => {
     if (framesSince >= 0) {
@@ -141,20 +173,25 @@ export async function showScene(parent: HTMLElement, scene: DiagramScene): Promi
         return;
       }
       window.__sceneReady = true;
-      viewport.hold();
+      if (!live) {
+        viewport.hold();
+      }
       return;
     }
     viewport.setCamera(scene.camera, NO_COVER);
     const match = connection.getSnapshot();
     viewport.scene.setSnapshot(
-      toArenaSnapshot(
-        match,
-        blocking(match.gates, match.breakables).walls,
-        [],
-        undefined,
-        undefined,
-        gated,
-        structure,
+      withCreatures(
+        toArenaSnapshot(
+          match,
+          blocking(match.gates, match.breakables).walls,
+          [],
+          undefined,
+          undefined,
+          gated,
+          structure,
+        ),
+        scene,
       ),
     );
     framesSince = 0;

@@ -1087,21 +1087,36 @@ describe("bodyGlyphLayout (#1037)", () => {
   });
 
   it("gives a creature its kind's glyph, opaque, and keeps its size knocked down (#1162)", () => {
-    for (const look of CREATURE_LOOKS.filter((look) => look !== "spirit")) {
+    for (const look of CREATURE_LOOKS.filter(
+      (look) => look !== "spirit" && look !== "ghostly-hero",
+    )) {
       const standing = bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look }));
       expect(standing).toEqual({
         glyph: { kind: "creature", look },
         x: 200,
         y: 100,
         size: CREATURE_GLYPH_SIZE,
-        // A Ghostly Hero's stand-in glyph is pale (#1377).
-        tint: look === "ghostly-hero" ? GHOST_GLYPH_TINT : BODY_EDGE,
+        tint: BODY_EDGE,
         alpha: 1,
       });
       expect(
         bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look, knockedDown: true })),
       ).toEqual(standing);
     }
+  });
+
+  it("puts a standing Ghostly Hero's glyph on its figure's badge, as a player's, and clears its bar over it (#4171)", () => {
+    const ghost = actor("c", 200, 100, 10, { creatureLook: "ghostly-hero" });
+    expect(bodyGlyphLayout(ghost)).toMatchObject({
+      x: 200,
+      y: 100 - stackBadge(10).rise,
+      tint: STACK_GLYPH_TINT,
+    });
+    expect(overheadRise(ghost)).toBe(stackOverheadRise(10));
+    // Knocked down it is its disc again, its glyph pale on it (#1377).
+    const down = actor("c", 200, 100, 10, { creatureLook: "ghostly-hero", knockedDown: true });
+    expect(bodyGlyphLayout(down)).toMatchObject({ x: 200, y: 100, tint: GHOST_GLYPH_TINT });
+    expect(overheadRise(down)).toBe(0);
   });
 
   it("gives a living spirit none, its wisp is its glyph, and greys a dead one's (#3306)", () => {

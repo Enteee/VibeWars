@@ -15,6 +15,7 @@ import {
   polygonCentre,
   pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
+  CREATURE_LOOKS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -46,6 +47,7 @@ import {
   spiritRingAlpha,
   nameplateLayout,
   isStackedFigure,
+  wearsFigureBadge,
   overheadRise,
   placeFloatingText,
   signetTextureKey,
@@ -88,10 +90,6 @@ import {
 import {
   STACK_BAKE_RADIUS,
   STACK_BAKE_SCALE,
-  STACK_FRAME_FEET_X,
-  STACK_FRAME_FEET_Y,
-  STACK_FRAME_HEIGHT,
-  STACK_FRAME_WIDTH,
   StackAtlas,
   type BakeContext,
   type StackFrame,
@@ -1214,6 +1212,8 @@ export class ArenaScene extends Phaser.Scene {
     readonly actor: RenderableActor;
     readonly frame: StackFrame;
     readonly band: number;
+    /** How far over its feet it is drawn, world units: a spirit's bob (#4171). */
+    readonly rise: number;
   }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
   private castBadges = new Map<string, Phaser.GameObjects.Image>();
@@ -1321,7 +1321,13 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
+    // Every creature figure too (#4171), in the same build and upload: a
+    // row per look, never per team, and few frames, so a summon mid-fight
+    // never waits on its bake.
+    atlas.bake([
+      ...this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
+      ...CREATURE_LOOKS.map((look): StackLook => ({ kind: "creature", look })),
+    ]);
   }
 
   /**
@@ -1330,6 +1336,7 @@ export class ArenaScene extends Phaser.Scene {
    */
   private stackLook(actor: RenderableActor): StackLook {
     return {
+      kind: "body",
       body: teamColour(actor.team),
       cape: actor.cape,
       primary: actor.profession,
@@ -3145,7 +3152,7 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (actor.creatureLook !== undefined) {
-      this.drawCreature(g, marks, actor, actor.creatureLook);
+      this.drawCreature(band, actor, actor.creatureLook);
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
@@ -3179,6 +3186,7 @@ export class ArenaScene extends Phaser.Scene {
           actor,
           frame: figure,
           band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+          rise: 0,
         });
       }
       this.drawCastGlow(marks, actor, frame);
@@ -3209,11 +3217,11 @@ export class ArenaScene extends Phaser.Scene {
    * lies, or else a facing tick.
    */
   private drawCreature(
-    g: Phaser.GameObjects.Graphics,
-    marks: Phaser.GameObjects.Graphics,
+    band: (typeof this.bands)[number],
     actor: RenderableActor,
     look: CreatureLook,
   ): void {
+    const { body: g, marks } = band;
     const { x, y } = actor.position;
     const team = this.lit(teamColour(actor.team), actor);
     const colourOf = (colour: OrnamentColour): number =>
@@ -3248,6 +3256,33 @@ export class ArenaScene extends Phaser.Scene {
 
     // A spirit's plate is a wisp (#3306), bobbing, inside a team rim.
     const bob = look === "spirit" ? spiritBob(this.now, cuePhase(actor.id), this.reducedMotion) : 0;
+    // Standing, a stacked creature (#4171) is its figure on the team's
+    // plate, the figure bobbing as a whole; until its look is baked, the disc.
+    const figure =
+      actor.knockedDown || !this.creatureFigures
+        ? undefined
+        : this.stackAtlas?.frame(
+            { kind: "creature", look },
+            this.figureHeading(actor),
+            this.figurePose(actor),
+          );
+    if (figure !== undefined) {
+      tracePath(g, creatureOutline(x, y, actor.radius));
+      g.fillStyle(team, 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+      if (wearsFigureBadge(actor)) {
+        this.drawFigureBadge(band.badge, actor);
+      }
+      this.figures.push({
+        actor,
+        frame: figure,
+        band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        rise: -bob,
+      });
+      return;
+    }
     if (look === "spirit") {
       this.drawSpiritWisp(g, actor, y + bob, team);
     } else {
@@ -4151,16 +4186,11 @@ export class ArenaScene extends Phaser.Scene {
     const shown = new Set<string>();
     const scale = 1 / STACK_BAKE_SCALE;
     const depthPerY = this.arena.height > 0 ? FIGURE_DEPTH_SPAN / this.arena.height : 0;
-    for (const { actor, frame, band } of this.figures) {
+    for (const { actor, frame, band, rise } of this.figures) {
       shown.add(actor.id);
       let image = this.bodyFigures.get(actor.id);
       if (image === undefined) {
-        image = this.add
-          .image(0, 0, this.stackTexture, frame.name)
-          .setOrigin(
-            STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
-            STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
-          );
+        image = this.add.image(0, 0, this.stackTexture, frame.name);
         this.bodyFigures.set(actor.id, image);
       }
       if (image.texture.key !== this.stackTexture) {
@@ -4170,12 +4200,13 @@ export class ArenaScene extends Phaser.Scene {
       }
       // A heading the atlas holds only as its mirror image (#4060); the feet are the frame's middle.
       image.setFlipX(frame.flipped);
-      const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
+      const size = (scale * actor.radius) / frame.radius;
       const { x, y } = actor.position;
       const depth = renderOrder({ kind: "character", band, part: "figure" });
       image
-        .setDisplaySize(STACK_FRAME_WIDTH * size, STACK_FRAME_HEIGHT * size)
-        .setPosition(x, y)
+        .setOrigin(frame.feetX / frame.width, frame.feetY / frame.height)
+        .setDisplaySize(frame.width * size, frame.height * size)
+        .setPosition(x, y - rise)
         .setDepth(depth + Math.min(Math.max(y * depthPerY, 0), FIGURE_DEPTH_SPAN * 0.99))
         .setTint(this.bodyTint(actor) ?? 0xffffff)
         .setVisible(true);
@@ -4195,7 +4226,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** The dark disc the glyph rides on, on top of `actor`'s figure (ADR-0057). */
   private drawFigureBadge(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    if (actor.profession === undefined) {
+    if (actor.profession === undefined && actor.creatureLook === undefined) {
       return;
     }
     const { x, y } = actor.position;
@@ -5071,6 +5102,14 @@ export class ArenaScene extends Phaser.Scene {
   /** Draws `markers` with the hover ring's own drawing, instead of waiting on a pointer. */
   setFixedMarkers(markers: readonly SceneMarker[]): void {
     this.fixedMarkers = markers;
+  }
+
+  /** Whether creatures stand as figures (#4171): off, the render bench's disc yardstick. */
+  private creatureFigures = true;
+
+  /** Draws creatures as figures, or keeps every one its disc. */
+  setCreatureFigures(on: boolean): void {
+    this.creatureFigures = on;
   }
 
   /** What the hover ring asks of a finger held still (#3878): below, once a release would long-press. */

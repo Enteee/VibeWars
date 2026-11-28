@@ -1017,7 +1017,19 @@ export function isStackedFigure(actor: RenderableActor): boolean {
  * they clear both (ADR-0057). 0 for a flat body.
  */
 export function overheadRise(actor: RenderableActor): number {
-  return isStackedFigure(actor) ? stackOverheadRise(actor.radius) : 0;
+  return wearsFigureBadge(actor) ? stackOverheadRise(actor.radius) : 0;
+}
+
+/**
+ * Whether `actor` stands as a figure with its glyph on a badge on top
+ * (ADR-0057): a body, or a standing Ghostly Hero, whose figure is a
+ * body's (#4171), so its glyph would hide it and its bar cut its head.
+ */
+export function wearsFigureBadge(actor: RenderableActor): boolean {
+  return (
+    isStackedFigure(actor) ||
+    (!actor.dead && !actor.knockedDown && actor.creatureLook === "ghostly-hero")
+  );
 }
 
 /** The shield: an arc on the body's centre, 45° to 105° left of the facing, at r + 3.5 (#275). */
@@ -1242,7 +1254,8 @@ export interface BodyGlyphLayout {
  * (ADR-0057); at 60 %, shrunk to fit its flattened disc, when knocked
  * down; a creature's
  * is its kind's (#1162), opaque, and its shape never lies down; a
- * Ghostly Hero's pale (#1377). A corpse greys it.
+ * Ghostly Hero's on its badge as a player's, its figure being a body's
+ * (#4171), and pale when knocked down (#1377). A corpse greys it.
  *
  * `undefined`: neither a profession nor a creature, so no glyph; and a
  * living spirit, whose wisp is its glyph and whose core it would hide (#3306).
@@ -1274,7 +1287,7 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
       alpha: 1,
     };
   }
-  if (isStackedFigure(actor)) {
+  if (wearsFigureBadge(actor)) {
     // On its badge on top of the figure, pale on the dark disc (ADR-0057).
     return {
       glyph,
