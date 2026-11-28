@@ -165,6 +165,7 @@ describe("lookOfWire (#1864)", () => {
       appearance: { weaponId: "sword", offhandId: "shield" },
       skillBar: ["warrior.backbreaker", null, null, null, null, null, null, null],
       cape: undefined,
+      physique: AVERAGE_BODY,
     });
   });
 
