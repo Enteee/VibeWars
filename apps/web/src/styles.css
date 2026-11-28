@@ -4397,9 +4397,27 @@ body:has(> .splash) #menu-background::after {
 }
 
 .screen button.flyout-rail-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 44px;
   min-height: 44px;
   color: var(--accent);
+}
+
+/* Back points to the list it returns to: left, and right in a
+   right-to-left language (#4237), as the drawer toggle does. */
+.flyout-rail-back-button::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-block-end: 2px solid currentcolor;
+  border-inline-start: 2px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.flyout-rail-back-button:dir(rtl)::after {
+  transform: rotate(-45deg);
 }
 
 .flyout-rail-title {

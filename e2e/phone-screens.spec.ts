@@ -264,7 +264,7 @@ test("the queue's window fits the phone (#3776)", async ({ page }) => {
   await expectFitsPhone(page, "queue");
 });
 
-test("the menu and Options fit the phone in German, the menu in Arabic (#3776)", async ({
+test("the menu and Options fit the phone in German, the menu in Arabic; Back points to the list either way (#3776, #4237)", async ({
   browser,
 }) => {
   for (const locale of ["de", "ar"]) {
@@ -272,10 +272,16 @@ test("the menu and Options fit the phone in German, the menu in Arabic (#3776)",
     const page = await context.newPage();
     await openPhone(page);
     await expectFitsPhone(page, `menu, ${locale}`);
-    if (locale === "de") {
-      await clickTopbarIcon(page, ".topbar-options");
-      await expectFitsPhone(page, `Options, ${locale}`);
-    }
+    await clickTopbarIcon(page, ".topbar-options");
+    if (locale === "de") await expectFitsPhone(page, `Options, ${locale}`);
+    await page.locator(".flyout-rail-entry").first().click();
+    await drilledIn(page);
+    // Right to left, the chevron turns the other way and points right,
+    // to the list: the sign of its rotation's sine says which way.
+    const sine = await page
+      .locator(".flyout-rail-back-button")
+      .evaluate((back) => new DOMMatrix(getComputedStyle(back, "::after").transform).b);
+    expect(Math.sign(sine), `back chevron, ${locale}`).toBe(locale === "ar" ? -1 : 1);
     await context.close();
   }
 });

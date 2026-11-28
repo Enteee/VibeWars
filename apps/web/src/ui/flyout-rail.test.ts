@@ -197,6 +197,12 @@ describe("mountFlyoutRail (#4216)", () => {
     expect(active()).toBe(title);
   });
 
+  it("back is a chevron drawn by CSS, so it can mirror, and is named (#4237)", () => {
+    const back = rail().element.find("flyout-rail-back-button");
+    expect(back?.textContent).toBe("");
+    expect(back?.getAttribute("aria-label")).toBe("Back to the list");
+  });
+
   it("narrow, back returns to the list on the entry that was open", () => {
     narrow = true;
     const { element } = rail();
