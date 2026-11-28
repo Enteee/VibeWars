@@ -344,7 +344,7 @@ describe("StackAtlas creatures (#4171)", () => {
     expect(made.frame(SPIRIT, 0, "stand")).toBeDefined();
   });
 
-  it("bakes each look a match may bring on later, one task each, once, and none with no figure (#4172)", () => {
+  it("bakes each look a match may bring on later, one task each, once (#4172, #4173)", () => {
     const { atlas: made, queued } = atlas();
     made.bake([FRIEND, SPIRIT]);
     const GOLEM: CreatureStackLook = { kind: "creature", look: "flesh-golem" };
@@ -352,14 +352,16 @@ describe("StackAtlas creatures (#4171)", () => {
     made.bakeLater([SPIRIT, GHOST, GOLEM, GHOST, PRIEST]);
     made.bakeLater([GOLEM]);
     expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
-    expect(queued).toHaveLength(2);
+    expect(queued).toHaveLength(3);
     const before = made.bakedFigures;
     queued[0]?.();
     expect(made.bakedFigures).toBe(before + 24);
     expect(made.frame(GHOST, 0, "stand")).toBeDefined();
     expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
     queued[1]?.();
+    queued[2]?.();
     expect(made.frame(GOLEM, 0, "stand")).toBeDefined();
-    expect(queued).toHaveLength(2);
+    expect(made.frame(PRIEST, 0, "stand")).toBeDefined();
+    expect(queued).toHaveLength(3);
   });
 });
