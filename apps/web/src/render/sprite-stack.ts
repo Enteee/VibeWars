@@ -2,8 +2,6 @@ import type { CreatureLook } from "@vibewars/game-core";
 
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
-import { beastSlices } from "./stack-beasts.js";
-import { minionSlices } from "./stack-minions.js";
 import {
   PROFESSION_OUTFITS,
   WARRIOR_OUTFIT,
@@ -15,6 +13,8 @@ import {
   type ShoulderKind,
   type TorsoKind,
 } from "./profession-outfits.js";
+import { beastSlices } from "./stack-beasts.js";
+import { minionSlices } from "./stack-minions.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**

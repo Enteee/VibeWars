@@ -1119,6 +1119,13 @@ describe("bodyGlyphLayout (#1037)", () => {
         tint: STACK_GLYPH_TINT,
       });
       expect(rise(look)).toBe(stackOverheadRise(10, figureTall(minion)));
+      expect(figureTall(minion)).toBeGreaterThan(0);
+      // Dead or knocked down it is its disc again, its glyph on the disc.
+      for (const fallen of [{ dead: true }, { knockedDown: true }]) {
+        const down = actor("c", 200, 100, 10, { creatureLook: look, ...fallen });
+        expect(bodyGlyphLayout(down)).toMatchObject({ x: 200, y: 100 });
+        expect(overheadRise(down)).toBe(0);
+      }
     }
     expect(rise("bone-minion")).toBeLessThan(rise("bone-horror"));
     expect(rise("bone-horror")).toBeLessThan(rise("flesh-golem"));

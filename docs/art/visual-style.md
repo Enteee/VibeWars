@@ -397,9 +397,12 @@ Every rule below can be checked from one screenshot.
     stitched seams, a fist at each side and a small head. All turn in 8
     headings and walk in stand and two strides; under reduced motion they
     stand, as a body does. No rim teeth: the silhouette is the type cue.
+    Standing, its glyph rides a badge over its own figure's height, as a
+    body's does, and its bars and name clear that badge; dead or knocked
+    down it is its disc again.
 
-    Worked example (`minion-figures.png`), at match zoom: the discs they
-    replace over the figures, bone minion to flesh golem.
+    Worked example (`minion-figures.png`), at match zoom: the standing
+    figures, ally and foe, bone minion to flesh golem, each glyph on its badge.
 
     ![minion figures](visual-style/minion-figures.png)
 

@@ -413,10 +413,24 @@ export class StackAtlas {
       const baked = bakedFrame(bucket, pose);
       return at(stackFrameName(key, baked.bucket, baked.pose), baked.flipped);
     }
-    if (look.kind === "creature" && creatureStack(look.look) === undefined) {
-      return undefined;
-    }
-    if (!this.pending.has(key)) {
+    this.bakeLater([look]);
+    return undefined;
+  }
+
+  /**
+   * Bake each of `looks` not baked yet alone, off the frame path, each
+   * once (#4172): a look a match may bring on, warmed before it does.
+   */
+  public bakeLater(looks: Iterable<StackLook>): void {
+    for (const look of looks) {
+      const key = stackLookKey(look);
+      if (
+        this.baked.has(key) ||
+        this.pending.has(key) ||
+        (look.kind === "creature" && creatureStack(look.look) === undefined)
+      ) {
+        continue;
+      }
       this.pending.add(key);
       this.schedule(() => {
         if (this.pending.has(key)) {
@@ -424,7 +438,6 @@ export class StackAtlas {
         }
       });
     }
-    return undefined;
   }
 
   /** Bake every look again, as after a lost WebGL context. */
