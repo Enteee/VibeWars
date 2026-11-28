@@ -119,6 +119,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     spellCast: undefined,
     offhandId: undefined,
     profession: undefined,
+    secondaryProfession: undefined,
     creatureLook: undefined,
     auraRadius: undefined,
     radius: 14,

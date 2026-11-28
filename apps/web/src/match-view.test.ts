@@ -102,6 +102,25 @@ describe("outcomeArrived (#2692)", () => {
 });
 
 describe("toArenaSnapshot", () => {
+  it("carries a player's primary and secondary profession to its figure (#4175)", () => {
+    const arena = toArenaSnapshot(
+      match([
+        { ...player("mo", 0), primaryProfession: "monk", secondaryProfession: "elementalist" },
+        player("bare", 0),
+      ]),
+      [],
+      [],
+      undefined,
+      undefined,
+    );
+    expect(
+      arena.actors.map((actor) => [actor.id, actor.profession, actor.secondaryProfession]),
+    ).toEqual([
+      ["mo", "monk", "elementalist"],
+      ["bare", undefined, undefined],
+    ]);
+  });
+
   it("draws a watcher's team 1 in the ally colour and team 2 in the enemy one (#480)", () => {
     const arena = toArenaSnapshot(
       { ...match([player("a", 0), { ...player("b", 0), team: 1 }]), selfSessionId: "watcher" },

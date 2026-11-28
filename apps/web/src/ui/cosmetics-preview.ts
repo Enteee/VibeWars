@@ -26,6 +26,7 @@ import {
   matchDecor,
   paintFigure,
   tintedGlyph,
+  type FigureWearing,
 } from "./character-figure.js";
 import { h } from "./kit.js";
 import { playerLabelElement, wearCosmetics } from "./player-label.js";
@@ -216,9 +217,12 @@ export function createCosmeticsPreview(
   let shown: FigureLook | undefined;
   let glyph: HTMLImageElement | undefined;
   let tinted: { readonly pixels: number; readonly canvas: HTMLCanvasElement } | undefined;
+  /** The professions whose outfit is worn (#4175): none until known or picked, the bare body's. */
+  let wearing: FigureWearing = { primary: undefined, secondary: undefined };
   /** The profession whose glyph is worn: the last asked for wins, however the loads finish. */
   let wanted: ProfessionId | undefined;
-  const wear = (profession: ProfessionId): void => {
+  const wear = (profession: ProfessionId, secondary: ProfessionId | undefined): void => {
+    wearing = { primary: profession, secondary };
     wanted = profession;
     loadGlyph(profession)
       .then((loaded) => {
@@ -237,7 +241,7 @@ export function createCosmeticsPreview(
       shown = known;
       // Professions picked before the character was known stay picked.
       if (known !== undefined && wanted === undefined) {
-        wear(known.primary);
+        wear(known.primary, known.secondary);
       }
     })
     .catch((error: unknown) => {
@@ -407,7 +411,7 @@ export function createCosmeticsPreview(
       reducedMotion: still,
     });
     const decor = matchDecor(body);
-    paintFigure(painter, context, body, pose, decor, () => {
+    paintFigure(painter, context, body, wearing, pose, decor, () => {
       if (tinted !== undefined) {
         drawBodyGlyph(context, decor.badge, tinted.canvas);
       }
@@ -497,8 +501,8 @@ export function createCosmeticsPreview(
     replayReactions() {
       reactedAt = clock;
     },
-    setProfessions(primary) {
-      wear(primary);
+    setProfessions(primary, secondary) {
+      wear(primary, secondary);
     },
   };
 }

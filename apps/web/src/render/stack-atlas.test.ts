@@ -31,13 +31,16 @@ import {
   stackTones,
 } from "./sprite-stack.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
+import { PROFESSION_OUTFITS, SECONDARY_ACCENTS } from "./profession-outfits.js";
 
-const FRIEND: BodyStackLook = { kind: "body", body: 0x59c2ff, cape: undefined };
-const FOE: BodyStackLook = { kind: "body", body: 0xff7b72, cape: undefined };
+const BARE = { primary: undefined, secondary: undefined } as const;
+const FRIEND: BodyStackLook = { kind: "body", body: 0x59c2ff, cape: undefined, ...BARE };
+const FOE: BodyStackLook = { kind: "body", body: 0xff7b72, cape: undefined, ...BARE };
 const CAPED: BodyStackLook = {
   kind: "body",
   body: 0x59c2ff,
   cape: { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] },
+  ...BARE,
 };
 const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 
@@ -129,6 +132,18 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     ).not.toBe(stackLookKey(CAPED));
   });
 
+  it("makes a look of a primary and of a secondary, each its own frames (#4175)", () => {
+    const monk: BodyStackLook = { ...FRIEND, primary: "monk" };
+    const healer: BodyStackLook = { ...monk, secondary: "ranger" };
+    const { atlas: made } = atlas();
+    made.bake([FRIEND, monk, healer]);
+    expect(made.bakedFigures).toBe(3 * FRAMES);
+    expect(new Set([FRIEND, monk, healer].map(stackLookKey)).size).toBe(3);
+    const names = [FRIEND, monk, healer].map((look) => made.frame(look, 4, "stand")?.name);
+    expect(new Set(names).size).toBe(3);
+    expect(names).not.toContain(undefined);
+  });
+
   it("names the frame of a baked look by heading bucket and pose, mirrored where it bakes none", () => {
     const { atlas: made } = atlas();
     made.bake([FOE]);
@@ -142,22 +157,29 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     });
   });
 
-  it("fits every pose at every baked heading in its frame, outline and all (#4060)", () => {
+  it("fits every outfit and accent, every pose at every baked heading, in its frame, outline and all (#4060, #4175)", () => {
     const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
     const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
-    for (const pose of STACK_POSES) {
-      for (const bucket of STACK_BAKED_HEADINGS) {
-        const layers = stackLayers(
-          stackSlices(pose),
-          bucketFacing(bucket),
-          r,
-          stackTones(FRIEND.body, undefined),
-        );
-        for (const { x, y } of layers.flatMap((layer) => layer.points)) {
-          expect(STACK_FRAME_FEET_X + x - pad).toBeGreaterThanOrEqual(0);
-          expect(STACK_FRAME_FEET_X + x + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
-          expect(STACK_FRAME_FEET_Y + y - pad).toBeGreaterThanOrEqual(0);
-          expect(STACK_FRAME_FEET_Y + y + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
+    const outfits = Object.values(PROFESSION_OUTFITS);
+    const accents = [undefined, ...Object.values(SECONDARY_ACCENTS)];
+    for (const outfit of outfits) {
+      for (const accent of accents) {
+        for (const pose of STACK_POSES) {
+          for (const bucket of STACK_BAKED_HEADINGS) {
+            const layers = stackLayers(
+              stackSlices(pose, outfit, accent),
+              bucketFacing(bucket),
+              r,
+              stackTones(FRIEND.body, undefined, outfit, accent),
+            );
+            const points = layers.flatMap((layer) => layer.points);
+            const xs = points.map((p) => STACK_FRAME_FEET_X + p.x);
+            const ys = points.map((p) => STACK_FRAME_FEET_Y + p.y);
+            expect(Math.min(...xs) - pad).toBeGreaterThanOrEqual(0);
+            expect(Math.max(...xs) + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
+            expect(Math.min(...ys) - pad).toBeGreaterThanOrEqual(0);
+            expect(Math.max(...ys) + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
+          }
         }
       }
     }
@@ -170,6 +192,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
         kind: "body" as const,
         body: 0x100000 * i + 0x40,
         cape: undefined,
+        ...BARE,
       })),
       ...CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look })),
     ]);

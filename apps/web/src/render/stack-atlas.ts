@@ -1,7 +1,8 @@
-import { CREATURE_LOOKS, type CreatureLook } from "@vibewars/game-core";
+import { CREATURE_LOOKS, type CreatureLook, type ProfessionId } from "@vibewars/game-core";
 
 import type { CapeLook } from "./cape-shape.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
+import { accentOf, outfitOf } from "./profession-outfits.js";
 import {
   STACK_BAKED_HEADINGS,
   STACK_HEIGHT,
@@ -34,11 +35,16 @@ import {
  * plate under it carries the team.
  */
 
-/** A body's figure: its body colour, and the cape it wears. */
+/**
+ * A body's figure: its body colour, the cape it wears, and the
+ * professions its outfit and accent follow (#4175).
+ */
 export interface BodyStackLook {
   readonly kind: "body";
   readonly body: number;
   readonly cape: CapeLook | undefined;
+  readonly primary: ProfessionId | undefined;
+  readonly secondary: ProfessionId | undefined;
 }
 
 /** A creature's figure: its look alone (#4171). */
@@ -101,14 +107,14 @@ export type SurfaceFactory = (width: number, height: number) => AtlasSurface;
 
 const css = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
 
-/** A look's name: a body's colours, or a creature's look, which is all a bake depends on. */
+/** A look's name: a body's colours and professions, or a creature's look, which is all a bake depends on. */
 export function stackLookKey(look: StackLook): string {
   if (look.kind === "creature") {
     return `creature:${look.look}`;
   }
   const { cape } = look;
   const worn = cape === undefined ? "" : `/${css(cape.main)}${css(cape.trim)}`;
-  return `${css(look.body)}${worn}`;
+  return `${css(look.body)}${worn}+${look.primary ?? ""}+${look.secondary ?? ""}`;
 }
 
 /**
@@ -183,11 +189,18 @@ export function bakeFigure(
   pose: StackPose,
 ): void {
   const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
+  const outfit = outfitOf(look.primary);
+  const accent = accentOf(look.secondary);
   bakeLayers(
     context,
     x,
     y,
-    stackLayers(stackSlices(pose), bucketFacing(bucket), r, stackTones(look.body, look.cape)),
+    stackLayers(
+      stackSlices(pose, outfit, accent),
+      bucketFacing(bucket),
+      r,
+      stackTones(look.body, look.cape, outfit, accent),
+    ),
   );
 }
 

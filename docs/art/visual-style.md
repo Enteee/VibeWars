@@ -240,7 +240,9 @@ outlines, and the noise fill on a map without one.
   floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
   helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
   colour at its cap, its robe in friend or foe colour, its profession glyph
-  on a dark badge disc on top. It turns in 16 headings, the atlas baking
+  on a dark badge disc on top. Its outfit follows its primary profession
+  and carries one accent of its secondary (#4175, `profession-outfits.ts`):
+  `profession-outfits-match.png`, ally over foe. It turns in 16 headings, the atlas baking
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
   shadow lies on the ground under it, not in its frame. A creature with a
   figure (#4171, `creatureSlices`, after `docs/art/creature-stack-study.md`)

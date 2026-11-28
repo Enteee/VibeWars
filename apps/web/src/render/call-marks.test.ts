@@ -27,6 +27,7 @@ const CALLED: RenderableActor = {
   spellCast: undefined,
   offhandId: undefined,
   profession: undefined,
+  secondaryProfession: undefined,
   creatureLook: undefined,
   auraRadius: undefined,
   radius: R,
