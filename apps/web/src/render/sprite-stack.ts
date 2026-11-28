@@ -2,6 +2,7 @@ import type { CreatureLook } from "@vibewars/game-core";
 
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
+import { minionSlices } from "./stack-minions.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -86,7 +87,13 @@ const BELT = 0x3a2a20;
 const STEEL = 0x9aa0a8;
 const VISOR = 0x101014;
 
-function ellipse(cx: number, cy: number, rx: number, ry: number, n = STACK_SEGMENTS): Point[] {
+export function ellipse(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  n = STACK_SEGMENTS,
+): Point[] {
   return Array.from({ length: n }, (_, i) => {
     const a = (i / n) * Math.PI * 2;
     return { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
@@ -542,6 +549,13 @@ export interface CreatureStack {
 const CREATURE_STACKS: Readonly<Partial<Record<CreatureLook, CreatureStack>>> = {
   spirit: { headings: 1, poses: ["stand"] },
   "ghostly-hero": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "bone-minion": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "bone-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "bone-fiend": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "vampiric-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "shambling-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "jagged-horror": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
+  "flesh-golem": { headings: 8, poses: ["stand", "stride-a", "stride-b"] },
 };
 
 /** How `look` turns and moves as a figure, or `undefined` when it stays a disc. */
@@ -686,6 +700,14 @@ export function creatureSlices(
       return spiritSlices();
     case "ghostly-hero":
       return ghostSlices(pose);
+    case "bone-minion":
+    case "bone-horror":
+    case "bone-fiend":
+    case "vampiric-horror":
+    case "shambling-horror":
+    case "jagged-horror":
+    case "flesh-golem":
+      return minionSlices(look, pose);
     default:
       return undefined;
   }

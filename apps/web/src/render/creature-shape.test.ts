@@ -52,6 +52,17 @@ describe("dashes (#1162)", () => {
   });
 });
 
+/** The looks whose stacked figure replaced their rim (#4172). */
+const MINION_LOOKS = [
+  "bone-minion",
+  "bone-horror",
+  "bone-fiend",
+  "vampiric-horror",
+  "shambling-horror",
+  "jagged-horror",
+  "flesh-golem",
+] as const;
+
 describe("creature ornaments (#2047)", () => {
   /** How far from the centre an ornament reaches, its stroke included. */
   const reach = (ornament: CreatureOrnament, x: number, y: number): number =>
@@ -70,13 +81,10 @@ describe("creature ornaments (#2047)", () => {
     );
   });
 
-  it("rims a horror with 12 teeth and a minion with 10", () => {
-    const teeth = (look: "bone-minion" | "jagged-horror"): number => {
-      const [rim] = creatureOrnament(look, 0, 0, CREATURE_DRAWN_RADIUS[look], 0);
-      return rim?.kind === "polygon" ? rim.points.length / 2 : 0;
-    };
-    expect(teeth("bone-minion")).toBe(10);
-    expect(teeth("jagged-horror")).toBe(12);
+  it("rims no minion or horror: its stacked figure is the cue (#4172)", () => {
+    for (const look of MINION_LOOKS) {
+      expect(creatureOrnament(look, 0, 0, CREATURE_DRAWN_RADIUS[look], 0)).toEqual([]);
+    }
   });
 
   it("gives a pet two ears and a Guild Lord five gold gems", () => {
@@ -116,7 +124,8 @@ describe("creature ornaments (#2047)", () => {
 
   it("keeps every ornament round its creature: past the plate, within 1.8 × its radius", () => {
     // The study's ear tips reach 1.69 r and the Lord's gems 1.77 r.
-    for (const look of CREATURE_LOOKS.filter((look) => look !== "spirit")) {
+    const bare = new Set<string>(["spirit", ...MINION_LOOKS]);
+    for (const look of CREATURE_LOOKS.filter((look) => !bare.has(look))) {
       const r = CREATURE_DRAWN_RADIUS[look];
       const ornaments = creatureOrnament(look, 40, -20, r, 1);
       expect(ornaments.length).toBeGreaterThan(0);

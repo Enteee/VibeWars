@@ -282,10 +282,10 @@ describe("StackAtlas creatures (#4171)", () => {
 
   it("gives a look with no figure no frame, and schedules no bake for it", () => {
     const { atlas: made, queued } = atlas();
-    const minion: CreatureStackLook = { kind: "creature", look: "bone-minion" };
-    made.bake([minion]);
+    const beast: CreatureStackLook = { kind: "creature", look: "beast" };
+    made.bake([beast]);
     expect(made.bakedFigures).toBe(0);
-    expect(made.frame(minion, 0, "stand")).toBeUndefined();
+    expect(made.frame(beast, 0, "stand")).toBeUndefined();
     expect(queued).toHaveLength(0);
   });
 
