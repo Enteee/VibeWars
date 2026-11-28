@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { CREATURE_LOOKS } from "@vibewars/game-core";
+import { BUILDS, HEIGHTS, type FigureBody } from "@vibewars/game-protocol";
 
 import {
   STACK_BAKE_RADIUS,
   STACK_BAKE_SCALE,
-  STACK_FRAME_FEET_X,
-  STACK_FRAME_FEET_Y,
   STACK_FRAME_HEIGHT,
   STACK_FRAME_WIDTH,
   StackAtlas,
   stackFrameName,
+  stackFrameSize,
   stackLookKey,
   type AtlasSurface,
   type BakeContext,
@@ -30,7 +30,6 @@ import {
   stackSlices,
   stackTones,
 } from "./sprite-stack.js";
-import { BUILDS, HEIGHTS } from "@vibewars/game-protocol";
 import { AVERAGE_BODY } from "./figure-body.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
 import { PROFESSION_OUTFITS, SECONDARY_ACCENTS } from "./profession-outfits.js";
@@ -168,41 +167,47 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     });
   });
 
-  it("fits every body, outfit and accent, every pose at every baked heading, in its frame, outline and all (#4060, #4175, #4176)", () => {
-    const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
-    const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
-    const outfits = Object.values(PROFESSION_OUTFITS);
-    // An accent's tone moves no point: one accent of each kind covers every shape.
-    const accents = [
-      undefined,
-      ...new Map(Object.values(SECONDARY_ACCENTS).map((accent) => [accent.kind, accent])).values(),
-    ];
-    const bodies = HEIGHTS.flatMap((height) => BUILDS.map((build) => ({ height, build })));
-    for (const [outfit, accent, body] of outfits.flatMap((outfit) =>
-      accents.flatMap((accent) => bodies.map((body) => [outfit, accent, body] as const)),
-    )) {
-      for (const pose of STACK_POSES) {
-        for (const bucket of STACK_BAKED_HEADINGS) {
-          const layers = stackLayers(
-            stackSlices(pose, outfit, accent, body),
-            bucketFacing(bucket),
-            r,
-            stackTones(FRIEND.body, undefined, outfit, accent),
-            body.height,
-          );
-          const points = layers.flatMap((layer) => layer.points);
-          const xs = points.map((p) => STACK_FRAME_FEET_X + p.x);
-          const ys = points.map((p) => STACK_FRAME_FEET_Y + p.y);
-          expect(Math.min(...xs) - pad).toBeGreaterThanOrEqual(0);
-          expect(Math.max(...xs) + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
-          expect(Math.min(...ys) - pad).toBeGreaterThanOrEqual(0);
-          expect(Math.max(...ys) + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
+  it.each(HEIGHTS.flatMap((height) => BUILDS.map((build) => ({ height, build }))))(
+    "fits a $height $build body, every outfit and accent, every pose at every baked heading, in its frame, outline and all (#4060, #4175, #4176)",
+    (body) => {
+      const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
+      const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
+      const outfits = Object.values(PROFESSION_OUTFITS);
+      // An accent's tone moves no point: one accent of each kind covers every shape.
+      const accents = [
+        undefined,
+        ...new Map(
+          Object.values(SECONDARY_ACCENTS).map((accent) => [accent.kind, accent]),
+        ).values(),
+      ];
+      const frame = stackFrameSize(body);
+      let [left, right, top, bottom] = [Infinity, -Infinity, Infinity, -Infinity];
+      for (const outfit of outfits) {
+        for (const accent of accents) {
+          const tones = stackTones(FRIEND.body, undefined, outfit, accent);
+          for (const pose of STACK_POSES) {
+            const slices = stackSlices(pose, outfit, accent, body);
+            for (const bucket of STACK_BAKED_HEADINGS) {
+              const layers = stackLayers(slices, bucketFacing(bucket), r, tones, body.height);
+              for (const p of layers.flatMap((layer) => layer.points)) {
+                left = Math.min(left, p.x);
+                right = Math.max(right, p.x);
+                top = Math.min(top, p.y);
+                bottom = Math.max(bottom, p.y);
+              }
+            }
+          }
         }
       }
-    }
-  });
+      expect(frame.feetX + left - pad).toBeGreaterThanOrEqual(0);
+      expect(frame.feetX + right + pad).toBeLessThanOrEqual(frame.width);
+      expect(frame.feetY + top - pad).toBeGreaterThanOrEqual(0);
+      expect(frame.feetY + bottom + pad).toBeLessThanOrEqual(frame.height);
+    },
+  );
 
-  it("holds sixteen looks and every creature in under 18 MB, a row no wider than 4096 px (#4060)", () => {
+  /** The surface sixteen looks of `physique` and every creature bake onto. */
+  const sixteen = (physique: FigureBody): FakeSurface | undefined => {
     const { atlas: made, surfaces } = atlas();
     made.bake([
       ...Array.from({ length: 16 }, (_, i) => ({
@@ -210,15 +215,57 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
         body: 0x100000 * i + 0x40,
         cape: undefined,
         ...BARE,
+        physique,
       })),
       ...CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look })),
     ]);
-    const surface = surfaces.at(-1);
+    return surfaces.at(-1);
+  };
+
+  it("holds sixteen looks and every creature in under 18 MB, a row no wider than 4096 px (#4060)", () => {
+    const surface = sixteen(AVERAGE_BODY);
     expect(surface?.width).toBe(FRAMES * STACK_FRAME_WIDTH);
     expect(surface?.width).toBeLessThanOrEqual(4096);
     // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen,
     // and the creature rows' 2 MB allowance (#4171) on top.
     expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(18e6);
+  });
+
+  it("holds sixteen tall heavy looks and every creature in under 24 MB, within 4096 px a side (#4176)", () => {
+    const surface = sixteen({ height: "tall", build: "heavy" });
+    const frame = stackFrameSize({ height: "tall", build: "heavy" });
+    expect(surface?.width).toBe(FRAMES * frame.width);
+    expect(surface?.width).toBeLessThanOrEqual(4096);
+    expect(surface?.height).toBeLessThanOrEqual(4096);
+    // 72 frames of 54 × 82 a look: 20.4 MB for sixteen, creatures on top.
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(24e6);
+  });
+
+  it("sizes a body's frame by its physique: the average frame for an average, short or lean body (#4176)", () => {
+    const average = stackFrameSize(AVERAGE_BODY);
+    expect(average).toEqual({
+      width: STACK_FRAME_WIDTH,
+      height: STACK_FRAME_HEIGHT,
+      feetX: STACK_FRAME_WIDTH / 2,
+      feetY: 63,
+    });
+    expect(stackFrameSize({ height: "short", build: "lean" })).toEqual(average);
+    expect(stackFrameSize({ height: "tall", build: "average" }).height).toBeGreaterThan(
+      average.height,
+    );
+    expect(stackFrameSize({ height: "average", build: "heavy" }).width).toBeGreaterThan(
+      average.width,
+    );
+  });
+
+  it("moves onto a wider canvas when a heavy look joins average ones, every row baked again (#4176)", () => {
+    const { atlas: made, surfaces } = atlas();
+    made.bake([FRIEND]);
+    const heavy: BodyStackLook = { ...FOE, physique: { height: "average", build: "heavy" } };
+    made.bake([FRIEND, heavy]);
+    expect(surfaces.at(-1)?.width).toBe(FRAMES * stackFrameSize(heavy.physique).width);
+    expect(surfaces.at(-1)?.frames.size).toBe(2 * FRAMES);
+    expect(made.frame(heavy, 4, "stand")).toMatchObject({ width: 54, feetX: 27 });
   });
 
   it("bakes a late look off the frame path, once, and shows nothing baked until then", () => {
