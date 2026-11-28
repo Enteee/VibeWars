@@ -248,7 +248,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "fleeting-stability",
         durationSeconds: {
-          scaling: { attributeId: "dervish.earth-prayers", atZero: 2, atTwelve: 7 },
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 2, atTwelve: 6.8 },
         },
       },
     ],
