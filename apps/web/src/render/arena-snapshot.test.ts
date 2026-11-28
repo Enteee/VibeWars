@@ -670,7 +670,9 @@ describe("nameLabelBottom", () => {
     );
     expect(overheadRise(actor("a", 100, 100, 14, { dead: true }))).toBe(0);
     expect(overheadRise(actor("a", 100, 100, 14, { knockedDown: true }))).toBe(0);
-    expect(overheadRise(actor("a", 100, 100, 10, { creatureLook: "beast" }))).toBe(0);
+    expect(overheadRise(actor("a", 100, 100, 10, { creatureLook: "spirit" }))).toBe(0);
+    // A beast stands as a figure since #4173, so it wears the badge too.
+    expect(overheadRise(actor("a", 100, 100, 10, { creatureLook: "beast" }))).toBeGreaterThan(0);
   });
 
   it("keeps the gap over the cast bar the same on screen at every zoom (#456)", () => {
