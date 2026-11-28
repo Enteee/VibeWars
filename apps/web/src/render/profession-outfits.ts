@@ -8,19 +8,24 @@ import type { ProfessionId } from "@vibewars/game-core";
  * a new outfit adds its kinds here and a case to each of its builders.
  */
 
-/** The torso: a warrior's plate, a caster's robe, a short coat, an assassin's tight wrap. */
-export type TorsoKind = "plate" | "robe" | "coat" | "wrap";
+/**
+ * The torso: a warrior's plate, a caster's robe, a short coat, a tight
+ * wrap, a paragon's plate under a tabard.
+ */
+export type TorsoKind = "plate" | "robe" | "coat" | "wrap" | "tabard";
 /** The legs: trousers, or a long robe skirt that hides them. */
 export type LegKind = "trousers" | "robe";
 /** Over the shoulders: pauldrons, a high cloth collar, a cloth mantle, bone spikes, or nothing. */
 export type ShoulderKind = "pauldrons" | "collar" | "mantle" | "spikes" | "none";
 /**
  * The head: a visored helm, a hood, a cowl that hides the face, a
- * wide-brimmed plumed hat, a bare head with or without a circlet.
+ * wide-brimmed plumed hat, a turban, a feathered headdress, a bare head
+ * with or without a circlet.
  */
-export type HeadKind = "helm" | "hood" | "cowl" | "hat" | "circlet" | "bare";
-/** On the back, behind the torso: a quiver, or two crossed blades. */
-export type BackKind = "quiver" | "blades";
+export type HeadKind =
+  "helm" | "hood" | "cowl" | "hat" | "turban" | "headdress" | "circlet" | "bare";
+/** On the back, behind the torso: a quiver, two crossed blades, or a bundle of spears. */
+export type BackKind = "quiver" | "blades" | "spears";
 
 /**
  * An outfit: a kind per slot, and its `cloth`, the second fabric, a dark
@@ -51,8 +56,8 @@ export const WARRIOR_OUTFIT: Outfit = {
   cloth: 0x4a4e58,
 };
 
-/** Each primary's outfit; one with none yet wears the warrior's. */
-export const PROFESSION_OUTFITS: Readonly<Partial<Record<ProfessionId, Outfit>>> = {
+/** Each primary's outfit. */
+export const PROFESSION_OUTFITS: Readonly<Record<ProfessionId, Outfit>> = {
   warrior: WARRIOR_OUTFIT,
   ranger: {
     torso: "coat",
@@ -102,6 +107,30 @@ export const PROFESSION_OUTFITS: Readonly<Partial<Record<ProfessionId, Outfit>>>
     back: "blades",
     cloth: 0x22242c,
   },
+  ritualist: {
+    torso: "wrap",
+    legs: "robe",
+    shoulders: "mantle",
+    head: "headdress",
+    back: undefined,
+    cloth: 0x2a5a52,
+  },
+  paragon: {
+    torso: "tabard",
+    legs: "trousers",
+    shoulders: "pauldrons",
+    head: "helm",
+    back: "spears",
+    cloth: 0xb89a4a,
+  },
+  dervish: {
+    torso: "robe",
+    legs: "robe",
+    shoulders: "none",
+    head: "turban",
+    back: undefined,
+    cloth: 0x7a4a2a,
+  },
 };
 
 /** Each secondary's accent; one with none adds nothing. */
@@ -118,9 +147,9 @@ export const SECONDARY_ACCENTS: Readonly<Partial<Record<ProfessionId, Accent>>> 
   dervish: { kind: "sash", tone: 0xe0a040 },
 };
 
-/** What a body of `primary` wears: the warrior's outfit for none, or one not drawn yet. */
+/** What a body of `primary` wears: the warrior's outfit for none. */
 export function outfitOf(primary: ProfessionId | undefined): Outfit {
-  return (primary === undefined ? undefined : PROFESSION_OUTFITS[primary]) ?? WARRIOR_OUTFIT;
+  return primary === undefined ? WARRIOR_OUTFIT : PROFESSION_OUTFITS[primary];
 }
 
 /** The accent a `secondary` adds: none for no secondary. */

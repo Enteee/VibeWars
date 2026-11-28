@@ -161,7 +161,11 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
     const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
     const outfits = Object.values(PROFESSION_OUTFITS);
-    const accents = [undefined, ...Object.values(SECONDARY_ACCENTS)];
+    // An accent's tone moves no point: one accent of each kind covers every shape.
+    const accents = [
+      undefined,
+      ...new Map(Object.values(SECONDARY_ACCENTS).map((accent) => [accent.kind, accent])).values(),
+    ];
     for (const outfit of outfits) {
       for (const accent of accents) {
         for (const pose of STACK_POSES) {
