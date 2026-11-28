@@ -27,6 +27,10 @@ function heard(transport: Transport): [Channel, unknown][] {
 
 const channels = (got: readonly [Channel, unknown][]): Channel[] => got.map(([channel]) => channel);
 
+/** How many messages on `channel` are in `got`. */
+const count = (got: readonly [Channel, unknown][], channel: Channel): number =>
+  channels(got).filter((heardOn) => heardOn === channel).length;
+
 /** `side`'s MAC, as a peer holding `PROOF_KEY` makes it. */
 async function mac(
   side: "guest" | "host",
@@ -82,6 +86,7 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
     late.send("lobby-join", {}, "host");
     late.send("lobby-join", {}, "host");
     late.send("key-ask", {}, "host");
+    await until(() => count(got, "key-challenge") >= 2);
     await cryptoTurns();
     expect(channels(got)).toEqual(["key-challenge", "key-challenge"]);
     expect(above).toEqual([]);
@@ -109,7 +114,7 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
     host.onPeerJoin((peerId) => joined.push(peerId));
     const late = network.join("late");
     const got = heard(late);
-    await cryptoTurns();
+    await until(() => count(got, "key-challenge") >= 1);
     const stale = lastChallenge(got);
     vi.advanceTimersByTime(KEY_PROOF_TIMEOUT_MS);
 
@@ -119,7 +124,7 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
       { nonce: GUEST_NONCE, mac: await mac("guest", stale, GUEST_NONCE, "late", "host") },
       "host",
     );
-    await cryptoTurns();
+    await until(() => count(got, "key-challenge") >= 2);
     expect(channels(got)).toEqual(["key-challenge", "key-challenge"]);
     expect(lastChallenge(got)).not.toBe(stale);
     expect(joined).toEqual([]);
@@ -145,9 +150,10 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
     const got = heard(host);
     await cryptoTurns();
     host.send("key-challenge", { nonce: "3c".repeat(16) }, "guest");
-    await cryptoTurns();
+    // Its answer is sent and waits: only then does the host challenge again.
+    await until(() => count(got, "key-proof") === 1);
     host.send("key-challenge", { nonce: HOST_NONCE }, "guest");
-    await cryptoTurns();
+    await until(() => count(got, "key-proof") === 2);
     const proofs = got.filter(([channel]) => channel === "key-proof");
     expect(proofs).toHaveLength(2);
     const { nonce } = proofs.at(-1)?.[1] as { nonce: string };
