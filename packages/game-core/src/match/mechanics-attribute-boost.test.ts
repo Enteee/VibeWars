@@ -148,6 +148,18 @@ describe("Ritual Lord (#1941)", () => {
     return found.combatant.maxHealth;
   };
 
+  it("sacrifices 2% of maximum Health (#4244)", () => {
+    const match = new MatchSimulation({
+      seed: "rl",
+      participants: [caster("a", ["ritualist.ritual-lord", "ritualist.recuperation"], RITUALIST)],
+    });
+    const self = get(match, "a").combatant;
+    expect(self.health).toBe(self.maxHealth);
+    use(match, 0, 0.5);
+    expect(self.statuses.has("ritual-lord")).toBe(true);
+    expect(self.health).toBe(self.maxHealth - Math.round(self.maxHealth * 0.02));
+  });
+
   it("lends a binding ritual +4 Ritualist attributes", () => {
     const raised: [string, number][] = [
       ["ritualist.spawning-power", 12],

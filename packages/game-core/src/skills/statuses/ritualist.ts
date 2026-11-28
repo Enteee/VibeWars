@@ -200,8 +200,8 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     ],
     endsWhenTriggered: true,
   }),
-  // "For 20 seconds, target ally's next 1...4...5 attacks deal 5...25...30
-  // damage to up to 4 adjacent foes" (#1022): 4 and 25, its rank-12
+  // "For 20 seconds, target ally's next 1...4...5 attacks deal 5...33...40
+  // damage to up to 4 adjacent foes" (#1022, #4244): 4 and 33, its rank-12
   // values. Adjacent to the foe hit, that foe excluded, as Sand Shards
   // (#939). GW1's is armor-ignoring physical; typeless ignores armor here.
   "splinter-weapon": define("splinter-weapon", "Splinter Weapon", "weapon-spell", {
@@ -218,7 +218,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
           radius: AREA_ADJACENT,
           maxTargets: undefined,
           effects: [
-            { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
+            { kind: "damage", amount: { flat: 33 }, type: "typeless", armorPenetration: 0 },
           ],
         },
       ],

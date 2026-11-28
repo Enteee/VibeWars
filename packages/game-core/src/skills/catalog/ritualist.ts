@@ -385,16 +385,16 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Target ally is healed for 15...68...80 Health. If that ally is under
+    // "Target ally is healed for 30...78...90 Health. If that ally is under
     // the effects of a weapon Spell, that ally loses one Condition": the
-    // 2026-04-28 revision (4 s, 68). The weapon spell is read before the
+    // live wiki (#4244): 4 s, 78. The weapon spell is read before the
     // heal, as Wielder's Boon's.
     effects: [
       {
         kind: "heal",
         received: "heal",
         amount: {
-          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 30, atTwelve: 78 },
         },
       },
       {
@@ -417,7 +417,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 4,
-    rechargeSeconds: 10,
+    rechargeSeconds: 6,
     range: RANGE_SPELL,
     target: "single-dead-ally",
     area: undefined,
@@ -2837,8 +2837,9 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 5...29...35 seconds, your Ritualist attributes are boosted by
     // 2...4 for your next skill. If that skill is a Binding Ritual, it
     // recharges 10...50...60% faster and Ritual Lord recharges instantly"
-    // (#1941): the status holds the rest.
+    // (#1941): the status holds the rest. A 2% sacrifice (#4244).
     effects: [
+      { kind: "sacrifice-health", percentOfMax: 2 },
       {
         kind: "apply-status",
         statusId: "ritual-lord",
