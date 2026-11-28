@@ -64,7 +64,9 @@ yapmaya devam ederler. Bir bot takım arkadaşlarını en fazla dört saniye
 bekler ve canı %30'un altındaki bir düşmanı bitirmek için hiç beklemez.
 Hedef Protective Spirit ya da Aegis gibi koruyucu bir tılsımın
 altındaysa, Strip Enchantment gibi tılsım sökme becerisi olan bir bot
-önce onu söker, diğerleri de vuruşlarını onun için bekletir.
+önce onu söker, diğerleri de vuruşlarını onun için bekletir. Takımda
+tılsım sökme yoksa botlar korunan düşmanı bırakır ve tılsım bitene
+kadar başka birine yönelir.
 
 Dövüşü kaybeden ağır yaralı bir bot şifacısının arkasına ya da üssüne
 çekilir ve canının çoğu geri gelene kadar erişim dışında dinlenir.
