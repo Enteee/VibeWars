@@ -1042,8 +1042,6 @@ export default {
   "queue.sameTeamIn": "I vandt: næste kamp med samme hold om {seconds} s",
   "queue.newTeamIn": "Jeres gruppe har ændret sig: vælg holdet igen om {seconds} s",
   "queue.now": "Nu",
-  "queue.warmupIn":
-    "Intet andet hold endnu. Opvarmningskamp mod bots om {seconds} s. Den tæller ikke, og du bliver i køen.",
   "queue.warmupNow": "Start opvarmning nu",
   "queue.warmupRunning": "Opvarmning — stadig i køen til {queue} ({waited} ventet)",
   "queue.warmupOver": "Kamp fundet — opvarmning slut",

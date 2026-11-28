@@ -1102,8 +1102,6 @@ export default {
   "queue.sameTeamIn": "ניצחתם: המשחק הבא עם אותה קבוצה בעוד {seconds} שנ׳",
   "queue.newTeamIn": "הקבוצה שלכם השתנתה: בחרו קבוצה מחדש בעוד {seconds} שנ׳",
   "queue.now": "עכשיו",
-  "queue.warmupIn":
-    "עדיין אין קבוצה אחרת. משחק חימום נגד בוטים בעוד {seconds} ש׳. הוא לא נספר, ואתם נשארים בתור.",
   "queue.warmupNow": "התחילו חימום עכשיו",
   "queue.warmupRunning": "חימום — עדיין בתור ל־{queue} (המתנה של {waited})",
   "queue.warmupOver": "נמצא משחק — החימום הסתיים",

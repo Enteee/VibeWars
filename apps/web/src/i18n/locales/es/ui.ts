@@ -1110,8 +1110,6 @@ export default {
   "queue.sameTeamIn": "Habéis ganado: siguiente partida con el mismo equipo en {seconds} s",
   "queue.newTeamIn": "Vuestro grupo ha cambiado: elegid el equipo de nuevo en {seconds} s",
   "queue.now": "Ya",
-  "queue.warmupIn":
-    "Todavía no hay otro equipo. Partida de calentamiento contra bots en {seconds} s. No cuenta y sigues en la cola.",
   "queue.warmupNow": "Empezar calentamiento ya",
   "queue.warmupRunning": "Calentamiento — sigues en la cola de {queue} ({waited} de espera)",
   "queue.warmupOver": "Partida encontrada — fin del calentamiento",

@@ -186,13 +186,13 @@ mod dem på en af spiltilstandens baner, hver side med sine egne builds,
 og vender tilbage til jeres lobby bagefter. Værten kan til enhver tid
 forlade køen fra ringens vindue; en gæst, der forlader den, tager hele
 gruppen ud af den. Så længe intet andet hold kommer, tæller ringens vindue
-og jeres lobby 30 s ned til en **opvarmning**: en kamp i jeres egen lobby
+30 s ned til en **opvarmning**, vist på dets knap **Start opvarmning nu**: en kamp i jeres egen lobby
 mod et tilfældigt forudindstillet hold af bots. Den tæller ikke for noget,
 ingen rating og ingen Kamphistorik, og du bliver i køen hele tiden: en
 etiket i kampen siger det. Den ene opvarmning følger den anden, indtil et
 hold er fundet; så slutter opvarmningen med det samme, og du går til din
-kamp. Værten kan trykke på **Start opvarmning nu** i ringens vindue i
-stedet for at vente. Der er ingen opvarmninger i
+kamp. Værten kan trykke på **Start opvarmning nu** i stedet for at
+vente; en gæst ser knappen gråtonet. Der er ingen opvarmninger i
 [Heltenes opstigning](modes.md#heltenes-opstigning), som venter på et hold
 i jeres runde.
 

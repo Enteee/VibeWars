@@ -1102,8 +1102,6 @@ export default {
   "queue.sameTeamIn": "Avete vinto: prossima partita con la stessa squadra tra {seconds} s",
   "queue.newTeamIn": "Il vostro gruppo è cambiato: scegliete di nuovo la squadra tra {seconds} s",
   "queue.now": "Ora",
-  "queue.warmupIn":
-    "Ancora nessun'altra squadra. Partita di riscaldamento contro bot tra {seconds} s. Non conta e resti in coda.",
   "queue.warmupNow": "Inizia il riscaldamento ora",
   "queue.warmupRunning": "Riscaldamento — ancora in coda per {queue} ({waited} di attesa)",
   "queue.warmupOver": "Partita trovata — riscaldamento finito",

@@ -203,14 +203,14 @@ ugyanabban a módban sorban álló csapat, a mód valamelyik pályáján
 játszotok ellenük, mindkét oldal a saját buildjeivel, utána pedig
 visszatértek a lobbitokba. A házigazda bármikor kiléphet a sorból a
 gyűrű ablakából; a vendég, aki kilép, az egész osztagot kiveszi a
-sorból. Amíg nem jön másik csapat, a gyűrű ablaka és a lobbid 30 mp-et
-számol vissza egy **bemelegítésig**: egy meccs a saját lobbidban egy
+sorból. Amíg nem jön másik csapat, a gyűrű ablaka 30 mp-et
+számol vissza egy **bemelegítésig** a **Bemelegítés indítása most** gombján: egy meccs a saját lobbidban egy
 véletlen előre beállított botcsapat ellen. Semmibe nem számít, sem a
 pontszámba, sem a Meccselőzményekbe, és végig sorban maradtok: egy
 felirat a meccsben ezt jelzi. Egyik bemelegítés követi a másikat, amíg
 csapat nem akad; akkor a bemelegítés azonnal véget ér, és mentek a
-meccsetekre. A házigazda várakozás helyett megnyomhatja a gyűrű ablakában
-a **Bemelegítés indítása most** gombot. A
+meccsetekre. A házigazda várakozás helyett megnyomhatja
+a **Bemelegítés indítása most** gombot; a vendég szürkén látja. A
 [Hősök Útján](modes.md#hősök-útja) nincs bemelegítés, az egy, a te
 körödben lévő csapatra vár.
 

@@ -707,6 +707,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Start warmup now's countdown (#4285): digits at its end, two wide, so 10 -> 9 keeps its width. */
+.queue-warmup-count {
+  display: inline-block;
+  min-width: 2ch;
+  margin-inline-start: 0.6em;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The Leaderboard flyout (#3575): the top 100, scrolling, as the queue's. */
 #topbar .leaderboard-window {
   position: absolute;

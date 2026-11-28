@@ -999,8 +999,6 @@ export default {
   "queue.sameTeamIn": "Kamu menang: pertandingan berikutnya dengan tim yang sama dalam {seconds} s",
   "queue.newTeamIn": "Rombonganmu berubah: pilih tim lagi dalam {seconds} s",
   "queue.now": "Kini",
-  "queue.warmupIn":
-    "Belum ada tim lain. Pertandingan pemanasan melawan bot dalam {seconds} dtk. Tidak dihitung, dan kamu tetap dalam antrean.",
   "queue.warmupNow": "Mulai pemanasan sekarang",
   "queue.warmupRunning": "Pemanasan — masih dalam antrean {queue} ({waited} menunggu)",
   "queue.warmupOver": "Pertandingan ditemukan — pemanasan selesai",

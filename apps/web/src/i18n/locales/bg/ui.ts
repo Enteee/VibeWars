@@ -1046,8 +1046,6 @@ export default {
   "queue.sameTeamIn": "Победихте: следващ мач със същия отбор след {seconds} с",
   "queue.newTeamIn": "Групата ви се промени: изберете отбора отново след {seconds} с",
   "queue.now": "Сега",
-  "queue.warmupIn":
-    "Все още няма друг отбор. Загрявъчен мач срещу ботове след {seconds} с. Не се брои и оставаш в опашката.",
   "queue.warmupNow": "Започни загрявка сега",
   "queue.warmupRunning": "Загрявка — още в опашката за {queue} ({waited} чакане)",
   "queue.warmupOver": "Мач намерен — загрявката свърши",

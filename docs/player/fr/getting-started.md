@@ -192,14 +192,14 @@ Arène d'équipe combien d'équipes cherchent, la tienne comprise :
 de l'hôte retire aussitôt le groupe de la file. Quand une autre équipe en file
 du même mode arrive, vous jouez sur l'une des cartes du mode, chaque camp avec
 ses propres builds, puis vous revenez à votre salon. L'hôte peut quitter la file depuis la fenêtre de l'anneau à tout moment ; un invité qui part retire tout le groupe de
-la file. Tant qu'aucune autre équipe n'arrive, la fenêtre de l'anneau et ton
-salon décomptent 30 s jusqu'à un **échauffement** : un match dans ton propre
+la file. Tant qu'aucune autre équipe n'arrive, la fenêtre de l'anneau
+décompte 30 s jusqu'à un **échauffement**, sur son bouton **Lancer l'échauffement** : un match dans ton propre
 salon contre une équipe préréglée de bots au hasard. Il ne compte pour rien,
 ni classement ni Historique des parties, et vous restez dans la file tout du
 long : une étiquette dans le match le rappelle. Les échauffements
 s'enchaînent jusqu'à ce qu'une équipe soit trouvée ; l'échauffement s'arrête
 alors aussitôt et vous partez à votre match. L'hôte peut appuyer sur
-**Lancer l'échauffement** dans la fenêtre de l'anneau plutôt que d'attendre.
+**Lancer l'échauffement** plutôt que d'attendre ; un invité voit le bouton grisé.
 Il n'y a pas d'échauffement en
 [Ascension des héros](modes.md#ascension-des-héros), qui attend une équipe de
 ta manche.

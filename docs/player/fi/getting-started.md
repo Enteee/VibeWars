@@ -188,12 +188,12 @@ heti. Kun toinen saman pelitilan jonottava tiimi ilmaantuu, pelaatte sitä
 vastaan yhdellä pelitilan kartoista, kumpikin puoli omilla
 buildeillaan, ja palaatte sen jälkeen aulaasi. Isäntä voi poistua renkaan ikkunasta milloin tahansa; vieras, joka poistuu, vie koko
 ryhmän pois jonosta. Niin kauan kuin muuta tiimiä ei tule, renkaan ikkuna
-ja aulasi laskevat 30 s **lämmittelyyn**: ottelu omassa aulassasi
+laskee 30 s **lämmittelyyn** **Aloita lämmittely nyt** -painikkeessaan: ottelu omassa aulassasi
 satunnaista valmista bottitiimiä vastaan. Se ei vaikuta mihinkään, ei
 luokitukseen eikä Otteluhistoriaan, ja pysytte jonossa koko ajan: ottelun
 merkintä kertoo sen. Lämmittelyt seuraavat toisiaan, kunnes tiimi löytyy;
 silloin lämmittely päättyy heti ja siirrytte otteluunne. Isäntä voi painaa
-renkaan ikkunasta **Aloita lämmittely nyt** odottamisen sijaan.
+**Aloita lämmittely nyt** odottamisen sijaan; vieras näkee painikkeen harmaana.
 [Sankarien nousussa](modes.md#sankarien-nousu) ei ole lämmittelyjä, koska
 se odottaa tiimiä sinun kierrokseltasi.
 

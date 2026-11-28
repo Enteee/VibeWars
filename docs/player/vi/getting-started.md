@@ -179,13 +179,13 @@ phòng sẽ đưa tổ đội ra khỏi hàng chờ ngay lập tức. Khi một 
 mỗi bên với build riêng, rồi quay về sảnh của mình sau đó. Chủ phòng có thể
 rời hàng chờ từ cửa sổ của vòng xoay bất cứ lúc nào; khách rời đi sẽ kéo cả
 tổ đội ra khỏi hàng chờ. Trong lúc chưa có đội nào khác tới, cửa sổ của
-vòng xoay và sảnh của bạn đếm ngược 30 giây tới một trận **khởi động**: một
+vòng xoay đếm ngược 30 giây tới một trận **khởi động** trên nút **Khởi động ngay** của nó: một
 trận trong chính sảnh của bạn với một đội bot có sẵn ngẫu nhiên. Trận này
 không tính gì cả, không có điểm xếp hạng và không vào Lịch sử trận đấu, và
 bạn vẫn ở trong hàng chờ suốt thời gian đó: một nhãn trong trận cho biết
 điều này. Các trận khởi động nối tiếp nhau cho đến khi tìm thấy một đội;
 khi đó trận khởi động kết thúc ngay và bạn vào trận của mình. Chủ phòng có
-thể nhấn **Khởi động ngay** trong cửa sổ của vòng xoay thay vì chờ. Không
+thể nhấn **Khởi động ngay** thay vì chờ; khách thấy nút này bị làm mờ. Không
 có trận khởi động ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng), nơi bạn chờ
 một đội ở cùng vòng với bạn.
 

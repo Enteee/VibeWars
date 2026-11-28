@@ -1046,8 +1046,6 @@ export default {
   "queue.sameTeamIn": "Gewonnen: volgende match met hetzelfde team over {seconds} s",
   "queue.newTeamIn": "Je groep is veranderd: kies je team opnieuw over {seconds} s",
   "queue.now": "Nu",
-  "queue.warmupIn":
-    "Nog geen ander team. Opwarmpotje tegen bots over {seconds} s. Het telt niet, en je blijft in de wachtrij.",
   "queue.warmupNow": "Nu opwarmen",
   "queue.warmupRunning": "Opwarmen — nog in de wachtrij voor {queue} ({waited} gewacht)",
   "queue.warmupOver": "Wedstrijd gevonden — opwarmen voorbij",

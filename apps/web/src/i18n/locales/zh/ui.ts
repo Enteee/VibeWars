@@ -985,7 +985,6 @@ export default {
   "queue.sameTeamIn": "胜利：{seconds} 秒后以同一队伍进行下一场",
   "queue.newTeamIn": "你的队伍成员变了：{seconds} 秒后重新选择队伍",
   "queue.now": "现在",
-  "queue.warmupIn": "还没有其他队伍。{seconds} 秒后与机器人进行热身赛。不计成绩，你仍在队列中。",
   "queue.warmupNow": "立即开始热身",
   "queue.warmupRunning": "热身中 — 仍在 {queue} 队列中（已等待 {waited}）",
   "queue.warmupOver": "已找到比赛 — 热身结束",

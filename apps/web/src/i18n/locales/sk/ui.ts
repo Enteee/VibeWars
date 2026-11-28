@@ -1135,8 +1135,6 @@ export default {
   "queue.sameTeamIn": "Vyhrali ste: ďalší zápas s rovnakým tímom o {seconds} s",
   "queue.newTeamIn": "Vaša skupina sa zmenila: zvoľte tím znova o {seconds} s",
   "queue.now": "Teraz",
-  "queue.warmupIn":
-    "Zatiaľ žiadny iný tím. Rozcvičkový zápas proti botom o {seconds} s. Nepočíta sa a zostávaš v rade.",
   "queue.warmupNow": "Začať rozcvičku hneď",
   "queue.warmupRunning": "Rozcvička — stále v rade na {queue} ({waited} čakania)",
   "queue.warmupOver": "Zápas nájdený — rozcvička skončila",

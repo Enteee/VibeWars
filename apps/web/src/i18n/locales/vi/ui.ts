@@ -991,8 +991,6 @@ export default {
   "queue.sameTeamIn": "Bạn đã thắng: trận tiếp theo với cùng đội sau {seconds} giây",
   "queue.newTeamIn": "Nhóm của bạn đã thay đổi: chọn lại đội sau {seconds} giây",
   "queue.now": "Ngay",
-  "queue.warmupIn":
-    "Chưa có đội khác. Trận khởi động với bot sau {seconds} giây. Trận này không tính, và bạn vẫn ở trong hàng chờ.",
   "queue.warmupNow": "Khởi động ngay",
   "queue.warmupRunning": "Khởi động — vẫn trong hàng chờ {queue} (đã chờ {waited})",
   "queue.warmupOver": "Đã tìm thấy trận — hết khởi động",

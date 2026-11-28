@@ -1054,8 +1054,6 @@ export default {
   "queue.sameTeamIn": "Gewonnen: nächstes Match mit demselben Team in {seconds} s",
   "queue.newTeamIn": "Eure Gruppe hat sich geändert: Team neu wählen in {seconds} s",
   "queue.now": "Jetzt",
-  "queue.warmupIn":
-    "Noch kein anderes Team. Aufwärmmatch gegen Bots in {seconds} s. Es zählt nicht, und du bleibst in der Warteschlange.",
   "queue.warmupNow": "Aufwärmen jetzt starten",
   "queue.warmupRunning": "Aufwärmen — noch in der Warteschlange für {queue} ({waited} gewartet)",
   "queue.warmupOver": "Match gefunden — Aufwärmen vorbei",
