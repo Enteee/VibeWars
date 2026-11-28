@@ -5,7 +5,7 @@ import { getStatusDefinition, type StatusId } from "../../../skills/status.js";
 import { isSpell, type Skill, type Surroundings } from "../../../skills/types.js";
 import { blockChanceAgainst } from "../block-swap.js";
 import { setupOf, type Setup } from "../skill-intent.js";
-import { healthFraction } from "./shared.js";
+import { healthFraction, keepsReserve } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 import { retreatsFrom } from "./way-out.js";
 
@@ -179,7 +179,8 @@ const setup: BotRule = {
       ({ skill, setup, statusId }) =>
         !combatant.statuses.has(statusId) &&
         wanted(setup, statusId, skill) &&
-        mayUse(skill, self.id),
+        mayUse(skill, self.id) &&
+        !keepsReserve(self, skill),
     );
     return found === undefined ? undefined : use(found.skill, self.id);
   },

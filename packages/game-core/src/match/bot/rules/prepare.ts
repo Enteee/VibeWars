@@ -6,7 +6,7 @@ import { distance } from "../../../vec2.js";
 import type { BehaviourContext, BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
 import { worthPrecasting } from "./precast.js";
-import { NOTHING, skillsOf } from "./shared.js";
+import { NOTHING, keepsReserve, skillsOf } from "./shared.js";
 
 /** The share of its maximum Energy a bot keeps for the start (#3910). */
 export const PREP_ENERGY_FLOOR = 0.5;
@@ -102,7 +102,8 @@ export function prepare(
     if (
       !worthPrecasting(skill) ||
       skill.cost?.kind === "adrenaline" ||
-      combatant.energy - energyCostOf(skill, combatant) < floor
+      combatant.energy - energyCostOf(skill, combatant) < floor ||
+      keepsReserve(self, skill)
     ) {
       continue;
     }

@@ -27,7 +27,10 @@ ist **Frontkämpfer**: Er geht nah heran und greift sein Ziel an. Wer zwei oder
 mehr Heilungen oder Schutz-Skills auf Verbündete wirken kann, ist **Heiler**: Er
 steht hinter dem am stärksten verletzten Verbündeten, weg von den Gegnern. Wenn
 zwei oder mehr Gegner auf einen Verbündeten gehen, wirkt ein Heiler seinen Schutz
-auf ihn, bevor der Treffer sitzt. Jeder andere Bot ist **Fernkämpfer**: Er bleibt
+auf ihn, bevor der Treffer sitzt. Ein Heiler hält genug Energie für seine
+billigste Heilung oder seinen billigsten Schutz zurück und geht nur für einen
+Verbündeten in echter Gefahr darunter. Jeder andere Bot ist **Fernkämpfer**:
+Er bleibt
 dort, wo jeder seiner Angriffe reicht, und stellt sich einem Gegner, der zu nah
 kommt. Fernkämpfer und Heiler gehen dorthin, wo weniger Gegner sie erreichen, und
 nutzen Säulen als Deckung. Ein Team stürzt sich auf jeden Gegner in Reichweite,

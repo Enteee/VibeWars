@@ -11,6 +11,12 @@ import {
   wrapSkirtRadii,
 } from "./outfits-necromancer-mesmer-assassin.js";
 import {
+  headdressSlices,
+  spearsSlices,
+  tabardSlices,
+  turbanSlices,
+} from "./outfits-ritualist-paragon-dervish.js";
+import {
   PROFESSION_OUTFITS,
   WARRIOR_OUTFIT,
   type Accent,
@@ -248,6 +254,7 @@ function skirtRadii(outfit: Outfit): readonly number[] {
     case "coat":
       return [0.7, 0.66, 0.62, 0.58];
     case "plate":
+    case "tabard":
     case "robe":
       return [0.62, 0.6, 0.58, 0.56];
     case "wrap":
@@ -279,7 +286,11 @@ function skirtSlices(
     cape([capeBack(motion, -0.3 - 0.06 * lean, 0.32, capeLength, 1 - i / 11)], 0.5 + 0.06 * i);
     push([ellipse(x, 0, r * 0.72, r)], "team", 0.6 + 0.07 * i, true);
   });
-  push([ellipse(0.12 * lean, 0, 0.4, 0.56)], outfit.torso === "plate" ? "belt" : "rope", 0.9);
+  push(
+    [ellipse(0.12 * lean, 0, 0.4, 0.56)],
+    outfit.torso === "plate" || outfit.torso === "tabard" ? "belt" : "rope",
+    0.9,
+  );
   if (accent?.kind === "belt") {
     push([ellipse(0.12 * lean, 0, 0.44, 0.6)], "accent", 0.92, true);
   }
@@ -293,6 +304,7 @@ function torsoShape(kind: TorsoKind): {
 } {
   switch (kind) {
     case "plate":
+    case "tabard":
       return { radii: [0.56, 0.6, 0.64, 0.68, 0.7], sleeve: "team", hand: "metal" };
     case "coat":
     case "wrap":
@@ -317,6 +329,9 @@ function backSlices(figure: Figure, kind: BackKind | undefined, i: number, x: nu
       return;
     case "blades":
       bladesSlices(figure, i, x);
+      return;
+    case "spears":
+      spearsSlices(figure, i, x);
       return;
   }
 }
@@ -344,6 +359,9 @@ function torsoSlices(figure: Figure, outfit: Outfit, accent: Accent | undefined)
       const r = radii[Math.min(i - 2, 4)] ?? 0;
       const x = 0.06 + 0.2 * lean * (i / 7);
       push([ellipse(x, 0, r * 0.66, r)], "team", 0.74 + 0.04 * i, true);
+      if (outfit.torso === "tabard") {
+        tabardSlices(figure, i, x, r);
+      }
       if (accent?.kind === "sash" && i >= 3) {
         push([ellipse(x, 0, 0.2, r * 1.12, 14, 0.5)], "accent", 0.82 + 0.04 * i, true);
       }
@@ -456,6 +474,12 @@ function headSlices({ push, motion }: Figure, kind: HeadKind): void {
       return;
     case "hat":
       hatSlices(push, cx);
+      return;
+    case "turban":
+      turbanSlices(push, cx);
+      return;
+    case "headdress":
+      headdressSlices(push, cx);
       return;
   }
 }

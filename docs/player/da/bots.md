@@ -26,7 +26,9 @@ er **frontlinje**: den rykker tæt på og angriber sit mål. En med to eller
 flere helbredelser eller beskyttelser, den kan kaste på en allieret, er
 **healer**: den står bag den allierede, der er hårdest ramt, væk fra
 fjenderne. Når to eller flere fjender går efter én allieret, lægger en
-healer sin beskyttelse på den allierede, før slaget lander. Hver anden bot
+healer sin beskyttelse på den allierede, før slaget lander. En healer
+holder nok energi tilbage til sin billigste helbredelse eller beskyttelse
+og bruger kun under det på en allieret i reel fare. Hver anden bot
 er **afstandskæmper**: den holder sig der, hvor hvert af dens angreb
 rækker, og står og kæmper mod en fjende, der kommer for tæt på.
 Afstandsbots og healere træder hen, hvor færre fjender kan nå dem, og

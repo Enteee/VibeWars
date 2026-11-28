@@ -500,27 +500,15 @@ describe("profession outfits (#4175)", () => {
     return hit;
   };
 
-  it("dresses every drawn profession its own way (#4175, #4179)", () => {
-    const drawn = [
-      "warrior",
-      "monk",
-      "elementalist",
-      "ranger",
-      "necromancer",
-      "mesmer",
-      "assassin",
-    ] as const;
-    for (const primary of drawn) {
-      expect(PROFESSION_OUTFITS[primary]).toBeDefined();
-    }
-    const looks = drawn.map((primary) => JSON.stringify(standing(outfitOf(primary))));
-    expect(new Set(looks).size).toBe(drawn.length);
+  it("dresses every profession its own way (#4175, #4179, #4180)", () => {
+    expect(OUTFITS).toHaveLength(10);
+    const looks = OUTFITS.map((outfit) => JSON.stringify(standing(outfit)));
+    expect(new Set(looks).size).toBe(OUTFITS.length);
   });
 
-  it("wears the warrior's outfit with no primary, or one with no outfit yet", () => {
+  it("wears the warrior's outfit with no primary, and adds no accent with no secondary", () => {
     expect(outfitOf("warrior")).toBe(WARRIOR_OUTFIT);
     expect(outfitOf(undefined)).toBe(WARRIOR_OUTFIT);
-    expect(outfitOf("ritualist")).toBe(WARRIOR_OUTFIT);
     expect(accentOf(undefined)).toBeUndefined();
   });
 
@@ -590,6 +578,21 @@ describe("profession outfits (#4175)", () => {
     expect(tones("assassin")).toContain("metal");
     expect(tones("assassin")).not.toContain("bone");
     expect(stackTones(0x59c2ff, undefined, outfitOf("necromancer"), undefined).bone).toBe(0xd8d0b8);
+  });
+
+  it("feathers the ritualist, tabards the paragon with spears on its back, turbans the dervish (#4180)", () => {
+    const tones = (primary: "warrior" | "ritualist" | "paragon" | "dervish"): StackTone[] =>
+      standing(outfitOf(primary)).map((slice) => slice.tone);
+    expect(tones("ritualist").at(-1)).toBe("gold");
+    expect(tones("ritualist")).toContain("crest");
+    expect(tones("ritualist")).not.toContain("visor");
+    // The paragon's helm and pauldrons, its tabard's cloth and its spears' shafts.
+    expect(tones("paragon")).toContain("visor");
+    expect(tones("paragon")).toContain("cloth");
+    expect(tones("paragon")).toContain("leather");
+    expect(tones("warrior")).not.toContain("cloth");
+    expect(tones("dervish").at(-1)).toBe("gold");
+    expect(tones("dervish")).not.toContain("hair");
   });
 });
 

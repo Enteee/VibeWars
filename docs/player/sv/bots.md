@@ -27,7 +27,10 @@ En bot spelar den roll dess build ger den. En som bär ett närstridsvapen
 fler helningar eller skydd som den kan kasta på en allierad är en
 **helare**: den står bakom den allierade som är mest skadad, borta från
 fienderna. När två eller fler fiender fokuserar på en allierad lägger en
-helare sitt skydd på den allierade innan träffen landar. Varje annan bot
+helare sitt skydd på den allierade innan träffen landar. En helare
+håller kvar tillräckligt med energi för sin billigaste helning eller sitt
+billigaste skydd, och går bara under det för en allierad i verklig fara.
+Varje annan bot
 är **avståndsstridande**: den håller sig där var och en av dess attacker
 når, och står kvar och slåss mot en fiende som kommer för nära.
 Avståndsstridande bottar och helare kliver dit där färre fiender kan nå

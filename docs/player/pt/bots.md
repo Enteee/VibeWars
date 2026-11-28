@@ -27,7 +27,9 @@ Um bot joga o papel que a build dele dá. Quem usa arma corpo a corpo é da
 ou proteções para usar em um aliado é **curandeiro**: fica atrás do
 aliado mais ferido, longe dos inimigos. Quando dois ou mais inimigos
 focam um aliado, o curandeiro coloca a proteção nele antes do golpe
-acertar. Todos os outros bots são **à distância**: ficam onde todos os
+acertar. O curandeiro guarda energia suficiente para sua cura ou
+proteção mais barata, e só gasta abaixo disso com um aliado em perigo
+real. Todos os outros bots são **à distância**: ficam onde todos os
 seus ataques alcançam e param para lutar com um inimigo que chega perto
 demais. Bots à distância e curandeiros vão para onde menos inimigos os
 alcançam e usam pilares como cobertura. Uma equipe se volta contra
