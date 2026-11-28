@@ -59,7 +59,9 @@ wykonują zamachy i rzucają klątwy oraz dolegliwości. Bot czeka na sojusznik�
 najwyżej cztery sekundy, a na dobicie wroga poniżej 30% zdrowia wcale nie czeka.
 Gdy cel jest pod ochronnym zaczarowaniem, jak Protective Spirit lub Aegis, bot
 z umiejętnością zdejmującą zaczarowania, jak Strip Enchantment, najpierw je zdejmuje,
-a pozostałe wstrzymują dla niego ciosy.
+a pozostałe wstrzymują dla niego ciosy. Gdy w drużynie nikt nie zdejmuje
+zaczarowań, boty zostawiają chronionego wroga i przechodzą do innego, aż
+zaczarowanie się skończy.
 
 Ciężko ranny bot, który przegrywa walkę, cofa się za swojego uzdrowiciela lub
 do bazy i odpoczywa poza zasięgiem, aż odzyska większość zdrowia.

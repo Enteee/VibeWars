@@ -608,17 +608,24 @@ function firesNow(mate: Participant, skill: Skill, target: Participant): boolean
 }
 
 /**
- * The strip skill `mate` casts at `target` before its spike (#2634): one
- * it could fire now, while `target` bears an enchantment a `defence`
- * skill put on it, Protective Spirit's or Aegis's. `undefined` with
- * nothing to strip, or no strip ready: a recharging one holds nobody up.
+ * Whether `target` bears an enchantment a `defence` skill put on it,
+ * Protective Spirit's or Aegis's (#2634, #4269).
  */
-export function stripFirst(mate: Participant, target: Participant): Skill | undefined {
-  const guarded = target.combatant.statuses.active.some(
+export function bearsDefence(target: Participant): boolean {
+  return target.combatant.statuses.active.some(
     (status) =>
       getStatusDefinition(status.id).category === "enchantment" && isDefenceStatus(status.id),
   );
-  if (!guarded) {
+}
+
+/**
+ * The strip skill `mate` casts at `target` before its spike (#2634): one
+ * it could fire now, while `target` bears a defence enchantment
+ * (`bearsDefence`). `undefined` with nothing to strip, or no strip
+ * ready: a recharging one holds nobody up.
+ */
+export function stripFirst(mate: Participant, target: Participant): Skill | undefined {
+  if (!bearsDefence(target)) {
     return undefined;
   }
   for (const id of mate.skillBar) {

@@ -63,7 +63,9 @@ afecțiunile. Un bot își așteaptă coechipierii cel mult patru secunde și nu
 așteaptă deloc ca să termine un inamic sub 30% din viață. Când ținta se află
 sub un farmec protector, precum Protective Spirit sau Aegis, un bot cu o
 abilitate de eliminare a farmecelor, precum Strip Enchantment, îl scoate mai
-întâi, iar ceilalți își rețin loviturile pentru asta.
+întâi, iar ceilalți își rețin loviturile pentru asta. Dacă echipa nu are
+nicio eliminare a farmecelor, boții lasă inamicul protejat și trec la altul
+până când farmecul se termină.
 
 Un bot grav rănit care își pierde lupta se retrage în spatele vindecătorului
 său sau la bază și se odihnește în afara razei până își recapătă cea mai mare

@@ -67,6 +67,8 @@ eikä odota lainkaan viimeistelläkseen vihollisen, jonka terveys on alle
 30 %. Kun kohde on suojaavan lumouksen, kuten Protective Spiritin tai
 Aegisin, alla, botti, jolla on lumouksen riisuva taito, kuten Strip
 Enchantment, poistaa sen ensin, ja muut pidättävät iskujaan sitä varten.
+Jos joukkueella ei ole lumouksen riisuvaa taitoa, botit jättävät suojatun
+vihollisen ja kääntyvät toiseen, kunnes lumous päättyy.
 
 Pahasti haavoittunut botti, joka on häviämässä taistelunsa, vetäytyy
 parantajansa taakse tai tukikohtaansa ja lepää ulottumattomissa, kunnes
