@@ -132,6 +132,25 @@ export const BENCH_SCENES: readonly DiagramScene[] = [
     ],
     markers: [],
   },
+  {
+    // The PR's still (#4172): every minion look side by side at match zoom.
+    id: "minion-figures",
+    map: "ember-pits",
+    camera: { x: 1600, y: 1100, zoom: 2.4 },
+    actors: [{ profession: "necromancer", team: 0, x: 1460, y: 1100 }],
+    creatures: (
+      [
+        "bone-minion",
+        "bone-horror",
+        "bone-fiend",
+        "vampiric-horror",
+        "shambling-horror",
+        "jagged-horror",
+        "flesh-golem",
+      ] as const
+    ).map((look, i) => ({ look, team: 0, x: 1480 + i * 44, y: 1100 })),
+    markers: [],
+  },
 ];
 
 export const UI_SCENES: readonly UiScene[] = [

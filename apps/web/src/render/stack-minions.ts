@@ -53,7 +53,7 @@ const SHAMBLER: Skeleton = { k: 0.6, wide: 1.5, deep: 1, ribs: 6, skull: 5, hunc
 
 /**
  * A skeleton: feet and shins, a pelvis, then each rib a spine knot, a
- * dark gap ring and two bone ends, every other one closed by a bone arc,
+ * dark gap inside two bone ends, every other one closed by a bone ring,
  * and a skull leaning forward with its eye sockets.
  */
 function skeleton(s: Slices, pose: CreaturePose, shape: Skeleton): void {
@@ -81,7 +81,7 @@ function skeleton(s: Slices, pose: CreaturePose, shape: Skeleton): void {
     const r = (0.42 + 0.05 * Math.sin((i / ribs) * Math.PI)) * wide;
     const lead = hunch * (i / ribs);
     s.push([ellipse(lead, 0, 0.1, 0.1, 6)], BONE, 0.6 + 0.03 * i);
-    s.push([ellipse(lead, 0, r * 0.7 * deep, r)], BONE_GAP, 0.45 + 0.04 * i, true);
+    s.push([ellipse(lead, 0, r * 0.6 * deep, r * 0.85)], BONE_GAP, 0.45 + 0.04 * i, true);
     s.push(
       [ellipse(lead, -r * 0.8, 0.12, 0.12 * deep, 6), ellipse(lead, r * 0.8, 0.12, 0.12 * deep, 6)],
       BONE,
@@ -89,7 +89,7 @@ function skeleton(s: Slices, pose: CreaturePose, shape: Skeleton): void {
       true,
     );
     if (i % 2 === 0) {
-      s.push([ellipse(lead, 0, r * 0.6 * deep, r * 0.95)], BONE, 0.8 + 0.02 * i);
+      s.push([ellipse(lead, 0, r * 0.7 * deep, r)], BONE, 0.8 + 0.02 * i);
     }
   }
   const hx = hunch + 0.1;
