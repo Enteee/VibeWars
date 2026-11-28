@@ -3257,7 +3257,8 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
     isNumber(raw.adrenalineCost) &&
     isNumber(raw.activationSeconds) &&
     isNumber(raw.rechargeSeconds) &&
-    (raw.copyEndsAt === null || isNumber(raw.copyEndsAt))
+    ((raw.copyEndsAt === null && raw.copySeconds === null) ||
+      (isNumber(raw.copyEndsAt) && isNumber(raw.copySeconds) && raw.copySeconds > 0))
     ? {
         id: raw.id,
         name: raw.name,
@@ -3266,6 +3267,7 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
         activationSeconds: raw.activationSeconds,
         rechargeSeconds: raw.rechargeSeconds,
         copyEndsAt: raw.copyEndsAt,
+        copySeconds: raw.copySeconds,
       }
     : undefined;
 }

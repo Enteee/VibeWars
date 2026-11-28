@@ -1037,7 +1037,8 @@ hotkey.
 - **An echo's copy** (#1154): a slot an echo filled carries a 3 px
   `enchantment` strip along its bottom edge, over the recharge wipe and
   clear of its number, under the hotkey and the `↔`, draining from full
-  to empty over the copy's 20 s; the tooltip adds "Echoed: 12 s left".
+  to empty over the copy's life, 30 s for Echo's and 20 s for Arcane
+  Echo's; the tooltip adds "Echoed: 12 s left".
   Under reduced motion it steps once a second.
 
 ### Elite frame

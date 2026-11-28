@@ -55,6 +55,7 @@ describe("rechargeState", () => {
       skillId: "c",
       key: "c@0",
       remainingSeconds: 20,
+      totalSeconds: 20,
       restores: { skillId: "a", rechargeSeconds: 20 },
     });
     cast.startRecharge("c", 8);

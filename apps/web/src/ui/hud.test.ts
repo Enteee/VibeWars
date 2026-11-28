@@ -118,6 +118,7 @@ describe("changedSlots (#469)", () => {
     activationSeconds: 0,
     rechargeSeconds: 0,
     copyEndsAt: null,
+    copySeconds: null,
   });
 
   it("names a slot whose skill changed: an echo's copy, and the echo back", () => {
@@ -150,7 +151,7 @@ describe("changedSlots (#469)", () => {
       skillBar: { querySelectorAll: () => [button] },
       slotTips: { repainted: (): void => undefined },
     } as unknown as HudElements;
-    refreshSkillBar(hud, [{ ...slot("elementalist.fireball"), copyEndsAt: 30 }]);
+    refreshSkillBar(hud, [{ ...slot("elementalist.fireball"), copyEndsAt: 30, copySeconds: 30 }]);
     expect(button.dataset.skillId).toBe("elementalist.fireball");
     expect(classes.has("is-recharging")).toBe(false);
     expect(button.innerHTML).toContain("echo-strip");
@@ -1815,6 +1816,7 @@ describe("skillSlotHtml", () => {
     activationSeconds: 1,
     rechargeSeconds: 7,
     copyEndsAt: null,
+    copySeconds: null,
   });
 
   it("carries the skill's type badge, named for a screen reader", () => {

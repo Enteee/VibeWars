@@ -566,6 +566,11 @@ export interface SkillBarSlot {
    * this slot ends (#1154), rounded to 0.1 s; `null` for a build slot.
    */
   readonly copyEndsAt: number | null;
+  /**
+   * That copy's whole life, seconds (#4236): 30 for Echo's, 20 for Arcane
+   * Echo's. `null` exactly when `copyEndsAt` is.
+   */
+  readonly copySeconds: number | null;
 }
 
 /**

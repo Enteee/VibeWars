@@ -32,6 +32,7 @@ function slot(id: string): SkillSlot {
     activationSeconds: 1,
     rechargeSeconds: 5,
     copyEndsAt: null,
+    copySeconds: null,
   };
 }
 
