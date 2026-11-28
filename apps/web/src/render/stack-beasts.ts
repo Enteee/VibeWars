@@ -212,7 +212,7 @@ const GUILD_LORD: Humanoid = {
     crest: 0x8a2a2a,
   },
   held: (stride) => {
-    const x = 0.35 + 0.1 * stride;
+    const x = 0.35 + 0.05 * stride;
     const slices: StackSlice<number>[] = [
       slice([ellipse(x, 0.8, 0.08, 0.08, 6)], 0x3a2a20, 0.8, HAND_LIFT),
       slice([ellipse(x, 0.8, 0.07, 0.3, 6)], GOLD, 1, HAND_LIFT + 1),

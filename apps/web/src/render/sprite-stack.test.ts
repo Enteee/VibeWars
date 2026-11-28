@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CREATURE_LOOKS } from "@vibewars/game-core";
 
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
+import { STACK_BAKE_RADIUS } from "./stack-atlas.js";
 
 import {
   STACK_BAKED_HEADINGS,
@@ -651,6 +652,26 @@ describe("pet and NPC figures (#4173)", () => {
     expect(tip.length).toBe(3);
     expect(Math.min(...tip.map((slice) => slice.lift))).toBeGreaterThan(helmet);
     expect(slices.some((slice) => slice.tone === 0xc9a227)).toBe(true);
+  });
+
+  it("stands a guild lord 1.25 of a warrior's height, helm to feet (#4173)", () => {
+    const height = (layers: readonly { points: readonly { y: number }[] }[]): number => {
+      const ys = layers.flatMap((layer) => layer.points.map((p) => p.y));
+      return Math.max(...ys) - Math.min(...ys);
+    };
+    const warrior = PROFESSION_OUTFITS.warrior;
+    const body = stackLayers(
+      stackSlices("stand", warrior, undefined),
+      0,
+      STACK_BAKE_RADIUS,
+      stackTones(0x59c2ff, undefined, warrior, undefined),
+    );
+    const lord = creatureLayers(
+      creatureSlices("guild-lord", "stand") ?? [],
+      0,
+      CREATURE_DRAWN_RADIUS["guild-lord"],
+    );
+    expect(height(lord) / height(body)).toBeCloseTo(1.25, 2);
   });
 
   it("wears no cape, crest or team on a guard or a priest; a guild lord its red cape", () => {
