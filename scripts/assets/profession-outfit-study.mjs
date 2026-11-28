@@ -28,6 +28,7 @@ import "./ts-resolve.mjs";
 
 const { STACK_OUTLINE, stackLayers, stackSlices, stackTones } =
   await import("../../apps/web/src/render/sprite-stack.ts");
+const { WARRIOR_OUTFIT } = await import("../../apps/web/src/render/profession-outfits.ts");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const outFile = join(root, "docs", "art", "profession-outfit-study.svg");
@@ -442,7 +443,7 @@ function head(push, kind) {
  * @param {Accent} [accent]
  */
 function tonesFor(body, outfit, accent) {
-  const base = stackTones(body, CAPE);
+  const base = stackTones(body, CAPE, outfit, accent);
   return {
     ...base,
     cloth: outfit.cloth,
@@ -476,7 +477,7 @@ function figureSvg(x, y, r, facing, body, name, accentName) {
     const accent = accentName === undefined ? undefined : ACCENTS[accentName];
     /** @type {{ points: Point[], colour: number }[]} */
     const layers = stackLayers(
-      outfitSlices(outfit, accent),
+      gameShape(outfitSlices(outfit, accent)),
       facing,
       DEF_R,
       tonesFor(body, outfit, accent),
@@ -629,7 +630,18 @@ writeFileSync(
 // Checks: the warrior is the game's figure; lift counts; team colour share.
 
 const lifts = (/** @type {Slice[]} */ slices) => slices.filter((s) => !s.same).length;
-const same = JSON.stringify(outfitSlices(OUTFITS.warrior)) === JSON.stringify(stackSlices("stand"));
+/** The study's slices in the game's shape: a lift count in place of `same`. */
+/** @param {Slice[]} slices */
+function gameShape(slices) {
+  let lift = -1;
+  return slices.map(({ parts, tone, light, same, rise }) => {
+    lift += same ? 0 : 1;
+    return { parts, tone, light, lift, rise, alpha: 1 };
+  });
+}
+const same =
+  JSON.stringify(gameShape(outfitSlices(OUTFITS.warrior))) ===
+  JSON.stringify(stackSlices("stand", WARRIOR_OUTFIT, undefined));
 console.log(`builder warrior equals stackSlices("stand"): ${String(same)}`);
 if (!same) {
   throw new Error("the study's warrior is no longer the game's stackSlices(\"stand\")");

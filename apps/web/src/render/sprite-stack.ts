@@ -254,12 +254,12 @@ function skirtSlices(
   const robe = outfit.legs === "robe";
   skirtRadii(outfit).forEach((r, i) => {
     const x = 0.03 * lean * i;
-    if (i === 0 && robe) {
-      push([ellipse(x, 0, r * 0.72 * 1.08, r * 1.08)], "cloth", 0.55, true);
-    }
     if (i === 0 && accent?.kind === "trim") {
       const k = robe ? 1.15 : 1.1;
       push([ellipse(x, 0, r * 0.72 * k, r * k)], "accent", 0.5, true);
+    }
+    if (i === 0 && robe) {
+      push([ellipse(x, 0, r * 0.72 * 1.08, r * 1.08)], "cloth", 0.55, true);
     }
     const capeLength = robe ? 0.66 + 0.04 * (1 - i / 4) : 0.66;
     cape([capeBack(motion, -0.3 - 0.06 * lean, 0.32, capeLength, 1 - i / 11)], 0.5 + 0.06 * i);
