@@ -121,6 +121,8 @@ export interface RenderableActor {
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
   readonly profession: ProfessionId | undefined;
+  /** The secondary profession, whose accent its outfit carries (#4175); `undefined`: none. */
+  readonly secondaryProfession: ProfessionId | undefined;
   /** A creature's shape and kind glyph (#1162); `undefined`: a player or a dummy, a disc. */
   readonly creatureLook: CreatureLook | undefined;
   /** How far a creature's aura reaches (#3306): a spirit's range ring; `undefined` for none. */

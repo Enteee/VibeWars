@@ -1332,9 +1332,18 @@ export class ArenaScene extends Phaser.Scene {
     ]);
   }
 
-  /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
+  /**
+   * What `actor`'s figure is painted in: its team's colour, its cape
+   * (ADR-0056), and its professions' outfit and accent (#4175).
+   */
   private stackLook(actor: RenderableActor): StackLook {
-    return { kind: "body", body: teamColour(actor.team), cape: actor.cape };
+    return {
+      kind: "body",
+      body: teamColour(actor.team),
+      cape: actor.cape,
+      primary: actor.profession,
+      secondary: actor.secondaryProfession,
+    };
   }
 
   /** A canvas texture for the figure atlas, `width` × `height`: a new key every time. */

@@ -808,6 +808,13 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
+The stacked figure's outfit per primary profession and its secondary accent
+(#4175, brief for #4175, #4179, #4180): `node scripts/assets/profession-outfit-study.mjs`
+draws all ten outfits as ally and foe, from the side, at the four camera
+zooms, and four accents, with the arena's own `stackLayers`.
+
+![Profession outfit study](profession-outfit-study.svg)
+
 How a flyout with sub-pages navigates them (Help, Options): three proposals
 mocked in the real flyouts, with a recommendation:
 [`flyout-nav-study.md`](flyout-nav-study.md).

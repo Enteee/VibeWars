@@ -240,7 +240,9 @@ outlines, and the noise fill on a map without one.
   floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
   helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
   colour at its cap, its robe in friend or foe colour, its profession glyph
-  on a dark badge disc on top. It turns in 16 headings, the atlas baking
+  on a dark badge disc on top. Its outfit follows its primary profession
+  and carries one accent of its secondary (#4175, `profession-outfits.ts`):
+  `profession-outfits-match.png`, ally over foe. It turns in 16 headings, the atlas baking
   the nine facing left and mirroring the rest (`bakedFrame`, #4060), and its
   shadow lies on the ground under it, not in its frame. A creature with a
   figure (#4171, `creatureSlices`, after `docs/art/creature-stack-study.md`)
@@ -250,6 +252,8 @@ outlines, and the noise fill on a map without one.
   top. A creature with no figure yet, a knocked-down one and fallen
   bodies stay discs. At match zoom: `creature-stack-match.png`, discs left,
   figures right.
+  Its outfit follows its primary profession, one accent its secondary, the
+  team colour staying torso and skirt ([study](profession-outfit-study.svg)).
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.

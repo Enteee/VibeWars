@@ -444,7 +444,12 @@ export async function hostLobby(
       relayPub: null,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -548,7 +553,12 @@ export async function joinLobbyByCode(
       relayPub,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
       ...guild,
       timeoutMs:
         rejoin === undefined ? JOIN_TIMEOUT_MS : Math.max(0, rejoin.expiresAt - Date.now()),

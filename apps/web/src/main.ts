@@ -1429,9 +1429,16 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
-  /** The cosmetic ids picked in Options now (ADR-0056), as a selection lists them. */
-  const currentLook = (): string =>
-    JSON.stringify(buildSelection(playerKey.pubkey, cosmeticsStore.choice(), 0).ids);
+  /** The cosmetic ids and body picked in Options now (ADR-0056, #4250), as a selection lists them. */
+  const currentLook = (): string => {
+    const { ids, body } = buildSelection(
+      playerKey.pubkey,
+      cosmeticsStore.choice(),
+      cosmeticsStore.body(),
+      0,
+    );
+    return JSON.stringify({ ids, body });
+  };
 
   /**
    * The name, guild and cosmetics just set in Options, to the lobby this
@@ -1456,7 +1463,12 @@ async function main(): Promise<void> {
     lobby.setProfile({
       name,
       ...guild,
-      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+      cosmetics: signSelection(
+        playerKey,
+        cosmeticsStore.choice(),
+        cosmeticsStore.body(),
+        Date.now(),
+      ),
     });
     lobbyName = name;
     lobbyLook = look;

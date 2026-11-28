@@ -80,4 +80,9 @@ export const testReceiptCrypto: ReceiptCrypto = {
 };
 
 /** An empty selection (ADR-0056), as a page that wears nothing sends it. */
-export const testCosmetics: WireCosmetics = { ids: [], at: 0, sig: "00".repeat(64) };
+export const testCosmetics: WireCosmetics = {
+  ids: [],
+  body: { height: "average", build: "average" },
+  at: 0,
+  sig: "00".repeat(64),
+};

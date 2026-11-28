@@ -566,6 +566,7 @@ const recharge: RechargeMessage = {
 /** A selection (ADR-0056): its shape is all a parser checks. */
 const COSMETICS = {
   ids: ["frame-bronze", "title-veteran"],
+  body: { height: "tall", build: "heavy" } as const,
   at: 1_700_000_000_000,
   sig: "c0".repeat(64),
 };
@@ -1692,6 +1693,27 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["an unsigned selection (ADR-0056)", parseWireCosmetics, { ids: [], at: 0 }],
   ["a selection at a fraction of a ms (ADR-0056)", parseWireCosmetics, { ...COSMETICS, at: 0.5 }],
+  ["a selection with no body (#4250)", parseWireCosmetics, { ...COSMETICS, body: undefined }],
+  [
+    "a selection whose body has no height (#4250)",
+    parseWireCosmetics,
+    { ...COSMETICS, body: { build: "heavy" } },
+  ],
+  [
+    "a selection whose body has no build (#4250)",
+    parseWireCosmetics,
+    { ...COSMETICS, body: { height: "tall" } },
+  ],
+  [
+    "a selection of an unknown height (#4250)",
+    parseWireCosmetics,
+    { ...COSMETICS, body: { height: "giant", build: "heavy" } },
+  ],
+  [
+    "a selection of an unknown build (#4250)",
+    parseWireCosmetics,
+    { ...COSMETICS, body: { height: "tall", build: "average " } },
+  ],
   [
     "cosmetics of a seat with no key (ADR-0056)",
     parseWireSeatCosmetics,
