@@ -48,6 +48,7 @@ const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 class FakeSurface implements AtlasSurface {
   public readonly frames = new Map<string, number>();
   public readonly areas = new Map<string, number>();
+  public readonly boxes = new Map<string, readonly [number, number, number, number]>();
   public refreshes = 0;
   public destroyed = false;
   public fills = 0;
@@ -77,8 +78,9 @@ class FakeSurface implements AtlasSurface {
     };
   }
 
-  public addFrame(name: string, _x: number, y: number, width: number, height: number): void {
+  public addFrame(name: string, x: number, y: number, width: number, height: number): void {
     this.frames.set(name, y);
+    this.boxes.set(name, [x, y, width, height]);
     this.areas.set(name, width * height);
   }
 
@@ -125,8 +127,9 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     made.bake([FRIEND, FOE, CAPED, FOE, FRIEND]);
     expect(made.bakedFigures).toBe(3 * FRAMES);
     expect(new Set([FRIEND, FOE, CAPED].map(stackLookKey)).size).toBe(3);
-    const rows = new Set(surfaces[0]?.frames.values());
-    expect([...rows].sort((a, b) => a - b)).toEqual([0, 1, 2].map((r) => r * STACK_FRAME_HEIGHT));
+    const rows = [...new Set(surfaces[0]?.frames.values())].sort((a, b) => a - b);
+    const top = rows[0] ?? 0;
+    expect(rows).toEqual([0, 1, 2].map((r) => top + r * STACK_FRAME_HEIGHT));
     expect(
       stackLookKey({ ...CAPED, cape: CAPED.cape && { ...CAPED.cape, trim: 0xa0a0a0 } }),
     ).not.toBe(stackLookKey(CAPED));
@@ -305,20 +308,35 @@ describe("StackAtlas creatures (#4171)", () => {
 
   it("gives a look with no figure no frame, and schedules no bake for it", () => {
     const { atlas: made, queued } = atlas();
-    const minion: CreatureStackLook = { kind: "creature", look: "bone-minion" };
-    made.bake([minion]);
+    const beast: CreatureStackLook = { kind: "creature", look: "beast" };
+    made.bake([beast]);
     expect(made.bakedFigures).toBe(0);
-    expect(made.frame(minion, 0, "stand")).toBeUndefined();
+    expect(made.frame(beast, 0, "stand")).toBeUndefined();
     expect(queued).toHaveLength(0);
   });
 
-  it("stacks a creature row under the bodies' in the same canvas", () => {
+  it("keeps a creature row on the shelves over the bodies' in the same canvas (#4172)", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake([FRIEND, FOE, SPIRIT]);
     expect(surfaces).toHaveLength(1);
-    expect(surfaces[0]?.frames.get(stackFrameName(stackLookKey(SPIRIT), 0, "stand"))).toBe(
-      2 * STACK_FRAME_HEIGHT,
+    const spirit = surfaces[0]?.boxes.get(stackFrameName(stackLookKey(SPIRIT), 0, "stand"));
+    const body = surfaces[0]?.frames.get(made.frame(FRIEND, 0, "stand")?.name ?? "");
+    expect((spirit?.[1] ?? Infinity) + (spirit?.[3] ?? 0)).toBeLessThanOrEqual(body ?? 0);
+  });
+
+  it("packs every creature on shelves, no two frames overlapping, none off the canvas (#4172)", () => {
+    const { atlas: made, surfaces } = atlas();
+    made.bake([FRIEND, ...CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look }))]);
+    const surface = surfaces.at(-1);
+    const boxes = [...(surface?.boxes.values() ?? [])];
+    for (const [x, y, w, h] of boxes) {
+      expect(x + w).toBeLessThanOrEqual(surface?.width ?? 0);
+      expect(y + h).toBeLessThanOrEqual(surface?.height ?? 0);
+    }
+    const overlaps = boxes.filter(([x, y, w, h], i) =>
+      boxes.some(([u, v, s, t], j) => j > i && x < u + s && u < x + w && y < v + t && v < y + h),
     );
+    expect(overlaps).toEqual([]);
   });
 
   it("bakes a creature row summoned after the roster alone, never the bodies again", () => {
@@ -330,5 +348,24 @@ describe("StackAtlas creatures (#4171)", () => {
     expect(surfaces[0]?.refreshes).toBe(2);
     expect(made.bakedFigures).toBe(2 * FRAMES + 1);
     expect(made.frame(SPIRIT, 0, "stand")).toBeDefined();
+  });
+
+  it("bakes each look a match may bring on later, one task each, once, and none with no figure (#4172)", () => {
+    const { atlas: made, queued } = atlas();
+    made.bake([FRIEND, SPIRIT]);
+    const GOLEM: CreatureStackLook = { kind: "creature", look: "flesh-golem" };
+    const PRIEST: CreatureStackLook = { kind: "creature", look: "priest" };
+    made.bakeLater([SPIRIT, GHOST, GOLEM, GHOST, PRIEST]);
+    made.bakeLater([GOLEM]);
+    expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
+    expect(queued).toHaveLength(2);
+    const before = made.bakedFigures;
+    queued[0]?.();
+    expect(made.bakedFigures).toBe(before + 24);
+    expect(made.frame(GHOST, 0, "stand")).toBeDefined();
+    expect(made.frame(GOLEM, 0, "stand")).toBeUndefined();
+    queued[1]?.();
+    expect(made.frame(GOLEM, 0, "stand")).toBeDefined();
+    expect(queued).toHaveLength(2);
   });
 });

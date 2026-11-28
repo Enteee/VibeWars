@@ -282,16 +282,49 @@ function creatureRow(key: string, look: CreatureLook): StackRow | undefined {
   };
 }
 
-/** Each creature look's row height, pixels, once worked out: 0 for one drawn as a disc. */
-const creatureRowHeights = new Map<CreatureLook, number>();
+/** Where a row's first frame sits on the atlas, pixels. */
+interface RowPlace {
+  readonly x: number;
+  readonly y: number;
+}
 
-function creatureRowHeight(look: CreatureLook): number {
-  let height = creatureRowHeights.get(look);
-  if (height === undefined) {
-    height = creatureRow(stackLookKey({ kind: "creature", look }), look)?.height ?? 0;
-    creatureRowHeights.set(look, height);
+/**
+ * Every creature look's place on the atlas (#4172): their rows packed on
+ * shelves across its top, tallest first, the same in every match, so a
+ * summon's late row bakes into its own place and moves nothing.
+ */
+interface CreatureShelves {
+  readonly at: ReadonlyMap<string, RowPlace>;
+  readonly width: number;
+  readonly height: number;
+}
+
+let creatureShelvesOnce: CreatureShelves | undefined;
+
+function creatureShelves(): CreatureShelves {
+  if (creatureShelvesOnce === undefined) {
+    const rows = CREATURE_LOOKS.flatMap(
+      (look) => creatureRow(stackLookKey({ kind: "creature", look }), look) ?? [],
+    ).sort((a, b) => b.height - a.height);
+    const span = (row: StackRow): number => row.width * row.frames.length;
+    const width = Math.max(ATLAS_WIDTH, ...rows.map(span));
+    const at = new Map<string, RowPlace>();
+    let x = 0;
+    let y = 0;
+    let shelf = 0;
+    for (const row of rows) {
+      if (x + span(row) > width) {
+        x = 0;
+        y += shelf;
+        shelf = 0;
+      }
+      at.set(row.key, { x, y });
+      x += span(row);
+      shelf = Math.max(shelf, row.height);
+    }
+    creatureShelvesOnce = { at, width, height: y + shelf };
   }
-  return height;
+  return creatureShelvesOnce;
 }
 
 /** The row `look` bakes into, or `undefined` for a creature still drawn as a disc. */
@@ -308,8 +341,7 @@ export class StackAtlas {
   private readonly baked = new Map<string, StackRow>();
   private readonly pending = new Set<string>();
   private surface: AtlasSurface | undefined;
-  /** The surface's size, pixels, and how many of the rows are on it. */
-  private width = 0;
+  /** The surface's height, pixels, and how many of the rows are on it. */
   private capacity = 0;
   private filled = 0;
   private bakes = 0;
@@ -381,10 +413,24 @@ export class StackAtlas {
       const baked = bakedFrame(bucket, pose);
       return at(stackFrameName(key, baked.bucket, baked.pose), baked.flipped);
     }
-    if (look.kind === "creature" && creatureStack(look.look) === undefined) {
-      return undefined;
-    }
-    if (!this.pending.has(key)) {
+    this.bakeLater([look]);
+    return undefined;
+  }
+
+  /**
+   * Bake each of `looks` not baked yet alone, off the frame path, each
+   * once (#4172): a look a match may bring on, warmed before it does.
+   */
+  public bakeLater(looks: Iterable<StackLook>): void {
+    for (const look of looks) {
+      const key = stackLookKey(look);
+      if (
+        this.baked.has(key) ||
+        this.pending.has(key) ||
+        (look.kind === "creature" && creatureStack(look.look) === undefined)
+      ) {
+        continue;
+      }
       this.pending.add(key);
       this.schedule(() => {
         if (this.pending.has(key)) {
@@ -392,7 +438,6 @@ export class StackAtlas {
         }
       });
     }
-    return undefined;
   }
 
   /** Bake every look again, as after a lost WebGL context. */
@@ -409,50 +454,49 @@ export class StackAtlas {
     this.rows.length = 0;
     this.baked.clear();
     this.pending.clear();
-    this.width = 0;
     this.capacity = 0;
     this.filled = 0;
   }
 
   /**
    * Bake the rows not on the surface yet, or all of them on a new one when
-   * they no longer fit, or `fresh`: one canvas, one upload. Rows stack
-   * down the canvas, each as tall as its frames. The canvas keeps room
-   * for every creature row not on it yet (#4171), which a body row never
-   * takes, so a summon's late row bakes alone, never every body's again
-   * mid-fight.
+   * they no longer fit, or `fresh`: one canvas, one upload. Every creature
+   * row has its place kept on the shelves at the top (#4172), which a body
+   * row never takes, so a summon's late row bakes alone, never every
+   * body's again mid-fight. Body rows stack down the canvas under them.
    */
   private build(fresh = false): void {
-    const width = Math.max(ATLAS_WIDTH, ...this.rows.map((row) => row.width * row.frames.length));
-    const height = this.rows.reduce((sum, row) => sum + row.height, 0);
-    const headroom = CREATURE_LOOKS.filter(
-      (look) => !this.baked.has(stackLookKey({ kind: "creature", look })),
-    ).reduce((sum, look) => sum + creatureRowHeight(look), 0);
+    const shelves = creatureShelves();
+    const height = this.rows
+      .filter((row) => !shelves.at.has(row.key))
+      .reduce((sum, row) => sum + row.height, shelves.height);
     let from = this.surface === undefined || fresh ? 0 : this.filled;
-    if (
-      this.surface === undefined ||
-      fresh ||
-      height + headroom > this.capacity ||
-      width > this.width
-    ) {
+    if (this.surface === undefined || fresh || height > this.capacity) {
       this.surface?.destroy();
-      this.width = width;
-      this.capacity = Math.max(height + headroom, this.capacity * 2);
-      this.surface = this.create(this.width, this.capacity);
+      this.capacity = Math.max(height, this.capacity * 2);
+      this.surface = this.create(shelves.width, this.capacity);
       from = 0;
     }
     const surface = this.surface;
-    let top = this.rows.slice(0, from).reduce((sum, row) => sum + row.height, 0);
-    for (const row of this.rows.slice(from)) {
-      surface.context.clearRect(0, top, this.width, row.height);
+    let top = shelves.height;
+    this.rows.forEach((row, index) => {
+      let place = shelves.at.get(row.key);
+      if (place === undefined) {
+        place = { x: 0, y: top };
+        top += row.height;
+      }
+      if (index < from) {
+        return;
+      }
+      const { x, y } = place;
+      surface.context.clearRect(x, y, row.width * row.frames.length, row.height);
       row.frames.forEach((frame, i) => {
-        const left = i * row.width;
-        frame.bake(surface.context, left + row.feetX, top + row.feetY);
-        surface.addFrame(frame.name, left, top, row.width, row.height);
+        const left = x + i * row.width;
+        frame.bake(surface.context, left + row.feetX, y + row.feetY);
+        surface.addFrame(frame.name, left, y, row.width, row.height);
         this.bakes += 1;
       });
-      top += row.height;
-    }
+    });
     this.filled = this.rows.length;
     surface.refresh();
   }

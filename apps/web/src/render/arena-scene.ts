@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 
-import type { MapAtmosphere, MapBounds, MapLighting, MapPaving } from "@vibewars/game-maps/schema";
+import type {
+  MapAtmosphere,
+  MapBounds,
+  MapData,
+  MapLighting,
+  MapPaving,
+} from "@vibewars/game-maps/schema";
 
 import {
   ALTAR_REACH_UNITS,
@@ -15,7 +21,6 @@ import {
   polygonCentre,
   pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
-  CREATURE_LOOKS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -48,6 +53,7 @@ import {
   nameplateLayout,
   isStackedFigure,
   wearsFigureBadge,
+  figureTall,
   overheadRise,
   placeFloatingText,
   signetTextureKey,
@@ -363,6 +369,7 @@ import {
 } from "./tutorial-props.js";
 import { cullToView, StaticGraphicsCull, type Box } from "./graphics-cull.js";
 import { layerZoom, mapLayerChanged, type MapLayer } from "./map-layer.js";
+import { matchCreatureLooks } from "./match-creature-looks.js";
 import {
   LightingPass,
   litOverhangColours,
@@ -1205,6 +1212,8 @@ export class ArenaScene extends Phaser.Scene {
   private stackTextures = 0;
   /** Whether the roster's looks are baked: at the first snapshot with bodies in it. */
   private rosterBaked = false;
+  /** The map the match is played on, whose creatures match start bakes too (#4172). */
+  private matchMap: MapData | undefined;
   /** One image per standing body drawn as a figure, by actor id. */
   private bodyFigures = new Map<string, Phaser.GameObjects.Image>();
   /** The figures this frame draws, gathered as their bodies are drawn. */
@@ -1287,6 +1296,14 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The map the match is played on (#4172): set before its first
+   * snapshot, so match start bakes the creatures the map places too.
+   */
+  public setMatchMap(map: MapData | undefined): void {
+    this.matchMap = map;
+  }
+
+  /**
    * The box of each name tag drawn last frame (#2738), by actor id, in
    * world units: what a click with Show names held hits. Live, updated
    * in place every frame.
@@ -1321,13 +1338,28 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    // Every creature figure too (#4171), in the same build and upload: a
-    // row per look, never per team, and few frames, so a summon mid-fight
-    // never waits on its bake.
+    // The creatures on the field too (#4171), in the same build and
+    // upload. Every other look the seats' professions and the map can
+    // bring on then bakes alone, one per task, off the frame path, so it
+    // is ready before its summon (#4172): all at once held match start up
+    // by half a second. A look that misses both bakes when it appears.
+    const { actors } = this.snapshot;
+    const creatures = (looks: Iterable<CreatureLook>): StackLook[] =>
+      [...looks].map((look) => ({ kind: "creature", look }));
     atlas.bake([
-      ...this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
-      ...CREATURE_LOOKS.map((look): StackLook => ({ kind: "creature", look })),
+      ...actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
+      ...creatures(new Set(actors.flatMap((actor) => actor.creatureLook ?? []))),
     ]);
+    atlas.bakeLater(
+      creatures(
+        matchCreatureLooks(
+          actors.flatMap((actor) =>
+            actor.creatureLook === undefined ? [actor.profession, actor.secondaryProfession] : [],
+          ),
+          this.matchMap,
+        ),
+      ),
+    );
   }
 
   /**
@@ -4230,7 +4262,7 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     const { x, y } = actor.position;
-    const badge = stackBadge(actor.radius);
+    const badge = stackBadge(actor.radius, figureTall(actor));
     g.fillStyle(STACK_BADGE_RIM, 1);
     g.fillCircle(x, y - badge.rise, badge.radius + 1);
     g.fillStyle(STACK_BADGE_FILL, 1);

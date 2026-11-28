@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
+
 import {
   STACK_BAKED_HEADINGS,
   STACK_CAPE_SETTLE_SECONDS,
@@ -388,9 +390,56 @@ describe("creature figures (#4171)", () => {
     expect(haftAt).toBeLessThan(visorAt);
   });
 
+  const MINIONS = [
+    "bone-minion",
+    "bone-horror",
+    "bone-fiend",
+    "vampiric-horror",
+    "shambling-horror",
+    "jagged-horror",
+    "flesh-golem",
+  ] as const;
+  /** How far `look`'s figure reaches from its feet, drawn, at its widest. */
+  const footprint = (look: (typeof MINIONS)[number]): number =>
+    Math.max(...(creatureSlices(look, "stand") ?? []).map(radius)) * CREATURE_DRAWN_RADIUS[look];
+
+  it("turns every minion in 8 headings and walks it in 3 poses (#4172)", () => {
+    for (const look of MINIONS) {
+      const stack = creatureStack(look);
+      expect(stack?.headings).toBe(8);
+      expect(stack?.poses).toEqual(["stand", "stride-a", "stride-b"]);
+      for (const pose of stack?.poses ?? []) {
+        expect(creatureSlices(look, pose)?.length).toBeGreaterThan(0);
+      }
+      expect(creatureSlices(look, "stride-a")).not.toEqual(creatureSlices(look, "stride-b"));
+    }
+  });
+
+  it("makes the flesh golem the widest minion and taller than a horror, the bone minion the smallest", () => {
+    const golem = footprint("flesh-golem");
+    const minion = footprint("bone-minion");
+    for (const look of MINIONS) {
+      expect(footprint(look)).toBeLessThanOrEqual(golem);
+      expect(footprint(look)).toBeGreaterThanOrEqual(minion);
+    }
+    expect(footprint("bone-horror")).toBeGreaterThan(minion);
+    expect(footprint("bone-horror")).toBeLessThan(golem);
+    const tall = (look: (typeof MINIONS)[number]): number =>
+      stackLifts(creatureSlices(look, "stand") ?? []) * CREATURE_DRAWN_RADIUS[look];
+    expect(tall("flesh-golem")).toBeGreaterThan(tall("bone-horror"));
+    expect(tall("bone-minion")).toBeLessThan(tall("bone-horror"));
+  });
+
+  it("gives each horror its own cue over the shared build", () => {
+    const horrors = MINIONS.filter((look) => look.endsWith("horror") || look === "bone-fiend");
+    const builds = horrors.map((look) => JSON.stringify(creatureSlices(look, "stand")));
+    expect(new Set(builds).size).toBe(horrors.length);
+    expect(creatureSlices("vampiric-horror", "stand")?.some((s) => s.tone === 0x7a1f2b)).toBe(true);
+  });
+
   it("leaves a look it has no figure for as its disc", () => {
-    expect(creatureStack("bone-minion")).toBeUndefined();
-    expect(creatureSlices("bone-minion", "stand")).toBeUndefined();
+    expect(creatureStack("beast")).toBeUndefined();
+    expect(creatureSlices("beast", "stand")).toBeUndefined();
   });
 
   it("picks a creature's heading and pose from a body's", () => {

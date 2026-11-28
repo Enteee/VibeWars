@@ -377,6 +377,27 @@ Every rule below can be checked from one screenshot.
     alpha 0.4, to 12 px, alpha 0.55; on release the weapon strikes and the
     glow becomes a 16 px white flash, gone in 0.15 s; stopped short, it
     shrinks to nothing and greys in 0.2 s. An instant skill shows none (#3320).
+15. **A Necromancer's minion** is a stacked figure (#4172) on its
+    team-coloured plate, told apart by silhouette alone; its look icon
+    stays the exact name. A **bone minion**, the smallest figure, is a
+    hunched skeleton: rib rings in bone `#d8d0bc` round dark gaps, a
+    skull on top. A **horror** is the same skeleton, larger and broader,
+    and each kind carries its cue: the bone fiend a bone spike off its
+    back, the vampiric horror a dark red `#7a1f2b` glow over its ribs,
+    the shambling horror stooped and uneven with one arm hanging, the
+    jagged horror bone spurs at its shoulders. The **flesh golem** is the
+    widest and tallest, a pale flesh mass `#b9a58f` banded by dark
+    stitched seams, a fist at each side and a small head. All turn in 8
+    headings and walk in stand and two strides; under reduced motion they
+    stand, as a body does. No rim teeth: the silhouette is the type cue.
+    Standing, its glyph rides a badge over its own figure's height, as a
+    body's does, and its bars and name clear that badge; dead or knocked
+    down it is its disc again.
+
+    Worked example (`minion-figures.png`), at match zoom: the standing
+    figures, ally and foe, bone minion to flesh golem, each glyph on its badge.
+
+    ![minion figures](visual-style/minion-figures.png)
 
 Rules 3 and 7 are checked by CI (#3251): `render/visibility-gate.test.ts`
 draws every map through the scene's own map drawing, records each filled

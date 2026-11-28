@@ -112,7 +112,14 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./ui/weapon-set-slots.js";
-import { mapFlagField, mapMode, mapRelicField, mapShrines, mapStructure } from "./net/maps.js";
+import {
+  fileMap,
+  mapFlagField,
+  mapMode,
+  mapRelicField,
+  mapShrines,
+  mapStructure,
+} from "./net/maps.js";
 import {
   renderableCapturePoints,
   renderableGates,
@@ -687,6 +694,7 @@ export async function startMatchView(
   const standing = switchedStructure(structure);
   const mode = mapMode(viewed.map.id);
   const shrines = mapShrines(viewed.map.id, viewed.map.teamCount);
+  viewport?.scene.setMatchMap(fileMap(viewed.map.id));
   const flagField = mapFlagField(viewed.map.id);
   const relicField = mapRelicField(viewed.map.id, viewed.map.teamCount);
   const camera =
