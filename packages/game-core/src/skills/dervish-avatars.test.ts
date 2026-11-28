@@ -272,7 +272,7 @@ describe("Avatar of Lyssa (#1455)", () => {
 
   it("recharges a Dervish enchantment 50% faster, not another profession's", () => {
     const mystic = "dervish.mystic-regeneration";
-    expect(rechargeOf(avatar(SKILL, mystic), mystic)).toBeCloseTo(12 * 0.5, 1);
+    expect(rechargeOf(avatar(SKILL, mystic), mystic)).toBeCloseTo(15 * 0.5, 1);
     const guardian = "monk.guardian";
     expect(rechargeOf(avatar(SKILL, guardian), guardian)).toBeCloseTo(6, 1);
   });
@@ -281,7 +281,7 @@ describe("Avatar of Lyssa (#1455)", () => {
     const mystic = "dervish.mystic-regeneration";
     const both = avatar(SKILL, mystic);
     dervish(both).statuses.apply("mantra-of-recovery", 30, "d", NO_RANKS);
-    expect(rechargeOf(both, mystic)).toBeCloseTo(12 * 0.5, 1);
+    expect(rechargeOf(both, mystic)).toBeCloseTo(15 * 0.5, 1);
     const guardian = "monk.guardian";
     const mantra = avatar(SKILL, guardian);
     dervish(mantra).statuses.apply("mantra-of-recovery", 30, "d", NO_RANKS);

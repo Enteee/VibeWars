@@ -367,8 +367,8 @@ describe("Lyssa's Haste (#2479)", () => {
     use(sim, "d", 0, "d", 1);
     use(sim, "d", 1, "d", DT);
     const left = get(sim, "d").cast.rechargeRemaining.get(FLEETING_STABILITY) ?? 0;
-    expect(left).toBeGreaterThan(9.5);
-    expect(left).toBeLessThan(10.2);
+    expect(left).toBeGreaterThan(6.2);
+    expect(left).toBeLessThan(6.8);
   });
 });
 

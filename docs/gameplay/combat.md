@@ -523,7 +523,7 @@ never another profession's. With none to lose, the skill still goes off
 and costs what it costs; only its "if one was removed" part does not
 happen. Wounding Strike loses one only on a hit, and then also Deep
 Wounds its target; Signet of Pious Light then recharges 75% faster (5 s,
-not 20); Pious Restoration then also removes up to 3 of your hexes.
+not 20); Pious Restoration then also removes one of your hexes.
 Mystic Regeneration gives +3 health pips for each enchantment on you,
 any profession's and itself included, at most 3, recounted the moment
 one goes. Heart of Fury is a stance: you attack 25% faster.
