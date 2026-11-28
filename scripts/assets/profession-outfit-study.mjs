@@ -20,27 +20,11 @@
 // true size (view height 640 / 860 / 1100 / 1400 world units on a 1080 px
 // canvas, body radius 14), and four secondary accents on the warrior.
 
-import { existsSync, writeFileSync } from "node:fs";
-import { registerHooks } from "node:module";
+import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The sources import `./x.js` for `./x.ts`: let node find the .ts.
-registerHooks({
-  resolve(specifier, context, next) {
-    if (
-      specifier.startsWith(".") &&
-      specifier.endsWith(".js") &&
-      context.parentURL?.endsWith(".ts")
-    ) {
-      const ts = new URL(specifier.replace(/\.js$/, ".ts"), context.parentURL);
-      if (existsSync(fileURLToPath(ts))) {
-        return next(ts.href, context);
-      }
-    }
-    return next(specifier, context);
-  },
-});
+import "./ts-resolve.mjs";
 
 const { STACK_OUTLINE, stackLayers, stackSlices, stackTones } =
   await import("../../apps/web/src/render/sprite-stack.ts");
@@ -647,6 +631,9 @@ writeFileSync(
 const lifts = (/** @type {Slice[]} */ slices) => slices.filter((s) => !s.same).length;
 const same = JSON.stringify(outfitSlices(OUTFITS.warrior)) === JSON.stringify(stackSlices("stand"));
 console.log(`builder warrior equals stackSlices("stand"): ${String(same)}`);
+if (!same) {
+  throw new Error("the study's warrior is no longer the game's stackSlices(\"stand\")");
+}
 
 /** The share of a 0.04-radius grid inside any team polygon (top-down). */
 /** @param {Slice[]} slices */
@@ -682,6 +669,14 @@ for (const name of ORDER) {
   const extra = lifts(sx) - lifts(warrior);
   const added = lifts(s) - lifts(warrior);
   const share = Math.round((100 * teamArea(s)) / baseArea);
+  if (added > 4 || extra > 4) {
+    throw new Error(
+      `${name}: lifts ${String(added)} / ${String(extra)} over the warrior's, more than 4`,
+    );
+  }
+  if (share < 80) {
+    throw new Error(`${name}: team-colour area ${String(share)} % of the warrior's, under 80 %`);
+  }
   console.log(
     [
       name.padEnd(13),
