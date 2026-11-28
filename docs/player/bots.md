@@ -30,7 +30,8 @@ foes focus one ally, a healer puts its protection on that ally before the
 hit lands. A healer keeps enough Energy back for its cheapest heal or
 protection, and spends below that only on an ally in real danger. A bot with two
 hexes lays its cheap hex over its important one, so a foe's hex removal takes
-the cheap one first. Every
+the cheap one first. A bot with energy denial burns the foe healer's Energy, not
+the warrior's. Every
 other bot is **ranged**: it keeps where every one of its
 attacks reaches, and stands and fights a foe who comes too close. Ranged
 bots and healers step to where fewer foes can reach them, and use pillars

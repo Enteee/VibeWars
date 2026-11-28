@@ -31,7 +31,8 @@ helare sitt skydd på den allierade innan träffen landar. En helare
 håller kvar tillräckligt med energi för sin billigaste helning eller sitt
 billigaste skydd, och går bara under det för en allierad i verklig fara. En bot
 med två förbannelser lägger sin billiga förbannelse ovanpå sin viktiga, så att
-en fiendes borttagning av förbannelser tar den billiga först.
+en fiendes borttagning av förbannelser tar den billiga först. En bot med
+energidränering bränner fiendens helares energi, inte Warriorns.
 Varje annan bot
 är **avståndsstridande**: den håller sig där var och en av dess attacker
 når, och står kvar och slåss mot en fiende som kommer för nära.

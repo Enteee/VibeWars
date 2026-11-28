@@ -822,6 +822,23 @@ export function energyAtFoes(skill: Skill): boolean {
 }
 
 /**
+ * Whether `skill` takes Energy off the foe it is cast at (#4281): Energy
+ * Burn, Signet of Weariness, Debilitating Shot. Only a top-level loss or
+ * steal counts, not one inside an `if` (Power Leak's on interrupt, Drain
+ * Delusions' on removal), and not one its user pays.
+ */
+export function deniesEnergy(skill: Skill): boolean {
+  return (
+    skill.target === "single-enemy" &&
+    skill.effects.some(
+      (effect) =>
+        (effect.kind === "energy-loss" && effect.on === undefined) ||
+        effect.kind === "energy-steal",
+    )
+  );
+}
+
+/**
  * Whether `skill` at a foe is for its user's Energy alone (#2231): Energy
  * Drain, a gain per point the foe loses and no damage.
  */

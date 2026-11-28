@@ -31,7 +31,9 @@ soigneur place sa protection sur cet allié avant que le coup ne tombe. Un
 soigneur garde assez d'énergie pour son soin ou sa protection le moins
 cher, et ne descend en dessous que pour un allié en réel danger. Un bot qui a
 deux maléfices pose son maléfice bon marché par-dessus son maléfice important,
-pour que le retrait de maléfice d'un ennemi emporte d'abord le moins cher. Tous
+pour que le retrait de maléfice d'un ennemi emporte d'abord le moins cher. Un
+bot qui prive d'énergie brûle l'énergie du soigneur ennemi, pas celle du
+Guerrier. Tous
 les autres bots sont **à distance** : ils restent là où toutes leurs
 attaques portent, et tiennent tête à un ennemi qui s'approche trop. Les bots
 à distance et les soigneurs se déplacent là où moins d'ennemis peuvent les

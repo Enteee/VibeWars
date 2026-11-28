@@ -35,6 +35,7 @@ import {
   stripFirst,
 } from "./shared.js";
 import { coverHexOf, coverTarget } from "./cover-hex.js";
+import { denialTarget } from "./energy-denial.js";
 import type { BotRule } from "./types.js";
 
 /** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
@@ -79,7 +80,8 @@ const SPIKE_TOLERANCE = 1e-6;
  * `attackTarget`, off a foe that blocks them (#4204); its spells stay.
  * Ahead of bar order, a bot with two hexes lays its cheap one over its key
  * hex on the nearest foe in range where that is newest (#4279,
- * `coverTarget`).
+ * `coverTarget`). An energy-denial skill goes on a foe healer in range
+ * with Energy to lose (#4281, `denialTarget`), else as any skill.
  */
 const fight: BotRule = {
   order: 100,
@@ -208,11 +210,15 @@ const fight: BotRule = {
         : isGhostId(targetId)
           ? undefined
           : snareTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));
+    // Energy denial on a foe healer in range (#4281), not the team's target.
+    const denial = (held: Skill): string | undefined =>
+      denialTarget(self, foes, held, (id) => mayUse(held, id));
     const castOn = (held: Skill): string =>
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : (freshFoe(held) ??
+        : (denial(held) ??
+          freshFoe(held) ??
           aside(held) ??
           (held.attack === undefined ? targetId : (attackTarget(held) ?? targetId)));
     // The team's target is `play-build`'s: a guard's own, or a ghost on

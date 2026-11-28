@@ -28,7 +28,8 @@ skupia się na jednym sojuszniku, uzdrowiciel nakłada na niego osłonę, zanim 
 cios. Uzdrowiciel zachowuje tyle Energii, ile trzeba na jego najtańsze leczenie lub
 osłonę, i schodzi poniżej tego tylko dla sojusznika w prawdziwym
 niebezpieczeństwie. Bot z dwiema klątwami rzuca tanią klątwę na ważną, więc
-usuwanie klątw przez wroga najpierw zdejmuje tę tanią.
+usuwanie klątw przez wroga najpierw zdejmuje tę tanią. Bot z odbieraniem Energii
+wypala Energię wrogiego uzdrowiciela, a nie Wojownika.
 Każdy inny bot walczy **z dystansu**: trzyma się miejsca, z którego sięgają
 wszystkie jego ataki, a wroga, który podejdzie zbyt blisko, zwalcza na miejscu.
 Boty dystansowe i uzdrowiciele przechodzą tam, gdzie może ich dosięgnąć mniej

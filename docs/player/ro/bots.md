@@ -31,7 +31,9 @@ protecția înainte să ajungă lovitura. Un vindecător păstrează destulă En
 pentru cea mai ieftină vindecare sau protecție a sa și cheltuie sub acest prag
 doar pentru un aliat aflat în pericol real. Un bot cu două blesteme își pune
 blestemul ieftin peste cel important, astfel încât îndepărtarea blestemelor de
-către un inamic îl ia mai întâi pe cel ieftin. Orice alt bot este **la
+către un inamic îl ia mai întâi pe cel ieftin. Un bot cu abilități de negare a
+Energiei arde Energia vindecătorului inamic, nu pe cea a Warrior-ului. Orice alt
+bot este **la
 distanță**: stă
 acolo unde ajunge fiecare dintre atacurile lui și se oprește să lupte cu un
 inamic care vine prea aproape. Boții la distanță și vindecătorii se mută unde îi
