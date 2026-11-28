@@ -1,7 +1,7 @@
 import { FLAT_STRUCTURE } from "./arena-snapshot.js";
 import { describe, expect, it } from "vitest";
 
-import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
+import { CREATURE_LOOKS, type CreatureLook, vec2 } from "@vibewars/game-core";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import {
@@ -19,6 +19,7 @@ import {
   healthFraction,
   nameLabelBottom,
   overheadRise,
+  figureTall,
   nameShown,
   nameTagBox,
   spiritRingAlpha,
@@ -45,7 +46,7 @@ import {
   type Rect,
   type RenderableActor,
 } from "./arena-snapshot.js";
-import { STACK_GLYPH_TINT, stackBadge, stackOverheadRise } from "./sprite-stack.js";
+import { STACK_GLYPH_TINT, creatureStack, stackBadge, stackOverheadRise } from "./sprite-stack.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import { recordBreakable } from "./breakable-objects.js";
@@ -1088,7 +1089,7 @@ describe("bodyGlyphLayout (#1037)", () => {
 
   it("gives a creature its kind's glyph, opaque, and keeps its size knocked down (#1162)", () => {
     for (const look of CREATURE_LOOKS.filter(
-      (look) => look !== "spirit" && look !== "ghostly-hero",
+      (look) => look !== "spirit" && creatureStack(look) === undefined,
     )) {
       const standing = bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look }));
       expect(standing).toEqual({
@@ -1103,6 +1104,23 @@ describe("bodyGlyphLayout (#1037)", () => {
         bodyGlyphLayout(actor("c", 200, 100, 10, { creatureLook: look, knockedDown: true })),
       ).toEqual(standing);
     }
+  });
+
+  it("puts a standing minion's glyph on a badge over its own figure's height, its bar over that (#4172)", () => {
+    const rise = (look: CreatureLook): number =>
+      overheadRise(actor("c", 200, 100, 10, { creatureLook: look }));
+    for (const look of ["bone-minion", "bone-horror", "flesh-golem"] as const) {
+      const minion = actor("c", 200, 100, 10, { creatureLook: look });
+      expect(bodyGlyphLayout(minion)).toMatchObject({
+        x: 200,
+        y: 100 - stackBadge(10, figureTall(minion)).rise,
+        tint: STACK_GLYPH_TINT,
+      });
+      expect(rise(look)).toBe(stackOverheadRise(10, figureTall(minion)));
+    }
+    expect(rise("bone-minion")).toBeLessThan(rise("bone-horror"));
+    expect(rise("bone-horror")).toBeLessThan(rise("flesh-golem"));
+    expect(rise("flesh-golem")).toBeGreaterThan(stackOverheadRise(10));
   });
 
   it("puts a standing Ghostly Hero's glyph on its figure's badge, as a player's, and clears its bar over it (#4171)", () => {

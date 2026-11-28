@@ -39,7 +39,7 @@ interface Quadruped {
 }
 
 const BEAST: Quadruped = { fur: 0x8a7360, dark: 0x5a4a3e, tail: 2, tailLength: 0.8, ears: true };
-const RAT: Quadruped = { fur: 0x7a6e66, dark: 0x4e4440, tail: 5, tailLength: 1.2, ears: false };
+const RAT: Quadruped = { fur: 0x7a6e66, dark: 0x4e4440, tail: 4, tailLength: 0.9, ears: false };
 
 /** Where each leg stands, and which way a stride moves it: diagonal pairs swap. */
 const LEGS = [
