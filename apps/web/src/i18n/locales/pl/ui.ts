@@ -1139,8 +1139,6 @@ export default {
   "queue.sameTeamIn": "Wygrana: następny mecz z tą samą drużyną za {seconds} s",
   "queue.newTeamIn": "Twoja grupa się zmieniła: wybierz drużynę ponownie za {seconds} s",
   "queue.now": "Teraz",
-  "queue.warmupIn":
-    "Jeszcze nie ma innej drużyny. Mecz rozgrzewkowy z botami za {seconds} s. Nie liczy się, a ty zostajesz w kolejce.",
   "queue.warmupNow": "Zacznij rozgrzewkę teraz",
   "queue.warmupRunning": "Rozgrzewka — nadal w kolejce do {queue} ({waited} czekania)",
   "queue.warmupOver": "Znaleziono mecz — koniec rozgrzewki",

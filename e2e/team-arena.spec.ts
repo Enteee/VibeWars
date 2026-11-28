@@ -279,12 +279,18 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
   try {
     await formParty([ann, bea], ["Ann", "Bea"]);
     await runTeamLobby([ann, bea]);
-    // Every member is told the warmup is coming; only the host may start it now.
-    await expect(bea.locator(".lobby-warmup")).toContainText("Warmup match against bots in");
+    // Every member sees the warmup's countdown on Start warmup now (#4285);
+    // only the host may press it.
+    await bea.locator("#topbar .topbar-queue").click();
+    const guestFlyout = bea.locator("#topbar .queue-window");
+    await expect(guestFlyout.locator(".queue-warmup-now")).toBeDisabled();
+    await expect(guestFlyout.locator(".queue-warmup-count")).toHaveText(/^\d+$/);
+    await bea.keyboard.press("Escape");
+    await expect(guestFlyout).toBeHidden();
     await ann.locator("#topbar .topbar-queue").click();
     const flyout = ann.locator("#topbar .queue-window");
-    await expect(flyout).toContainText("Warmup match against bots in");
-    await flyout.getByRole("button", { name: "Start warmup now" }).click();
+    await expect(flyout.locator(".queue-warmup-count")).toHaveText(/^\d+$/);
+    await flyout.getByRole("button", { name: /^Start warmup now/ }).click();
 
     // A warmup: the party's own match against bots, still in the queue.
     for (const page of [ann, bea]) {

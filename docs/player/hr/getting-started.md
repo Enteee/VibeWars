@@ -180,13 +180,13 @@ kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
 sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
-grupu iz njega. Dok ne dođe nijedan drugi tim, prozor prstena i tvoja soba
-odbrojavaju 30 s do **zagrijavanja**: meča u tvojoj vlastitoj sobi protiv
+grupu iz njega. Dok ne dođe nijedan drugi tim, prozor prstena
+odbrojava 30 s do **zagrijavanja** na svom gumbu **Započni zagrijavanje odmah**: meča u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova. Ne računa se ni za što, ni za
 rejting ni za Povijest mečeva, a cijelo vrijeme ostajete u redu: oznaka u
 meču to kaže. Zagrijavanje slijedi za zagrijavanjem dok se ne pronađe tim;
-tada zagrijavanje odmah završava i idete na svoj meč. Domaćin može u
-prozoru prstena pritisnuti **Započni zagrijavanje odmah** umjesto da čeka.
+tada zagrijavanje odmah završava i idete na svoj meč. Domaćin može
+pritisnuti **Započni zagrijavanje odmah** umjesto da čeka; gostu je taj gumb zasivljen.
 Nema zagrijavanja u [Usponu heroja](modes.md#uspon-heroja), koji čeka
 tim u tvojoj rundi.
 

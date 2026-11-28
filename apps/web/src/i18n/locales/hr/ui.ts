@@ -1098,8 +1098,6 @@ export default {
   "queue.sameTeamIn": "Pobijedili ste: sljedeći meč s istim timom za {seconds} s",
   "queue.newTeamIn": "Vaša se skupina promijenila: odaberite tim ponovno za {seconds} s",
   "queue.now": "Sad",
-  "queue.warmupIn":
-    "Još nema drugog tima. Zagrijavanje protiv botova za {seconds} s. Ne računa se, a ostaješ u redu čekanja.",
   "queue.warmupNow": "Započni zagrijavanje odmah",
   "queue.warmupRunning": "Zagrijavanje — još u redu za {queue} ({waited} čekanja)",
   "queue.warmupOver": "Meč pronađen — zagrijavanje gotovo",

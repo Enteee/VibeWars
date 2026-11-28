@@ -178,12 +178,12 @@ fila, grupul iese imediat din coadă. Când apare altă echipă la coada aceluia
 joci cu ea pe una dintre hărțile modului, fiecare parte cu buildurile ei, și te
 întorci apoi în lobby. Gazda poate ieși oricând din coadă, din fereastra cercului; un invitat care
 pleacă scoate tot grupul din ea. Cât timp nu vine altă echipă, fereastra cercului
-și lobby-ul tău numără invers 30 s până la o **încălzire**: un meci în propriul lobby
+numără invers 30 s până la o **încălzire**, pe butonul ei **Începe încălzirea acum**: un meci în propriul lobby
 contra unei echipe presetate aleatorii de boți. Nu contează pentru nimic, nici rating,
 nici Istoricul meciurilor, iar tu rămâi tot timpul în coadă: o etichetă din meci îți
 spune asta. O încălzire urmează după alta până se găsește o echipă; atunci încălzirea
 se termină imediat și treci la meciul tău. În loc să aștepte, gazda poate apăsa
-**Începe încălzirea acum** în fereastra cercului. Nu există încălziri la
+**Începe încălzirea acum**; un invitat vede butonul estompat. Nu există încălziri la
 [Ascensiunea Eroilor](modes.md#ascensiunea-eroilor), care așteaptă o echipă de la
 runda ta.
 

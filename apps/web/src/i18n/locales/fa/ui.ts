@@ -1046,8 +1046,6 @@ export default {
   "queue.sameTeamIn": "بردید: مسابقهٔ بعد با همین تیم تا {seconds} ثانیه دیگر",
   "queue.newTeamIn": "گروه شما تغییر کرد: تیم را دوباره انتخاب کنید تا {seconds} ثانیه دیگر",
   "queue.now": "الان",
-  "queue.warmupIn":
-    "هنوز تیم دیگری نیست. مسابقهٔ گرم‌کردن با ربات‌ها تا {seconds} ثانیه دیگر. حساب نمی‌شود و در صف می‌مانید.",
   "queue.warmupNow": "همین حالا گرم‌کردن را شروع کن",
   "queue.warmupRunning": "گرم‌کردن — هنوز در صف {queue} ({waited} انتظار)",
   "queue.warmupOver": "مسابقه پیدا شد — گرم‌کردن تمام شد",

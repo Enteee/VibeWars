@@ -495,23 +495,28 @@ describe("the top bar's queue icon (#2743)", () => {
     expect(shown(parent.children[0])).toEqual([
       "Guild vs Guild",
       "0:00",
-      "No other team yet. Warmup match against bots in 30 s. It does not count, and you stay in the queue.",
+      "Start warmup now",
+      "30",
       "Only the host can leave the queue.",
     ]);
+    const now = parent.children[0]?.children.find((child) =>
+      child.className.split(" ").includes("queue-warmup-now"),
+    );
+    expect(now?.getAttribute("aria-disabled")).toBe("true");
     setQueue(undefined);
     expect(isTopbarPopoverOpen()).toBe(false);
     expect(parent.children).toEqual([]);
   });
 
-  it("gives the host Start warmup now at once, and none during a warmup (#3899)", () => {
+  it("gives the host Start warmup now at once, counting down, and none during a warmup (#3899, #4285)", () => {
     const { parent, button, setQueue, left } = mount();
-    const queue = (warmup: boolean) => {
+    const queue = (warmup: boolean, waitedMs = 0) => {
       setQueue({
         kind: "team",
         mode: "team-arena",
         teamSize: 2,
         ascentRound: null,
-        since: Date.now(),
+        since: Date.now() - waitedMs,
         teams: undefined,
         isHost: true,
         warmup,
@@ -525,9 +530,16 @@ describe("the top bar's queue icon (#2743)", () => {
       child.className.split(" ").includes("queue-warmup-now"),
     );
     expect(now?.hidden).toBe(true);
-    queue(false);
+    queue(false, 9_000);
     expect(now?.hidden).toBe(false);
+    expect(now?.getAttribute("aria-disabled")).toBe("false");
     expect(now?.textContent).toBe("Start warmup now");
+    expect(now?.children.map((child) => [child.className, child.textContent])).toEqual([
+      ["queue-warmup-count", "21"],
+    ]);
+    expect(
+      parent.children[0]?.children.some((child) => child.className === "queue-window-warmup"),
+    ).toBe(false);
     now?.fire("click");
     expect(left).toEqual(["warmup"]);
     expect(isTopbarPopoverOpen()).toBe(false);

@@ -1043,8 +1043,6 @@ export default {
   "queue.sameTeamIn": "Ni vann: nästa match med samma lag om {seconds} s",
   "queue.newTeamIn": "Er grupp har ändrats: välj lag igen om {seconds} s",
   "queue.now": "Nu",
-  "queue.warmupIn":
-    "Inget annat lag än. Uppvärmningsmatch mot bottar om {seconds} s. Den räknas inte, och du stannar i kön.",
   "queue.warmupNow": "Starta uppvärmning nu",
   "queue.warmupRunning": "Uppvärmning — fortfarande i kön för {queue} ({waited} väntat)",
   "queue.warmupOver": "Match hittad — uppvärmningen är slut",

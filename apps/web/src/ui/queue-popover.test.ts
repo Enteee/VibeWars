@@ -7,8 +7,6 @@ import type { Standing } from "./leaderboard-window.js";
 import { queueStatus, type QueueStatusInput } from "./queue-popover.js";
 
 const NOW = 1_000_000;
-const WARMUP_IN_21 =
-  "No other team yet. Warmup match against bots in 21 s. It does not count, and you stay in the queue.";
 
 const GROUP: FormedGroup = {
   groupId: "g",
@@ -112,8 +110,8 @@ describe("queueStatus (#2743)", () => {
       title: "Team Arena 2v2",
       waited: "0:09",
       detail: "2 teams searching",
-      warmupLine: WARMUP_IN_21,
-      warmupNow: true,
+      warmupSeconds: 21,
+      warmupNow: "enabled",
       leave: "button",
     });
     expect(team(1, true)?.detail).toBe("1 team searching");
@@ -121,7 +119,8 @@ describe("queueStatus (#2743)", () => {
     expect(team(0, false)).toEqual({
       title: "Team Arena 2v2",
       waited: "0:09",
-      warmupLine: WARMUP_IN_21,
+      warmupSeconds: 21,
+      warmupNow: "disabled",
       leave: "host-only",
     });
   });
@@ -169,9 +168,8 @@ describe("queueStatus (#2743)", () => {
     expect(queueStatus({ ...base, mode: "gvg", ascentRound: null }, NOW)).toEqual({
       title: "Guild vs Guild",
       waited: "0:00",
-      warmupLine:
-        "No other team yet. Warmup match against bots in 30 s. It does not count, and you stay in the queue.",
-      warmupNow: true,
+      warmupSeconds: 30,
+      warmupNow: "enabled",
       leave: "button",
     });
   });
@@ -198,21 +196,25 @@ describe("queueStatus (#2743)", () => {
         NOW,
       );
 
-    it("counts down to WARMUP_AFTER_MS for every member, and says nothing once it is due", () => {
-      expect(team(0)?.warmupLine).toContain("in 30 s");
-      expect(team(WARMUP_AFTER_MS - 800, { isHost: false })?.warmupLine).toContain("in 1 s");
-      expect(team(WARMUP_AFTER_MS)?.warmupLine).toBeUndefined();
-      expect(team(0, { warmup: true })?.warmupLine).toBeUndefined();
+    it("counts down to WARMUP_AFTER_MS for every member, and is gone once it is due", () => {
+      expect(team(0)?.warmupSeconds).toBe(30);
+      expect(team(9_000)?.warmupSeconds).toBe(21);
+      expect(team(WARMUP_AFTER_MS - 800, { isHost: false })?.warmupSeconds).toBe(1);
+      expect(team(WARMUP_AFTER_MS)).not.toHaveProperty("warmupSeconds");
+      expect(team(WARMUP_AFTER_MS)).not.toHaveProperty("warmupNow");
+      expect(team(0, { warmup: true })).not.toHaveProperty("warmupSeconds");
     });
 
-    it("offers Start warmup now to the host alone, at once, and never during one", () => {
-      expect(team(0)?.warmupNow).toBe(true);
-      expect(team(0, { isHost: false })?.warmupNow).toBeUndefined();
-      expect(team(0, { warmup: true })?.warmupNow).toBeUndefined();
+    it("offers Start warmup now to the host, shows it disabled to a guest, never during one (#4285)", () => {
+      expect(team(0)?.warmupNow).toBe("enabled");
+      expect(team(0, { isHost: false })?.warmupNow).toBe("disabled");
+      expect(team(0, { warmup: true })).not.toHaveProperty("warmupNow");
     });
 
     it("is none in Heroes' Ascent, in the Vault, and in Random Arena", () => {
-      expect(team(0, { mode: "heroes-ascent", ascentRound: 1 })).not.toHaveProperty("warmupLine");
+      expect(team(0, { mode: "heroes-ascent", ascentRound: 1 })).not.toHaveProperty(
+        "warmupSeconds",
+      );
       expect(team(0, { mode: "heroes-ascent", ascentRound: 1 })).not.toHaveProperty("warmupNow");
       expect(
         team(0, { mode: "heroes-ascent", ascentRound: ASCENT_PROGRESSION.length - 1 }),

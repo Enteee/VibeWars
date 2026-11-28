@@ -991,8 +991,6 @@ export default {
   "queue.sameTeamIn": "ชนะแล้ว: แมตช์ถัดไปด้วยทีมเดิมใน {seconds} วิ",
   "queue.newTeamIn": "ปาร์ตี้ของคุณเปลี่ยนไป: เลือกทีมใหม่ใน {seconds} วิ",
   "queue.now": "ตอนนี้",
-  "queue.warmupIn":
-    "ยังไม่มีทีมอื่น แมตช์วอร์มอัพกับบอทใน {seconds} วิ ไม่นับผล และคุณยังอยู่ในคิว",
   "queue.warmupNow": "เริ่มวอร์มอัพเลย",
   "queue.warmupRunning": "วอร์มอัพ — ยังอยู่ในคิว {queue} (รอแล้ว {waited})",
   "queue.warmupOver": "พบแมตช์แล้ว — จบวอร์มอัพ",

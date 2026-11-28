@@ -1000,8 +1000,6 @@ export default {
   "queue.sameTeamIn": "勝利：{seconds}秒後に同じチームで次のマッチ",
   "queue.newTeamIn": "パーティが変わりました：{seconds}秒後にチームを選び直します",
   "queue.now": "今すぐ",
-  "queue.warmupIn":
-    "まだ他のチームがいません。{seconds} 秒後にボットとのウォームアップ戦。結果は残らず、キューにはそのまま残ります。",
   "queue.warmupNow": "今すぐウォームアップ",
   "queue.warmupRunning": "ウォームアップ — {queue} のキューで待機中（{waited} 経過）",
   "queue.warmupOver": "マッチが見つかりました — ウォームアップ終了",

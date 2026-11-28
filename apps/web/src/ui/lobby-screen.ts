@@ -10,7 +10,6 @@ import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
 import { arenaMap } from "../net/maps.js";
 import { button, findMatchButton, h, readyButton, toast, type ShareLine } from "./kit.js";
-import { warmupLine } from "./queue-popover.js";
 import {
   SIGNET_ROW_PX,
   playerLabelElement,
@@ -280,14 +279,6 @@ export function lobbyPanel(
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
     // A guest's word on a team-mode screen: matchmaking is the host's.
     panel.appendChild(h("div", "screen-info lobby-waiting", t("lobby.hostStartsMatchmaking")));
-  }
-  // Every member's, not only the host's: what comes while no other team does (#3899).
-  const warmup =
-    matchmaking === undefined || matchmaking.queuedMs === null
-      ? undefined
-      : warmupLine(snapshot.mode, matchmaking.queuedMs);
-  if (warmup !== undefined) {
-    panel.appendChild(h("div", "screen-info lobby-warmup", warmup));
   }
   // Everyone sees it, not only the host: a guest who is the one being
   // waited for should know. Nobody waits on Ready for matchmaking.

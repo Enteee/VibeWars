@@ -1044,8 +1044,6 @@ export default {
   "queue.sameTeamIn": "Kazandınız: aynı takımla sonraki maç {seconds} sn içinde",
   "queue.newTeamIn": "Grubunuz değişti: {seconds} sn içinde takımınızı yeniden seçin",
   "queue.now": "Şimdi",
-  "queue.warmupIn":
-    "Henüz başka takım yok. {seconds} sn sonra botlara karşı ısınma maçı. Sayılmaz ve sırada kalırsın.",
   "queue.warmupNow": "Isınmayı şimdi başlat",
   "queue.warmupRunning": "Isınma — hâlâ {queue} sırasında ({waited} beklendi)",
   "queue.warmupOver": "Maç bulundu — ısınma bitti",

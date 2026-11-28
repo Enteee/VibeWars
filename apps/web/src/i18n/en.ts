@@ -1044,8 +1044,6 @@ export const en = {
   "queue.sameTeamIn": "You won: next match with the same team in {seconds} s",
   "queue.newTeamIn": "Your party changed: choose your team again in {seconds} s",
   "queue.now": "Now",
-  "queue.warmupIn":
-    "No other team yet. Warmup match against bots in {seconds} s. It does not count, and you stay in the queue.",
   "queue.warmupNow": "Start warmup now",
   "queue.warmupRunning": "Warmup — still in the queue for {queue} ({waited} waited)",
   "queue.warmupOver": "Match found — warmup over",

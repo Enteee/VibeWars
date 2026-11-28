@@ -1056,8 +1056,6 @@ export default {
   "queue.sameTeamIn": "Voitit: seuraava ottelu samalla joukkueella: {seconds} s",
   "queue.newTeamIn": "Ryhmäsi muuttui: valitse joukkue uudelleen: {seconds} s",
   "queue.now": "Nyt",
-  "queue.warmupIn":
-    "Ei vielä muuta joukkuetta. Lämmittelyottelu botteja vastaan {seconds} s kuluttua. Se ei vaikuta mihinkään, ja pysyt jonossa.",
   "queue.warmupNow": "Aloita lämmittely nyt",
   "queue.warmupRunning": "Lämmittely — yhä jonossa: {queue} ({waited} odotettu)",
   "queue.warmupOver": "Ottelu löytyi — lämmittely päättyi",

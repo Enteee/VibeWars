@@ -16,13 +16,13 @@ import { isVaultRound, vaultLines } from "./vault-screen.js";
  */
 
 /**
- * The line saying a warmup against bots is coming (#3899), for a party
- * of `mode` queued `waitedMs`: none once it is due, nor in Heroes'
- * Ascent, which waits for a side at its round (#1996).
+ * The seconds until a warmup against bots (#3899, #4285), for a party of
+ * `mode` queued `waitedMs`: none once it is due, nor in Heroes' Ascent,
+ * which waits for a side at its round (#1996).
  */
-export function warmupLine(mode: LobbyMode, waitedMs: number): string | undefined {
+export function warmupSeconds(mode: LobbyMode, waitedMs: number): number | undefined {
   const seconds = Math.ceil((WARMUP_AFTER_MS - waitedMs) / 1000);
-  return mode === "heroes-ascent" || seconds <= 0 ? undefined : t("queue.warmupIn", { seconds });
+  return mode === "heroes-ascent" || seconds <= 0 ? undefined : seconds;
 }
 
 /** The queue this tab is in, as the flyout shows it. */
@@ -70,10 +70,10 @@ export interface QueueStatus {
   readonly notice?: string;
   /** Leave Queue, or a guest's word that only the host can. */
   readonly leave: "button" | "host-only";
-  /** Before the first warmup (#3899): when it comes. Every member's. */
-  readonly warmupLine?: string;
-  /** Start warmup now (#3899): a host's, outside Heroes' Ascent and a warmup. */
-  readonly warmupNow?: true;
+  /** Before the first warmup (#3899): the seconds until it, on Start warmup now (#4285). */
+  readonly warmupSeconds?: number;
+  /** Start warmup now (#3899) with `warmupSeconds`: a host's to press, a guest's disabled (#4285). */
+  readonly warmupNow?: "enabled" | "disabled";
 }
 
 /** The flyout for `input` at `now`; none without a queue. */
@@ -108,14 +108,10 @@ function unratedStatus(input: QueueStatusInput, now: number): QueueStatus {
     return { title: vault.title, waited: vault.countdown, detail: vault.holder, leave };
   }
   const status = teamStatus(input, waited, leave);
-  const line = input.warmup ? undefined : warmupLine(input.mode, now - input.since);
-  return {
-    ...status,
-    ...(line === undefined ? {} : { warmupLine: line }),
-    ...(input.isHost && !input.warmup && input.mode !== "heroes-ascent"
-      ? { warmupNow: true as const }
-      : {}),
-  };
+  const seconds = input.warmup ? undefined : warmupSeconds(input.mode, now - input.since);
+  return seconds === undefined
+    ? status
+    : { ...status, warmupSeconds: seconds, warmupNow: input.isHost ? "enabled" : "disabled" };
 }
 
 /** A team mode's flyout outside the Vault, without its warmup. */
@@ -202,17 +198,18 @@ export function queueButton(
     const rating = h("div", "queue-window-rating");
     const detail = h("div", "queue-window-detail");
     const notice = h("p", "queue-window-notice");
-    const warmup = h("p", "queue-window-warmup");
     const warmupNow = button(t("queue.warmupNow"), "primary queue-warmup-now", () => {
       close();
       onStartWarmup();
     });
+    const warmupCount = h("span", "queue-warmup-count");
+    warmupNow.appendChild(warmupCount);
     const hostOnly = h("p", "queue-window-host-only", t("queue.hostOnly"));
     const leave = button(t("queue.leaveQueue"), "", () => {
       close();
       onLeave();
     });
-    panel.append(title, waited, rating, warmup, warmupNow, detail, notice, hostOnly, leave);
+    panel.append(title, waited, rating, warmupNow, detail, notice, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -226,9 +223,10 @@ export function queueButton(
       detail.hidden = status.detail === undefined;
       notice.textContent = status.notice ?? "";
       notice.hidden = status.notice === undefined;
-      warmup.textContent = status.warmupLine ?? "";
-      warmup.hidden = status.warmupLine === undefined;
+      warmupCount.textContent = String(status.warmupSeconds ?? "");
       warmupNow.hidden = status.warmupNow === undefined;
+      warmupNow.disabled = status.warmupNow === "disabled";
+      warmupNow.setAttribute("aria-disabled", String(status.warmupNow === "disabled"));
       hostOnly.hidden = status.leave !== "host-only";
       leave.hidden = status.leave !== "button";
     };

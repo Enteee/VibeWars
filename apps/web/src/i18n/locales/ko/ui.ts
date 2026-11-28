@@ -994,8 +994,6 @@ export default {
   "queue.sameTeamIn": "승리: {seconds}초 후 같은 팀으로 다음 매치",
   "queue.newTeamIn": "파티가 바뀌었습니다: {seconds}초 후 팀을 다시 고릅니다",
   "queue.now": "지금",
-  "queue.warmupIn":
-    "아직 다른 팀이 없습니다. {seconds}초 후 봇과 워밍업 경기. 기록되지 않으며 대기열에 그대로 남습니다.",
   "queue.warmupNow": "지금 워밍업 시작",
   "queue.warmupRunning": "워밍업 — 아직 {queue} 대기열에 있음 ({waited} 대기)",
   "queue.warmupOver": "경기 찾음 — 워밍업 종료",

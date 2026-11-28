@@ -190,12 +190,12 @@ başka bir takım çıkınca, onlarla modun haritalarından birinde, her taraf
 kendi dizilimleriyle oynarsın ve ardından lobine dönersin. Kurucu
 halkanın penceresinden istediği an çıkabilir; çıkan bir misafir bütün
 grubu sıradan çıkarır. Başka bir takım gelmediği sürece halkanın penceresi
-ve lobin bir **ısınma** için 30 sn geri sayar: kendi lobinde rastgele hazır
+**Isınmayı şimdi başlat** düğmesinde bir **ısınma** için 30 sn geri sayar: kendi lobinde rastgele hazır
 bir bot takımına karşı bir maç. Hiçbir şeye sayılmaz, ne puan ne Maç
 geçmişi, ve bu sürenin tamamında sırada kalırsın: maçtaki bir etiket de
 bunu söyler. Bir takım bulunana kadar ısınmalar birbirini izler; sonra
-ısınma hemen biter ve maçına geçersin. Kurucu beklemek yerine halkanın
-penceresinde **Isınmayı şimdi başlat**'a basabilir. Senin turundaki bir
+ısınma hemen biter ve maçına geçersin. Kurucu beklemek yerine
+**Isınmayı şimdi başlat**'a basabilir; misafir düğmeyi gri görür. Senin turundaki bir
 takımı bekleyen [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi)
 modunda ısınma yoktur.
 

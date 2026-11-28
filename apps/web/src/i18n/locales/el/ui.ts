@@ -1056,8 +1056,6 @@ export default {
   "queue.sameTeamIn": "Νικήσατε: επόμενος αγώνας με την ίδια ομάδα σε {seconds} δ",
   "queue.newTeamIn": "Η ομάδα σας άλλαξε: διαλέξτε ξανά ομάδα σε {seconds} δ",
   "queue.now": "Τώρα",
-  "queue.warmupIn":
-    "Καμία άλλη ομάδα ακόμα. Αγώνας προθέρμανσης με bots σε {seconds} δ. Δεν μετράει και μένεις στην ουρά.",
   "queue.warmupNow": "Ξεκίνα προθέρμανση τώρα",
   "queue.warmupRunning": "Προθέρμανση — ακόμα στην ουρά για {queue} ({waited} αναμονή)",
   "queue.warmupOver": "Βρέθηκε αγώνας — η προθέρμανση τελείωσε",

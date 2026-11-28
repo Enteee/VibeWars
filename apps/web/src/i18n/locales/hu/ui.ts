@@ -1048,8 +1048,6 @@ export default {
   "queue.sameTeamIn": "Nyertetek: következő meccs ugyanazzal a csapattal {seconds} mp múlva",
   "queue.newTeamIn": "A csapatotok megváltozott: válasszatok újra csapatot {seconds} mp múlva",
   "queue.now": "Most",
-  "queue.warmupIn":
-    "Még nincs másik csapat. Bemelegítő meccs botok ellen {seconds} mp múlva. Nem számít, és a sorban maradsz.",
   "queue.warmupNow": "Bemelegítés indítása most",
   "queue.warmupRunning": "Bemelegítés — még sorban: {queue} ({waited} várakozás)",
   "queue.warmupOver": "Meccs megvan — vége a bemelegítésnek",
