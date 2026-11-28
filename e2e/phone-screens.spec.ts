@@ -264,7 +264,7 @@ test("the queue's window fits the phone (#3776)", async ({ page }) => {
   await expectFitsPhone(page, "queue");
 });
 
-test("the menu and Options fit the phone in German, the menu in Arabic (#3776)", async ({
+test("the menu and Options fit the phone in German, the menu in Arabic, where back points right (#3776, #4237)", async ({
   browser,
 }) => {
   for (const locale of ["de", "ar"]) {
@@ -275,6 +275,19 @@ test("the menu and Options fit the phone in German, the menu in Arabic (#3776)",
     if (locale === "de") {
       await clickTopbarIcon(page, ".topbar-options");
       await expectFitsPhone(page, `Options, ${locale}`);
+    }
+    if (locale === "ar") {
+      // Back points to the list, which is on the right in Arabic (#4237).
+      await clickTopbarIcon(page, ".topbar-options");
+      await page.locator('.flyout-rail-entry[data-id="controls"]').click();
+      await drilledIn(page);
+      const back = page.locator(".flyout-rail-back-button");
+      await expect(back).toHaveText("");
+      const degrees = await back.evaluate((button) => {
+        const { a, b } = new DOMMatrix(getComputedStyle(button, "::after").transform);
+        return Math.round((Math.atan2(b, a) * 180) / Math.PI);
+      });
+      expect(degrees, "the RTL rotation").toBe(-45);
     }
     await context.close();
   }
